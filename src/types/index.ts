@@ -1,10 +1,23 @@
 export type UserRole = 'investor' | 'collector';
-export type LoanStatus = 'active' | 'overdue' | 'closed';
-export type InstallmentStatus = 'pending' | 'due_today' | 'overdue' | 'paid';
+export type LoanStatus = 'active' | 'overdue' | 'closed' | 'cancelled';
+export type InstallmentStatus =
+  | 'pending'
+  | 'due_today'
+  | 'overdue'
+  | 'paid'
+  | 'partial'
+  | 'missed';
 export type PaymentMode = 'CASH' | 'UPI' | 'BANK';
 export type RiskLevel = 'low' | 'medium' | 'high';
-export type RepaymentFrequency = 'daily' | 'weekly' | 'monthly';
-export type LendingModel = 'model_a';
+export type RepaymentFrequency =
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'half_yearly'
+  | 'yearly'
+  | 'custom';
+export type LendingModel = 'model_a' | 'model_b';
+export type InterestType = 'pct' | 'fixed';
 
 export interface User {
   id: string;
@@ -12,7 +25,7 @@ export interface User {
   name: string;
   phone: string | null;
   role: UserRole;
-  investor_id: string | null;
+  is_active: boolean;
 }
 
 export interface Customer {
@@ -22,6 +35,7 @@ export interface Customer {
   location: string | null;
   risk_level: RiskLevel;
   is_blacklisted: boolean;
+  blacklist_reason: string | null;
   active_loan_count: number;
   total_outstanding: number;
 }
@@ -30,7 +44,8 @@ export interface Installment {
   id: string;
   sequence: number;
   due_date: string;
-  amount: number;
+  due_amount: number;
+  paid_amount: number;
   status: InstallmentStatus;
 }
 
@@ -40,17 +55,29 @@ export interface Loan {
   customer_name: string;
   collector_id: string;
   collector_name: string;
+
   principal: number;
-  interest_rate: number;
+  interest_type: InterestType;
+  interest_value: number;
   lending_model: LendingModel;
+
+  disbursed: number;
+  repayable: number;
+  profit: number;
+
   repayment_frequency: RepaymentFrequency;
   total_installments: number;
   installment_amount: number;
   start_date: string;
+
   status: LoanStatus;
   outstanding: number;
   repaid: number;
   repaid_pct: number;
+  paid_count: number;
+  overdue_count: number;
+  closed_at: string | null;
+
   installments?: Installment[];
 }
 

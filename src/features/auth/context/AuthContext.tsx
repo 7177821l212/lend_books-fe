@@ -1,9 +1,14 @@
+/**
+ * AuthContext — single source of truth for auth state.
+ * Wraps the app once; consume via useAuth().
+ */
 import * as SecureStore from 'expo-secure-store';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { apiClient } from '@/lib/api';
 import { SECURE_STORE_KEYS } from '@/config/constants';
+import { setUnauthorizedHandler } from '@/lib/api';
 import type { User } from '@/types';
+import { authApi, type LoginPayload } from '../api/authApi';
 
 interface AuthState {
   user: User | null;
@@ -12,57 +17,76 @@ interface AuthState {
 }
 
 interface AuthActions {
-  login: (email: string, password: string) => Promise<void>;
+  login: (payload: LoginPayload) => Promise<void>;
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<(AuthState & AuthActions) | null>(null);
+type AuthContextValue = AuthState & AuthActions;
+
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const token = await SecureStore.getItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
-        if (token) {
-          const { data } = await apiClient.get<User>('/auth/me');
-          setUser(data);
-        }
-      } catch {
-        await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, []);
-
-  async function login(email: string, password: string) {
-    const { data } = await apiClient.post<{
-      access_token: string;
-      refresh_token: string;
-    }>('/auth/login', { email, password });
-    await SecureStore.setItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN, data.access_token);
-    await SecureStore.setItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN, data.refresh_token);
-    const me = await apiClient.get<User>('/auth/me');
-    setUser(me.data);
-  }
-
-  async function logout() {
+  const logout = useCallback(async () => {
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
     await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN);
     setUser(null);
-  }
+  }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, isLoading, isAuthenticated: !!user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      void logout();
+    });
+  }, [logout]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await SecureStore.getItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
+        if (!token) {
+          if (!cancelled) setIsLoading(false);
+          return;
+        }
+        const me = await authApi.me();
+        if (!cancelled) setUser(me);
+      } catch {
+        await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
+        await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const login = useCallback(async (payload: LoginPayload) => {
+    const tokens = await authApi.login(payload);
+    await SecureStore.setItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN, tokens.access_token);
+    await SecureStore.setItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN, tokens.refresh_token);
+    const me = await authApi.me();
+    setUser(me);
+  }, []);
+
+  const value: AuthContextValue = useMemo(
+    () => ({
+      user,
+      isLoading,
+      isAuthenticated: !!user,
+      login,
+      logout,
+    }),
+    [user, isLoading, login, logout]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;

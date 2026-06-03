@@ -1,0 +1,50 @@
+/**
+ * Spacing — 4-pt grid. Use spacing[n] not raw numbers.
+ */
+export const spacing = {
+  0: 0,
+  px: 1,
+  0.5: 2,
+  1: 4,
+  1.5: 6,
+  2: 8,
+  2.5: 10,
+  3: 12,
+  3.5: 14,
+  4: 16,
+  5: 20,
+  6: 24,
+  7: 28,
+  8: 32,
+  10: 40,
+  12: 48,
+  14: 56,
+  16: 64,
+  20: 80,
+  24: 96,
+  28: 112,
+  32: 128,
+} as const;
+
+export type SpacingKey = keyof typeof spacing;
+
+/** Layout constants */
+export const layout = {
+  // Bottom tab height (custom)
+  tabBarHeight: 70,
+  tabBarHeightWithFab: 78,
+  // FAB
+  fabSize: 56,
+  fabSizeLarge: 64,
+  // Header
+  headerHeight: 56,
+  heroHeaderHeight: 140,
+  heroHeaderHeightCompact: 100,
+  // Touch targets — minimum
+  minTouchTarget: 44,
+  // Screen padding default
+  screenPaddingX: spacing[4],
+  screenPaddingY: spacing[4],
+  // Max content width on tablets
+  maxContentWidth: 720,
+} as const;

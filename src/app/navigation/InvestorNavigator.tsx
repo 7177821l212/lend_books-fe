@@ -1,47 +1,70 @@
+/**
+ * Investor bottom-tab navigator.
+ * Screens use Placeholder until Sprint 5.
+ */
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
-
-import { BRAND_COLOR } from '@/config/constants';
-
-// Screens — imported when implemented
-// import { DashboardScreen } from '@/features/investor/dashboard/screens/DashboardScreen';
-// import { CustomerListScreen } from '@/features/investor/customers/screens/CustomerListScreen';
-// import { TeamScreen } from '@/features/investor/team/screens/TeamScreen';
-// import { ReportsScreen } from '@/features/investor/reports/screens/ReportsScreen';
+import { BarChart3, Home, LayoutGrid, Users } from 'lucide-react-native';
 
 import { Placeholder } from '../Placeholder';
+import { CustomersNavigator } from './CustomersNavigator';
+import { colors, fontFamily } from '@/theme';
 
 const Tab = createBottomTabNavigator();
+const ICON_SIZE = 22;
 
 export function InvestorNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: BRAND_COLOR,
-        tabBarInactiveTintColor: '#9CA3AF',
-        tabBarStyle: { paddingBottom: 4 },
+        tabBarActiveTintColor: colors.brand[600],
+        tabBarInactiveTintColor: colors.slate[400],
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopWidth: 0,
+          paddingTop: 6,
+          paddingBottom: 8,
+          height: 64,
+          elevation: 8,
+          shadowColor: colors.slate[900],
+          shadowOpacity: 0.06,
+          shadowOffset: { width: 0, height: -2 },
+          shadowRadius: 8,
+        },
+        tabBarLabelStyle: { fontFamily: fontFamily.medium, fontSize: 10 },
       }}
     >
       <Tab.Screen
         name="Home"
         component={Placeholder}
-        options={{ tabBarLabel: 'Home', tabBarIcon: () => <Text>🏠</Text> }}
+        options={{
+          tabBarLabel: 'Home',
+          tabBarIcon: ({ color }) => <Home size={ICON_SIZE} color={color} strokeWidth={2.1} />,
+        }}
       />
       <Tab.Screen
         name="Customers"
-        component={Placeholder}
-        options={{ tabBarLabel: 'Customers', tabBarIcon: () => <Text>👥</Text> }}
+        component={CustomersNavigator}
+        options={{
+          tabBarLabel: 'Customers',
+          tabBarIcon: ({ color }) => <Users size={ICON_SIZE} color={color} strokeWidth={2.1} />,
+        }}
       />
       <Tab.Screen
         name="Team"
         component={Placeholder}
-        options={{ tabBarLabel: 'Team', tabBarIcon: () => <Text>🧑‍💼</Text> }}
+        options={{
+          tabBarLabel: 'Team',
+          tabBarIcon: ({ color }) => <LayoutGrid size={ICON_SIZE} color={color} strokeWidth={2.1} />,
+        }}
       />
       <Tab.Screen
         name="Reports"
         component={Placeholder}
-        options={{ tabBarLabel: 'Reports', tabBarIcon: () => <Text>📊</Text> }}
+        options={{
+          tabBarLabel: 'Reports',
+          tabBarIcon: ({ color }) => <BarChart3 size={ICON_SIZE} color={color} strokeWidth={2.1} />,
+        }}
       />
     </Tab.Navigator>
   );
