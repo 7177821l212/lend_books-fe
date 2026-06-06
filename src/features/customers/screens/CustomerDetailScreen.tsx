@@ -1,20 +1,32 @@
-/**
- * CustomerDetailScreen — hero, KPIs, loan history placeholder, documents.
- */
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import {
   Ban,
+  Camera,
   CheckCircle,
   Edit2,
   FileText,
+  Image as ImageIcon,
   MessageSquare,
   Phone,
   Plus,
 } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Linking, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import {
+  ActionSheetIOS,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Linking,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigator';
@@ -32,15 +44,17 @@ import {
   useToast,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { useT } from '@/i18n';
 import {
   useBlacklistCustomer,
   useCustomer,
   useCustomerDocuments,
   useUnblacklistCustomer,
+  useUpdateCustomer,
   useUploadDocument,
 } from '@/features/customers/hooks/useCustomers';
 import { useCustomerLoans } from '@/features/loans/hooks/useLoans';
-import { colors, fontFamily, layout, radii, spacing } from '@/theme';
+import { useColors, fontFamily, layout, radii, spacing } from '@/theme';
 import { LoanListItem } from '@/features/loans/components/LoanListItem';
 
 type Nav = NativeStackNavigationProp<CustomersStackParamList, 'CustomerDetail'>;
@@ -50,10 +64,12 @@ const RISK_TONE = { low: 'success', medium: 'warning', high: 'danger' } as const
 const DOC_TYPES = ['ID Proof', 'Address Proof', 'Signed Agreement', 'Other'] as const;
 
 export function CustomerDetailScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const nav = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const { user } = useAuth();
+  const colors = useColors();
   const toast = useToast();
   const isInvestor = user?.role === 'investor';
 
@@ -63,6 +79,7 @@ export function CustomerDetailScreen() {
   const blacklist = useBlacklistCustomer();
   const unblacklist = useUnblacklistCustomer();
   const upload = useUploadDocument(params.id);
+  const updateCustomer = useUpdateCustomer(params.id);
   const loans = loansPage?.items ?? [];
   const [blacklistReason, setBlacklistReason] = useState('');
   const [showBlacklistModal, setShowBlacklistModal] = useState(false);
@@ -121,6 +138,45 @@ export function CustomerDetailScreen() {
     }
   };
 
+  const handlePhotoUpload = () => {
+    const doGallery = async () => {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) { toast.warning('Gallery permission needed'); return; }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1],
+      });
+      if (!result.canceled) {
+        await updateCustomer.mutateAsync({ photo_url: result.assets[0].uri });
+        toast.success('Photo updated');
+      }
+    };
+
+    const doCamera = async () => {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) { toast.warning('Camera permission needed'); return; }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1],
+      });
+      if (!result.canceled) {
+        await updateCustomer.mutateAsync({ photo_url: result.assets[0].uri });
+        toast.success('Photo updated');
+      }
+    };
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['Cancel', 'Take Photo', 'Choose from Gallery'], cancelButtonIndex: 0 },
+        (idx) => { if (idx === 1) void doCamera(); if (idx === 2) void doGallery(); }
+      );
+    } else {
+      Alert.alert('Upload photo', 'Choose source', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Camera', onPress: () => void doCamera() },
+        { text: 'Gallery', onPress: () => void doGallery() },
+      ]);
+    }
+  };
+
   return (
     <Screen padded={false} background="default" edges={[]} scroll>
       <GradientBackground
@@ -138,12 +194,12 @@ export function CustomerDetailScreen() {
             icon={<Text variant="h2" color="onDark" style={{ marginTop: -2 }}>‹</Text>}
             variant="glass"
             size="md"
-            onPress={() => nav.goBack()}
+            onPress={() => nav.navigate('CustomerList')}
             accessibilityLabel="Back"
           />
           {isInvestor ? (
             <IconButton
-              icon={<Edit2 size={16} color={colors.white} />}
+              icon={<Edit2 size={16} color="#fff" />}
               variant="glass"
               size="md"
               onPress={() => nav.navigate('EditCustomer', { id: customer.id })}
@@ -153,12 +209,35 @@ export function CustomerDetailScreen() {
         </View>
 
         <View style={styles.heroRow}>
-          <Avatar
-            name={customer.name}
-            id={customer.id}
-            size="2xl"
-            ring={customer.is_blacklisted ? 'danger' : 'none'}
-          />
+          <TouchableOpacity onPress={isInvestor ? handlePhotoUpload : undefined} activeOpacity={isInvestor ? 0.7 : 1}>
+            {customer.photo_url ? (
+              <View style={{ position: 'relative' }}>
+                <Image
+                  source={{ uri: customer.photo_url }}
+                  style={[styles.photo, { borderColor: customer.is_blacklisted ? colors.danger : 'rgba(255,255,255,0.3)' }]}
+                />
+                {isInvestor ? (
+                  <View style={[styles.cameraOverlay, { backgroundColor: colors.brand[600] }]}>
+                    <Camera size={12} color="#fff" />
+                  </View>
+                ) : null}
+              </View>
+            ) : (
+              <View style={{ position: 'relative' }}>
+                <Avatar
+                  name={customer.name}
+                  id={customer.id}
+                  size="2xl"
+                  ring={customer.is_blacklisted ? 'danger' : 'none'}
+                />
+                {isInvestor ? (
+                  <View style={[styles.cameraOverlay, { backgroundColor: colors.brand[600] }]}>
+                    <Camera size={12} color="#fff" />
+                  </View>
+                ) : null}
+              </View>
+            )}
+          </TouchableOpacity>
           <View style={{ flex: 1, marginLeft: spacing[4], minWidth: 0 }}>
             <Text variant="h2" color="onDark" numberOfLines={1}>
               {customer.name}
@@ -181,25 +260,25 @@ export function CustomerDetailScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View>
               <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-                OUTSTANDING
+                {t('outstanding').toUpperCase()}
               </Text>
               <AmountText
                 value={customer.total_outstanding}
                 size="2xl"
-                color={colors.white}
+                color="#fff"
                 short
               />
             </View>
             <View style={{ flexDirection: 'row', gap: spacing[2] }}>
               <IconButton
-                icon={<Phone size={18} color={colors.white} />}
+                icon={<Phone size={18} color="#fff" />}
                 variant="glass"
                 tone="onDark"
                 onPress={() => Linking.openURL(`tel:${customer.phone}`)}
                 accessibilityLabel="Call"
               />
               <IconButton
-                icon={<MessageSquare size={18} color={colors.white} />}
+                icon={<MessageSquare size={18} color="#fff" />}
                 variant="glass"
                 tone="onDark"
                 onPress={() => Linking.openURL(`sms:${customer.phone}`)}
@@ -212,22 +291,22 @@ export function CustomerDetailScreen() {
 
       <View style={{ padding: layout.screenPaddingX }}>
         {customer.is_blacklisted ? (
-          <Card padding={3} style={styles.blacklistBanner}>
+          <Card padding={3} style={[styles.blacklistBanner, { backgroundColor: colors.dangerSoft }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ban size={18} color={colors.danger} />
               <View style={{ marginLeft: spacing[2], flex: 1 }}>
-                <Text variant="bodyStrong" color={colors.danger}>
-                  Blacklisted
+                <Text variant="bodyStrong" style={{ color: colors.danger }}>
+                  {t('blacklisted')}
                 </Text>
                 {customer.blacklist_reason ? (
-                  <Text variant="caption" color={colors.danger} style={{ opacity: 0.85 }}>
+                  <Text variant="caption" style={{ color: colors.danger, opacity: 0.85 }}>
                     {customer.blacklist_reason}
                   </Text>
                 ) : null}
               </View>
               {isInvestor ? (
                 <Button
-                  label="Remove"
+                  label={t('unblacklist')}
                   variant="ghost"
                   size="sm"
                   loading={unblacklist.isPending}
@@ -242,15 +321,11 @@ export function CustomerDetailScreen() {
         <View style={styles.kpiRow}>
           <Card padding={3} style={styles.kpi}>
             <Text variant="h2">{customer.active_loan_count}</Text>
-            <Text variant="overline" color="tertiary">
-              Active
-            </Text>
+            <Text variant="overline" color="tertiary">{t('active')}</Text>
           </Card>
           <Card padding={3} style={styles.kpi}>
             <Text variant="h2">{closedLoans.length}</Text>
-            <Text variant="overline" color="tertiary">
-              Closed
-            </Text>
+            <Text variant="overline" color="tertiary">{t('status_closed')}</Text>
           </Card>
           <Card padding={3} style={styles.kpi}>
             <Badge
@@ -259,17 +334,15 @@ export function CustomerDetailScreen() {
               size="md"
               uppercase
             />
-            <Text variant="overline" color="tertiary" style={{ marginTop: 6 }}>
-              Risk
-            </Text>
+            <Text variant="overline" color="tertiary" style={{ marginTop: 6 }}>{t('risk')}</Text>
           </Card>
         </View>
 
         <View style={styles.sectionRow}>
-          <Text variant="title">Loans</Text>
+          <Text variant="title">{t('loans')}</Text>
           {isInvestor && !customer.is_blacklisted ? (
             <Button
-              label="New"
+              label={t('new')}
               variant="ghost"
               size="sm"
               leadingIcon={<Plus size={14} color={colors.brand[700]} />}
@@ -280,8 +353,8 @@ export function CustomerDetailScreen() {
         {loans.length === 0 ? (
           <EmptyState
             icon={<FileText size={24} color={colors.brand[700]} />}
-            title="No loans yet"
-            description="Loan history will appear here once you create one."
+            title={t('no_loans_yet')}
+            description={t('no_loans_desc')}
           />
         ) : (
           <View>
@@ -296,7 +369,7 @@ export function CustomerDetailScreen() {
         )}
 
         <View style={styles.sectionRow}>
-          <Text variant="title">Documents</Text>
+          <Text variant="title">{t('documents')}</Text>
         </View>
         <View style={styles.docGrid}>
           {DOC_TYPES.map((label) => {
@@ -330,8 +403,8 @@ export function CustomerDetailScreen() {
                 <Text variant="label" style={{ marginTop: spacing[1.5] }}>
                   {label}
                 </Text>
-                <Text variant="caption" color={existing ? colors.brand[600] : 'tertiary'}>
-                  {existing ? 'Tap to view' : isInvestor ? 'Tap to upload' : 'Missing'}
+                <Text variant="caption" style={{ color: existing ? colors.brand[600] : colors.text.tertiary }}>
+                  {existing ? t('tap_to_view') : isInvestor ? t('upload') : t('missing')}
                 </Text>
               </Card>
             );
@@ -340,12 +413,12 @@ export function CustomerDetailScreen() {
 
         {isInvestor && !customer.is_blacklisted ? (
           <Button
-            label="Blacklist customer"
+            label={t('blacklist')}
             variant="danger"
             fullWidth
             size="lg"
             onPress={() => setShowBlacklistModal(true)}
-            leadingIcon={<Ban size={16} color={colors.white} />}
+            leadingIcon={<Ban size={16} color="#fff" />}
             style={{ marginTop: spacing[6] }}
           />
         ) : null}
@@ -361,9 +434,9 @@ export function CustomerDetailScreen() {
             style={styles.modalOverlay}
             onPress={() => setShowBlacklistModal(false)}
           >
-            <Pressable style={styles.modalSheet} onPress={() => {}}>
+            <Pressable style={[styles.modalSheet, { backgroundColor: colors.card }]} onPress={() => {}}>
               <Text variant="h2" style={{ marginBottom: spacing[2] }}>
-                Blacklist reason
+                {t('blacklist_reason')}
               </Text>
               <Text variant="body" color="secondary" style={{ marginBottom: spacing[4] }}>
                 Provide a reason for blacklisting {customer.name}.
@@ -373,19 +446,23 @@ export function CustomerDetailScreen() {
                 onChangeText={setBlacklistReason}
                 placeholder="e.g. Defaulted on loan repayment"
                 placeholderTextColor={colors.text.placeholder}
-                style={styles.reasonInput}
+                style={[styles.reasonInput, {
+                  backgroundColor: colors.slate[100],
+                  color: colors.text.primary,
+                  borderColor: colors.border.default,
+                }]}
                 multiline
                 autoFocus
               />
               <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[4] }}>
                 <Button
-                  label="Cancel"
+                  label={t('cancel')}
                   variant="secondary"
                   style={{ flex: 1 }}
                   onPress={() => setShowBlacklistModal(false)}
                 />
                 <Button
-                  label="Confirm"
+                  label={t('confirm')}
                   variant="danger"
                   style={{ flex: 1 }}
                   loading={blacklist.isPending}
@@ -401,15 +478,30 @@ export function CustomerDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  topRow: { flexDirection: 'row' },
+  topRow: { flexDirection: 'row', justifyContent: 'space-between' },
   heroRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: spacing[4],
   },
   heroSub: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  photo: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+  },
+  cameraOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   blacklistBanner: {
-    backgroundColor: colors.dangerSoft,
     borderWidth: 1,
     borderColor: 'rgba(220, 38, 38, 0.2)',
     marginBottom: spacing[4],
@@ -432,10 +524,11 @@ const styles = StyleSheet.create({
   },
   docGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing[2],
   },
   docTile: {
-    flex: 1,
+    width: '48%',
     alignItems: 'flex-start',
   },
   modalOverlay: {
@@ -444,7 +537,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: colors.card,
     borderTopLeftRadius: radii['3xl'],
     borderTopRightRadius: radii['3xl'],
     padding: spacing[6],
@@ -452,14 +544,11 @@ const styles = StyleSheet.create({
   },
   reasonInput: {
     minHeight: 80,
-    backgroundColor: colors.slate[50],
     borderRadius: radii.lg,
     padding: spacing[3],
     fontFamily: fontFamily.regular,
     fontSize: 14,
-    color: colors.text.primary,
     textAlignVertical: 'top',
     borderWidth: 1,
-    borderColor: colors.border.default,
   },
 });

@@ -6,10 +6,12 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { Button, GradientBackground, Input, Screen, Text } from '@/components/ui';
+import { useT } from '@/i18n';
 import { colors, radii, spacing } from '@/theme';
 import { useLogin } from '../hooks/useLogin';
 
 export function LoginScreen() {
+  const t = useT();
   const { submit, isLoading, error } = useLogin();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -32,13 +34,13 @@ export function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.sheet}
       >
-        <Text variant="h2">Welcome back</Text>
+        <Text variant="h2">{t('welcome_back')}</Text>
         <Text variant="body" color="secondary" style={{ marginTop: 2, marginBottom: spacing[5] }}>
-          Sign in to continue
+          {t('sign_in_to_continue')}
         </Text>
 
         <Input
-          label="Email"
+          label={t('email')}
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -49,7 +51,7 @@ export function LoginScreen() {
           containerStyle={{ marginBottom: spacing[3] }}
         />
         <Input
-          label="Password"
+          label={t('password')}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -65,7 +67,7 @@ export function LoginScreen() {
         ) : null}
 
         <Button
-          label="Sign in"
+          label={t('sign_in')}
           fullWidth
           size="lg"
           loading={isLoading}

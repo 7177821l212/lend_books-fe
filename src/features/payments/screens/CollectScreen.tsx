@@ -36,17 +36,16 @@ import {
 } from '@/components/ui';
 import { useLoan } from '@/features/loans/hooks/useLoans';
 import { useCollect, useMarkMissed } from '@/features/payments/hooks/usePayments';
-import { colors, fontFamily, layout, radii, spacing } from '@/theme';
+import { useT } from '@/i18n';
+import { colors, useColors, fontFamily, layout, radii, spacing } from '@/theme';
 import type { PaymentMode } from '@/types';
 
 type Nav = NativeStackNavigationProp<CollectorStackParamList, 'Collect'>;
 type Route = RouteProp<CollectorStackParamList, 'Collect'>;
 
-const MODES: Array<{ key: PaymentMode; label: string; icon: typeof Banknote }> = [
-  { key: 'CASH', label: 'Cash', icon: Banknote },
-  { key: 'UPI', label: 'UPI', icon: Smartphone },
-  { key: 'BANK', label: 'Bank', icon: Building2 },
-];
+const MODE_ICONS: Record<PaymentMode, typeof Banknote> = {
+  CASH: Banknote, UPI: Smartphone, BANK: Building2,
+};
 
 const MISSED_REASONS = [
   'Customer unavailable',
@@ -56,10 +55,24 @@ const MISSED_REASONS = [
   'Wrong address',
   'Medical issue',
   'Other',
-];
+] as const;
+
+type MissedReason = typeof MISSED_REASONS[number];
 
 export function CollectScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
+  const dynColors = useColors();
+
+  const REASON_LABEL: Record<MissedReason, string> = {
+    'Customer unavailable': t('customer_unavailable'),
+    'Customer refused': t('customer_refused'),
+    'Shop closed': t('shop_closed'),
+    'Promised later': t('promised_later'),
+    'Wrong address': t('wrong_address'),
+    'Medical issue': t('medical_issue'),
+    'Other': t('other'),
+  };
   const nav = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const toast = useToast();
@@ -158,7 +171,7 @@ export function CollectScreen() {
           />
           <View style={{ flex: 1, marginLeft: spacing[2] }}>
             <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-              COLLECT
+              {t('collect').toUpperCase()}
             </Text>
             <Text variant="title" color="onDark" numberOfLines={1}>
               {loan.customer_name}
@@ -175,7 +188,7 @@ export function CollectScreen() {
           />
           <View style={{ flex: 1, marginLeft: spacing[3] }}>
             <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-              INSTALLMENT #{targetInstallment.sequence}
+              {t('installment').toUpperCase()} #{targetInstallment.sequence}
             </Text>
             <Text variant="h2" color="onDark">
               ₹{targetRemaining.toLocaleString('en-IN')}
@@ -206,7 +219,7 @@ export function CollectScreen() {
                 color={mode === 'PAID' ? 'onBrand' : colors.success}
                 style={{ marginLeft: 6 }}
               >
-                Collected
+                {t('collected')}
               </Text>
             </Pressable>
             <Pressable
@@ -219,7 +232,7 @@ export function CollectScreen() {
                 color={mode === 'MISSED' ? 'onBrand' : colors.danger}
                 style={{ marginLeft: 6 }}
               >
-                Missed
+                {t('missed')}
               </Text>
             </Pressable>
           </View>
@@ -228,16 +241,16 @@ export function CollectScreen() {
             <>
               <Card padding={4} style={styles.section}>
                 <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
-                  AMOUNT
+                  {t('amount').toUpperCase()}
                 </Text>
                 <View style={styles.amountWrap}>
                   <Text style={styles.amountSymbol}>₹</Text>
                   <TextInput
-                    style={styles.amountInput}
+                    style={[styles.amountInput, { color: dynColors.text.primary }]}
                     value={amount}
                     onChangeText={setAmount}
                     keyboardType="numeric"
-                    selectionColor={colors.brand[600]}
+                    selectionColor={dynColors.brand[600]}
                   />
                 </View>
                 <View style={styles.chipRow}>
@@ -264,11 +277,15 @@ export function CollectScreen() {
 
               <Card padding={4} style={styles.section}>
                 <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
-                  PAYMENT MODE
+                  {t('payment_mode').toUpperCase()}
                 </Text>
                 <View style={styles.modeRow}>
-                  {MODES.map((m) => {
-                    const Icon = m.icon;
+                  {([
+                    { key: 'CASH' as PaymentMode, label: t('cash') },
+                    { key: 'UPI' as PaymentMode, label: t('upi') },
+                    { key: 'BANK' as PaymentMode, label: t('bank') },
+                  ] as const).map((m) => {
+                    const Icon = MODE_ICONS[m.key];
                     const selected = paymentMode === m.key;
                     return (
                       <Pressable
@@ -295,7 +312,7 @@ export function CollectScreen() {
 
               <Card padding={4} style={styles.section}>
                 <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
-                  NOTES (OPTIONAL)
+                  {t('notes').toUpperCase()} (OPTIONAL)
                 </Text>
                 <TextInput
                   value={notes}
@@ -311,7 +328,7 @@ export function CollectScreen() {
             <>
               <Card padding={4} style={styles.section}>
                 <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
-                  WHY MISSED?
+                  {t('why_missed').toUpperCase()}
                 </Text>
                 <View style={{ gap: spacing[2] }}>
                   {MISSED_REASONS.map((r) => {
@@ -331,7 +348,7 @@ export function CollectScreen() {
                           {selected ? <View style={styles.radioDot} /> : null}
                         </View>
                         <Text variant="body" style={{ marginLeft: spacing[2] }}>
-                          {r}
+                          {REASON_LABEL[r]}
                         </Text>
                       </Pressable>
                     );
@@ -341,7 +358,7 @@ export function CollectScreen() {
 
               <Card padding={4} style={styles.section}>
                 <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
-                  NOTES
+                  {t('notes').toUpperCase()}
                 </Text>
                 <TextInput
                   value={notes}
@@ -356,7 +373,7 @@ export function CollectScreen() {
           )}
 
           <Button
-            label={mode === 'PAID' ? 'Save collection' : 'Mark as missed'}
+            label={mode === 'PAID' ? t('save_collection') : t('mark_as_missed')}
             fullWidth
             size="lg"
             variant={mode === 'PAID' ? 'primary' : 'danger'}

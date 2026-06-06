@@ -23,6 +23,7 @@ import {
   useToast,
 } from '@/components/ui';
 import { useCreateCustomer } from '@/features/customers/hooks/useCustomers';
+import { useT } from '@/i18n';
 import { colors, layout, radii, spacing } from '@/theme';
 import type { RiskLevel } from '@/types';
 
@@ -37,17 +38,19 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-const RISKS: Array<{ key: RiskLevel; label: string; tone: 'success' | 'warning' | 'danger' }> = [
-  { key: 'low', label: 'Low risk', tone: 'success' },
-  { key: 'medium', label: 'Medium', tone: 'warning' },
-  { key: 'high', label: 'High risk', tone: 'danger' },
-];
 
 export function NewCustomerScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const nav = useNavigation<Nav>();
   const toast = useToast();
   const create = useCreateCustomer();
+
+  const RISKS: Array<{ key: RiskLevel; label: string; tone: 'success' | 'warning' | 'danger' }> = [
+    { key: 'low', label: t('risk_low'), tone: 'success' },
+    { key: 'medium', label: t('risk_medium'), tone: 'warning' },
+    { key: 'high', label: t('risk_high'), tone: 'danger' },
+  ];
 
   const {
     control,
@@ -97,7 +100,7 @@ export function NewCustomerScreen() {
             accessibilityLabel="Back"
           />
           <Text variant="title" color="onDark" style={{ marginLeft: spacing[2] }}>
-            New customer
+            {t('new_customer')}
           </Text>
         </View>
       </GradientBackground>
@@ -113,7 +116,7 @@ export function NewCustomerScreen() {
               name="name"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="Full name"
+                  label={t('full_name')}
                   placeholder="e.g. Murugan Textiles"
                   value={value}
                   onChangeText={onChange}
@@ -128,7 +131,7 @@ export function NewCustomerScreen() {
               name="phone"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="Phone"
+                  label={t('phone')}
                   placeholder="10-digit mobile"
                   keyboardType="phone-pad"
                   value={value}
@@ -144,7 +147,7 @@ export function NewCustomerScreen() {
               name="location"
               render={({ field: { onChange, value } }) => (
                 <Input
-                  label="Address (optional)"
+                  label={`${t('address')} (optional)`}
                   placeholder="City, area"
                   value={value ?? ''}
                   onChangeText={onChange}
@@ -155,7 +158,7 @@ export function NewCustomerScreen() {
             />
 
             <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
-              RISK LEVEL
+              {t('risk_level').toUpperCase()}
             </Text>
             <Controller
               control={control}
@@ -201,7 +204,7 @@ export function NewCustomerScreen() {
           </Card>
 
           <Button
-            label="Create customer"
+            label={t('create_customer')}
             fullWidth
             size="lg"
             loading={create.isPending}

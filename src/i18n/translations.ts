@@ -143,6 +143,50 @@ export const translations = {
     avg_loan: 'Avg loan',
     avg_rate: 'Avg rate',
 
+    // Installment status
+    status_pending: 'Pending',
+    status_partial: 'Partial',
+    status_due_today: 'Due today',
+    status_missed: 'Missed',
+
+    // My Day
+    call: 'Call',
+    all_caught_up: "You're all caught up",
+    no_pickups_desc: 'No pickups due right now. Great work.',
+    done: 'done',
+
+    // History
+    all_time: 'All time',
+    entries: 'entries',
+    no_entries_yet: 'No entries yet',
+    your_collections_desc: 'Your collections will appear here.',
+
+    // Status
+    active: 'Active',
+    inactive: 'Inactive',
+
+    // Misc
+    not_added: 'Not added',
+    no_loans_yet: 'No loans yet',
+    no_loans_desc: 'Loan history will appear here once you create one.',
+    tap_to_view: 'Tap to view',
+    missing: 'Missing',
+    risk: 'Risk',
+    new: 'New',
+    no_collectors_yet: 'No collectors yet',
+    no_collectors_desc: 'Tap + to add a collector and start assigning loans.',
+    nothing_overdue_desc: 'Everything on schedule — nice.',
+    nobody_blacklisted_desc: 'Customers will appear here when an investor blacklists them.',
+    no_collections_yet: 'No collections yet',
+    no_collections_desc: 'Performance will appear once collectors start recording payments.',
+    lifetime: 'lifetime',
+    needs_attention: 'needs attention',
+    create_customer: 'Create customer',
+    save_changes: 'Save changes',
+    collector: 'Collector',
+    name: 'Name',
+    missed_visit: 'Missed visit',
+
     // Profile
     profile: 'Profile',
 
@@ -309,6 +353,50 @@ export const translations = {
     total_interest: 'மொத்த வட்டி',
     avg_loan: 'சராசரி கடன்',
     avg_rate: 'சராசரி வீதம்',
+
+    // Installment status
+    status_pending: 'நிலுவையில்',
+    status_partial: 'பகுதி',
+    status_due_today: 'இன்று செலுத்தவும்',
+    status_missed: 'தவறவிட்டது',
+
+    // My Day
+    call: 'அழைக்கவும்',
+    all_caught_up: 'எல்லாம் முடிந்தது',
+    no_pickups_desc: 'இப்போது சேகரிப்பு இல்லை. நல்லது!',
+    done: 'முடிந்தது',
+
+    // History
+    all_time: 'எல்லா நேரமும்',
+    entries: 'பதிவுகள்',
+    no_entries_yet: 'இதுவரை பதிவுகள் இல்லை',
+    your_collections_desc: 'உங்கள் சேகரிப்புகள் இங்கே தோன்றும்.',
+
+    // Status
+    active: 'செயலில்',
+    inactive: 'செயலற்றது',
+
+    // Misc
+    not_added: 'சேர்க்கப்படவில்லை',
+    no_loans_yet: 'இதுவரை கடன்கள் இல்லை',
+    no_loans_desc: 'கடன் உருவாக்கியதும் வரலாறு இங்கே தோன்றும்',
+    tap_to_view: 'பார்க்க தொட்டுவிடுக',
+    missing: 'இல்லை',
+    risk: 'ஆபத்து',
+    new: 'புதியது',
+    no_collectors_yet: 'இதுவரை சேகரிப்பாளர்கள் இல்லை',
+    no_collectors_desc: '+ அழுத்தி சேகரிப்பாளர் சேர்க்கவும்',
+    nothing_overdue_desc: 'எல்லாம் சரியான நேரத்தில் உள்ளது',
+    nobody_blacklisted_desc: 'முதலீட்டாளர் யாரையாவது பட்டியலிட்டால் இங்கே தோன்றும்',
+    no_collections_yet: 'இதுவரை சேகரிப்புகள் இல்லை',
+    no_collections_desc: 'சேகரிப்பாளர்கள் பணம் பெற்றதும் செயல்திறன் தோன்றும்',
+    lifetime: 'ஆயுள்காலம்',
+    needs_attention: 'கவனம் தேவை',
+    create_customer: 'வாடிக்கையாளர் உருவாக்கு',
+    save_changes: 'மாற்றங்கள் சேமி',
+    collector: 'சேகரிப்பாளர்',
+    name: 'பெயர்',
+    missed_visit: 'வருகை தவறவிட்டது',
 
     // Profile
     profile: 'சுயவிவரம்',

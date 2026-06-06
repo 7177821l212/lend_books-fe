@@ -16,12 +16,14 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { usePaymentHistory } from '@/features/payments/hooks/usePayments';
+import { useT } from '@/i18n';
 import type { MeStackParamList } from '@/app/navigation/MeNavigator';
 import { useColors, layout, radii, spacing } from '@/theme';
 
 type Nav = NativeStackNavigationProp<MeStackParamList, 'Profile'>;
 
 export function ProfileScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const nav = useNavigation<Nav>();
   const colors = useColors();
@@ -40,7 +42,7 @@ export function ProfileScreen() {
       <GradientBackground
         gradient="hero"
         style={{
-          paddingTop: insets.top + spacing[4],
+          paddingTop: insets.top + spacing[2],
           paddingHorizontal: layout.screenPaddingX,
           paddingBottom: spacing[6],
           borderBottomLeftRadius: radii['3xl'],
@@ -48,7 +50,7 @@ export function ProfileScreen() {
           alignItems: 'center',
         }}
       >
-        <View style={styles.settingsBtn}>
+        <View style={styles.topRow}>
           <IconButton
             icon={<Settings size={18} color="rgba(255,255,255,0.85)" />}
             variant="glass"
@@ -56,7 +58,7 @@ export function ProfileScreen() {
             accessibilityLabel="Settings"
           />
         </View>
-        <Avatar name={user.name} id={user.id} size="2xl" />
+        <Avatar name={user.name} id={user.id} size="2xl" style={{ marginTop: spacing[2] }} />
         <Text variant="h2" color="onDark" style={{ marginTop: spacing[3] }}>
           {user.name}
         </Text>
@@ -74,19 +76,19 @@ export function ProfileScreen() {
         <View style={styles.kpiRow}>
           <Card padding={4} style={styles.kpi}>
             <Text variant="caption" color="tertiary">
-              COLLECTED
+              {t('collected').toUpperCase()}
             </Text>
             <AmountText value={collected} size="lg" color={colors.success} short />
           </Card>
           <Card padding={4} style={styles.kpi}>
             <Text variant="caption" color="tertiary">
-              VISITS
+              {t('visits').toUpperCase()}
             </Text>
             <Text variant="h2">{history?.items.length ?? 0}</Text>
           </Card>
           <Card padding={4} style={styles.kpi}>
             <Text variant="caption" color="tertiary">
-              MISSED
+              {t('missed').toUpperCase()}
             </Text>
             <Text variant="h2" style={{ color: colors.danger }}>
               {missed}
@@ -95,7 +97,7 @@ export function ProfileScreen() {
         </View>
 
         <Button
-          label="Sign out"
+          label={t('sign_out')}
           variant="danger"
           fullWidth
           size="lg"
@@ -109,10 +111,9 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  settingsBtn: {
-    position: 'absolute',
-    top: 0,
-    right: layout.screenPaddingX,
+  topRow: {
+    alignSelf: 'stretch',
+    alignItems: 'flex-end',
   },
   roleChip: {
     marginTop: spacing[3],

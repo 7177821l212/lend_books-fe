@@ -20,6 +20,7 @@ import {
 import { Sparkline } from '@/components/charts/Sparkline';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
+import { useT } from '@/i18n';
 import { useColors, layout, radii, spacing } from '@/theme';
 
 type KPIIconKey = 'wallet' | 'income' | 'profit' | 'warning' | 'customers' | 'coins';
@@ -34,6 +35,7 @@ const ICONS: Record<KPIIconKey, typeof Wallet> = {
 };
 
 export function DashboardScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const { user, logout } = useAuth();
@@ -91,25 +93,25 @@ export function DashboardScreen() {
         {k ? (
           <Card padding={4} style={styles.heroCard}>
             <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-              NET OUTSTANDING
+              {t('net_outstanding')}
             </Text>
             <AmountText value={k.outstanding} size="3xl" color={colors.white} short />
             <View style={styles.heroFooter}>
               <View>
                 <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-                  TODAY
+                  {t('today')}
                 </Text>
                 <AmountText value={k.collected_today} size="md" color={colors.brand[200]} short />
               </View>
               <View>
                 <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-                  PROFIT
+                  {t('profit').toUpperCase()}
                 </Text>
                 <AmountText value={k.profit_realised} size="md" color={colors.white} short />
               </View>
               <View>
                 <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-                  OVERDUE
+                  {t('overdue')}
                 </Text>
                 <Text variant="bodyStrong" color="onDark">
                   {k.overdue_loans}
@@ -129,29 +131,29 @@ export function DashboardScreen() {
         {/* KPI grid */}
         <View style={styles.grid}>
           <KPITile
-            label="Disbursed"
-            sub={k ? `${k.active_loans + k.closed_loans} loans` : ''}
+            label={t('capital_disbursed')}
+            sub={k ? `${k.active_loans + k.closed_loans} ${t('loans')}` : ''}
             value={k ? k.capital_disbursed : 0}
             iconKey="wallet"
             gradient="brand"
           />
           <KPITile
-            label="Collected"
-            sub="lifetime"
+            label={t('total_collected')}
+            sub={t('lifetime')}
             value={k ? k.collected_lifetime : 0}
             iconKey="income"
             gradient="success"
           />
           <KPITile
-            label="Profit"
-            sub={`${k?.closed_loans ?? 0} closed`}
+            label={t('profit')}
+            sub={`${k?.closed_loans ?? 0} ${t('closed_loans').toLowerCase()}`}
             value={k ? k.profit_realised : 0}
             iconKey="profit"
             gradient="sunset"
           />
           <KPITile
-            label="Overdue"
-            sub="needs attention"
+            label={t('overdue')}
+            sub={t('needs_attention')}
             value={k ? k.overdue_loans : 0}
             iconKey="warning"
             gradient="danger"
@@ -163,9 +165,9 @@ export function DashboardScreen() {
         <Card padding={4} style={{ marginTop: spacing[4] }}>
           <View style={styles.sectionHead}>
             <View>
-              <Text variant="title">Collection trend</Text>
+              <Text variant="title">{t('collection_trend')}</Text>
               <Text variant="caption" color="tertiary">
-                Last 30 days
+                {t('last_30_days')}
               </Text>
             </View>
             {k ? (
@@ -193,12 +195,12 @@ export function DashboardScreen() {
         {/* Leaderboard */}
         <Card padding={4} style={{ marginTop: spacing[3] }}>
           <View style={styles.sectionHead}>
-            <Text variant="title">Top collectors</Text>
+            <Text variant="title">{t('top_collectors')}</Text>
           </View>
           {recent.length === 0 ? (
             <EmptyState
-              title="No collections yet"
-              description="Performance will appear once collectors start recording payments."
+              title={t('no_collections_yet')}
+              description={t('no_collections_desc')}
             />
           ) : (
             <View style={{ marginTop: spacing[2] }}>
@@ -221,10 +223,10 @@ export function DashboardScreen() {
                       </View>
                       <View style={styles.leaderSub}>
                         <Text variant="caption" color="tertiary">
-                          {c.visits} visits
+                          {c.visits} {t('visits')}
                         </Text>
                         <Text variant="caption" color="tertiary">
-                          {c.missed} missed
+                          {c.missed} {t('missed').toLowerCase()}
                         </Text>
                       </View>
                       <ProgressBar value={pct} height={4} style={{ marginTop: 4 }} />
@@ -238,8 +240,8 @@ export function DashboardScreen() {
 
         {/* Customers count + active loans summary */}
         <View style={[styles.grid, { marginTop: spacing[3] }]}>
-          <SmallStat label="Customers" value={k?.total_customers ?? 0} sub={`${k?.active_customers ?? 0} active`} />
-          <SmallStat label="Active loans" value={k?.active_loans ?? 0} sub={`${k?.closed_loans ?? 0} closed`} />
+          <SmallStat label={t('customers')} value={k?.total_customers ?? 0} sub={`${k?.active_customers ?? 0} ${t('active').toLowerCase()}`} />
+          <SmallStat label={t('active_loans')} value={k?.active_loans ?? 0} sub={`${k?.closed_loans ?? 0} ${t('closed_loans').toLowerCase()}`} />
         </View>
       </View>
     </Screen>

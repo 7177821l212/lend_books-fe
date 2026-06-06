@@ -6,22 +6,25 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigator';
 import { Button, Card, Input, Screen, Text, useToast } from '@/components/ui';
 import { useCustomer, useUpdateCustomer } from '../hooks/useCustomers';
+import { useT } from '@/i18n';
 import { useColors, layout, radii, spacing } from '@/theme';
 import type { RiskLevel } from '@/types';
 
 type Route = RouteProp<CustomersStackParamList, 'EditCustomer'>;
 
-const RISK_OPTIONS: { value: RiskLevel; label: string }[] = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-];
 
 export function EditCustomerScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const toast = useToast();
   const nav = useNavigation();
+
+  const RISK_OPTIONS: { value: RiskLevel; label: string }[] = [
+    { value: 'low', label: t('risk_low') },
+    { value: 'medium', label: t('risk_medium') },
+    { value: 'high', label: t('risk_high') },
+  ];
   const { params } = useRoute<Route>();
 
   const { data: customer, isLoading } = useCustomer(params.id);
@@ -91,13 +94,13 @@ export function EditCustomerScreen() {
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn} hitSlop={12}>
           <Text variant="h2" style={{ marginTop: -2 }}>‹</Text>
         </TouchableOpacity>
-        <Text variant="h2">Edit Customer</Text>
+        <Text variant="h2">{t('edit')} {t('customer')}</Text>
         <View style={{ width: 36 }} />
       </View>
 
       <View style={{ padding: layout.screenPaddingX, marginTop: spacing[4] }}>
         <Input
-          label="Full name"
+          label={t('full_name')}
           value={name}
           onChangeText={setName}
           placeholder="Customer full name"
@@ -105,7 +108,7 @@ export function EditCustomerScreen() {
           containerStyle={{ marginBottom: spacing[3] }}
         />
         <Input
-          label="Phone"
+          label={t('phone')}
           value={phone}
           onChangeText={setPhone}
           placeholder="10-digit mobile number"
@@ -113,14 +116,14 @@ export function EditCustomerScreen() {
           containerStyle={{ marginBottom: spacing[3] }}
         />
         <Input
-          label="Address / Location (optional)"
+          label={`${t('address')} (optional)`}
           value={location}
           onChangeText={setLocation}
           placeholder="e.g. Anna Nagar, Chennai"
           containerStyle={{ marginBottom: spacing[4] }}
         />
 
-        <Text variant="label" style={{ marginBottom: spacing[2] }}>Risk level</Text>
+        <Text variant="label" style={{ marginBottom: spacing[2] }}>{t('risk_level')}</Text>
         <Card padding={3} style={{ marginBottom: spacing[5] }}>
           <View style={styles.riskRow}>
             {RISK_OPTIONS.map((opt) => {
@@ -155,7 +158,7 @@ export function EditCustomerScreen() {
         </Card>
 
         <Button
-          label="Save changes"
+          label={t('save_changes')}
           variant="primary"
           fullWidth
           size="lg"

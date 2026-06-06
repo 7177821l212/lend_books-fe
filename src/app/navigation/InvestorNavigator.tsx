@@ -3,6 +3,7 @@ import { BarChart3, Home, LayoutGrid, User, Users } from 'lucide-react-native';
 
 import { DashboardScreen } from '@/features/dashboard/screens/DashboardScreen';
 import { ReportsScreen } from '@/features/reports/screens/ReportsScreen';
+import { useT } from '@/i18n';
 import { CustomersNavigator } from './CustomersNavigator';
 import { MeNavigator } from './MeNavigator';
 import { TeamNavigator } from './TeamNavigator';
@@ -12,6 +13,7 @@ const Tab = createBottomTabNavigator();
 const ICON_SIZE = 22;
 
 export function InvestorNavigator() {
+  const t = useT();
   const colors = useColors();
 
   return (
@@ -39,7 +41,7 @@ export function InvestorNavigator() {
         name="Home"
         component={DashboardScreen}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: t('nav_home'),
           tabBarIcon: ({ color }) => <Home size={ICON_SIZE} color={color} strokeWidth={2.1} />,
         }}
       />
@@ -47,7 +49,7 @@ export function InvestorNavigator() {
         name="Customers"
         component={CustomersNavigator}
         options={{
-          tabBarLabel: 'Customers',
+          tabBarLabel: t('nav_customers'),
           tabBarIcon: ({ color }) => <Users size={ICON_SIZE} color={color} strokeWidth={2.1} />,
         }}
       />
@@ -55,7 +57,7 @@ export function InvestorNavigator() {
         name="Team"
         component={TeamNavigator}
         options={{
-          tabBarLabel: 'Team',
+          tabBarLabel: t('nav_team'),
           tabBarIcon: ({ color }) => <LayoutGrid size={ICON_SIZE} color={color} strokeWidth={2.1} />,
         }}
       />
@@ -63,7 +65,7 @@ export function InvestorNavigator() {
         name="Reports"
         component={ReportsScreen}
         options={{
-          tabBarLabel: 'Reports',
+          tabBarLabel: t('nav_reports'),
           tabBarIcon: ({ color }) => <BarChart3 size={ICON_SIZE} color={color} strokeWidth={2.1} />,
         }}
       />
@@ -71,7 +73,7 @@ export function InvestorNavigator() {
         name="Me"
         component={MeNavigator}
         options={{
-          tabBarLabel: 'Me',
+          tabBarLabel: t('nav_me'),
           tabBarIcon: ({ color }) => <User size={ICON_SIZE} color={color} strokeWidth={2.1} />,
         }}
       />

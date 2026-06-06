@@ -25,6 +25,7 @@ export interface UpdateCustomerPayload {
   phone?: string;
   location?: string;
   risk_level?: RiskLevel;
+  photo_url?: string;
 }
 
 export interface CustomerDocument {

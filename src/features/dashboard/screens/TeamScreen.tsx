@@ -23,11 +23,13 @@ import {
 } from '@/components/ui';
 import { useCreateCollector, useCollectors } from '@/features/collectors/hooks/useCollectors';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
+import { useT } from '@/i18n';
 import { colors, fontFamily, layout, radii, spacing } from '@/theme';
 
 type TeamNav = NativeStackNavigationProp<TeamStackParamList, 'TeamList'>;
 
 export function TeamScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const nav = useNavigation<TeamNav>();
@@ -99,10 +101,10 @@ export function TeamScreen() {
           <View style={styles.heroRow}>
             <View style={{ flex: 1 }}>
               <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-                TEAM
+                {t('team').toUpperCase()}
               </Text>
               <Text variant="h1" color="onDark">
-                {collectors?.length ?? 0} collectors
+                {collectors?.length ?? 0} {t('collectors')}
               </Text>
             </View>
             <IconButton
@@ -118,8 +120,8 @@ export function TeamScreen() {
           {team.length === 0 ? (
             <EmptyState
               icon={<Users size={28} color={colors.brand[700]} />}
-              title="No collectors yet"
-              description="Tap + to add a collector and start assigning loans."
+              title={t('no_collectors_yet')}
+              description={t('no_collectors_desc')}
             />
           ) : (
             team.map((c, i) => (
@@ -145,10 +147,10 @@ export function TeamScreen() {
                     </View>
                     <View style={styles.subRow}>
                       <Text variant="caption" color="tertiary">
-                        {c.visits} visits
+                        {c.visits} {t('visits')}
                       </Text>
                       <Text variant="caption" color="tertiary">
-                        {c.missed} missed
+                        {c.missed} {t('missed').toLowerCase()}
                       </Text>
                     </View>
                     <ProgressBar
@@ -183,7 +185,7 @@ export function TeamScreen() {
               <View style={styles.sheetHeader}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
                   <UserPlus size={20} color={colors.brand[700]} />
-                  <Text variant="h2">New collector</Text>
+                  <Text variant="h2">{t('new_collector')}</Text>
                 </View>
                 <IconButton
                   icon={<X size={20} color={colors.slate[500]} />}
@@ -194,7 +196,7 @@ export function TeamScreen() {
               </View>
 
               <Input
-                label="Full name"
+                label={t('collector_name')}
                 value={name}
                 onChangeText={setName}
                 placeholder="e.g. Ravi Kumar"
@@ -202,7 +204,7 @@ export function TeamScreen() {
                 containerStyle={{ marginBottom: spacing[3] }}
               />
               <Input
-                label="Email"
+                label={t('collector_email')}
                 value={email}
                 onChangeText={setEmail}
                 placeholder="collector@email.com"
@@ -211,7 +213,7 @@ export function TeamScreen() {
                 containerStyle={{ marginBottom: spacing[3] }}
               />
               <Input
-                label="Phone (optional)"
+                label={t('collector_phone')}
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="10-digit mobile number"
@@ -219,7 +221,7 @@ export function TeamScreen() {
                 containerStyle={{ marginBottom: spacing[3] }}
               />
               <Input
-                label="Password"
+                label={t('collector_password')}
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Min 6 characters"
@@ -228,7 +230,7 @@ export function TeamScreen() {
               />
 
               <Button
-                label="Create account"
+                label={t('create_account')}
                 fullWidth
                 size="lg"
                 loading={createCollector.isPending}
