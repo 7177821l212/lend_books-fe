@@ -38,6 +38,7 @@ const FREQUENCY_OPTIONS: Array<{ key: RepaymentFrequency; label: string }> = [
   { key: 'monthly', label: 'Monthly' },
   { key: 'half_yearly', label: '6 Months' },
   { key: 'yearly', label: 'Yearly' },
+  { key: 'custom', label: 'Custom' },
 ];
 
 function todayISO(): string {
@@ -59,6 +60,7 @@ export function NewLoanScreen() {
   const [interestType, setInterestType] = useState<InterestType>('pct');
   const [lendingModel, setLendingModel] = useState<LendingModel>('model_a');
   const [frequency, setFrequency] = useState<RepaymentFrequency>('daily');
+  const [customInterval, setCustomInterval] = useState<string>('7');
   const [installments, setInstallments] = useState<string>('10');
   const [startDate] = useState<string>(todayISO());
   const [collectorId, setCollectorId] = useState<string | undefined>(undefined);
@@ -89,6 +91,10 @@ export function NewLoanScreen() {
         interest_value: parseFloat(interestValue),
         lending_model: lendingModel,
         repayment_frequency: frequency,
+        frequency_meta:
+          frequency === 'custom'
+            ? { interval_days: parseInt(customInterval, 10) || 7 }
+            : null,
         total_installments: parseInt(installments, 10),
         start_date: startDate,
       });
@@ -307,6 +313,15 @@ export function NewLoanScreen() {
                 );
               })}
             </ScrollView>
+            {frequency === 'custom' ? (
+              <Input
+                label="Days between installments"
+                keyboardType="numeric"
+                value={customInterval}
+                onChangeText={setCustomInterval}
+                containerStyle={{ marginTop: spacing[3] }}
+              />
+            ) : null}
             <Input
               label="Number of installments"
               keyboardType="numeric"

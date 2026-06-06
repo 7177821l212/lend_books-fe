@@ -3,8 +3,8 @@
  */
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ChevronLeft, CircleCheck, Lock, Receipt } from 'lucide-react-native';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { CheckCircle2, ChevronLeft, CircleCheck, Lock, UserCog, X } from 'lucide-react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigator';
@@ -14,6 +14,7 @@ import {
   Badge,
   Button,
   Card,
+  EmptyState,
   GradientBackground,
   IconButton,
   ProgressBar,
@@ -22,10 +23,13 @@ import {
   useToast,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
-import { useCloseLoan, useLoan } from '@/features/loans/hooks/useLoans';
+import { useCollectors } from '@/features/collectors/hooks/useCollectors';
+import { useCloseLoan, useLoan, useReassignLoan } from '@/features/loans/hooks/useLoans';
 import { InstallmentRow } from '@/features/loans/components/InstallmentRow';
+import { usePaymentHistory } from '@/features/payments/hooks/usePayments';
 import { colors, layout, radii, spacing } from '@/theme';
-import type { LoanStatus } from '@/types';
+import type { LoanStatus, Payment } from '@/types';
+import { useState } from 'react';
 
 type Nav = NativeStackNavigationProp<CustomersStackParamList, 'LoanDetail'>;
 type Route = RouteProp<CustomersStackParamList, 'LoanDetail'>;
@@ -57,6 +61,11 @@ export function LoanDetailScreen() {
 
   const { data: loan, isLoading } = useLoan(params.id);
   const close = useCloseLoan(params.id);
+  const reassign = useReassignLoan(params.id);
+  const { data: collectors } = useCollectors();
+  const { data: paymentsPage } = usePaymentHistory({ loan_id: params.id });
+  const payments = paymentsPage?.items ?? [];
+  const [showReassign, setShowReassign] = useState(false);
 
   if (isLoading || !loan) {
     return (
@@ -198,13 +207,45 @@ export function LoanDetailScreen() {
             </View>
             {isInvestor && loan.status === 'active' ? (
               <Button
-                label="Reassign"
+                label={showReassign ? 'Cancel' : 'Reassign'}
                 variant="ghost"
                 size="sm"
-                onPress={() => toast.info('Reassign — coming soon')}
+                leadingIcon={showReassign ? <X size={14} color={colors.slate[500]} /> : <UserCog size={14} color={colors.brand[700]} />}
+                onPress={() => setShowReassign((v) => !v)}
               />
             ) : null}
           </View>
+          {showReassign && collectors && collectors.length > 0 ? (
+            <View style={{ marginTop: spacing[3], gap: spacing[2] }}>
+              <Text variant="caption" color="secondary">
+                SELECT NEW COLLECTOR
+              </Text>
+              {collectors
+                .filter((c) => c.is_active && c.id !== loan.collector_id)
+                .map((c) => (
+                  <Pressable
+                    key={c.id}
+                    onPress={async () => {
+                      try {
+                        await reassign.mutateAsync(c.id);
+                        setShowReassign(false);
+                        toast.success(`Reassigned to ${c.name}`);
+                      } catch {
+                        toast.error('Could not reassign');
+                      }
+                    }}
+                    style={styles.collectorOption}
+                  >
+                    <Avatar name={c.name} id={c.id} size="sm" />
+                    <View style={{ flex: 1, marginLeft: spacing[2] }}>
+                      <Text variant="bodyStrong">{c.name}</Text>
+                      <Text variant="caption" color="tertiary">{c.email}</Text>
+                    </View>
+                    <CheckCircle2 size={18} color={colors.brand[400]} />
+                  </Pressable>
+                ))}
+            </View>
+          ) : null}
         </Card>
 
         {/* Schedule */}
@@ -225,30 +266,22 @@ export function LoanDetailScreen() {
           )}
         </Card>
 
-        {/* Collections (placeholder for Sprint 4) */}
-        <View style={styles.sectionHead}>
-          <Text variant="title">Collections</Text>
-          <Text variant="caption" color="tertiary">
-            Sprint 4
-          </Text>
-        </View>
-        <Card padding={4} style={{ alignItems: 'center' }}>
-          <View
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: radii.full,
-              backgroundColor: colors.brand[50],
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Receipt size={20} color={colors.brand[700]} />
-          </View>
-          <Text variant="caption" color="secondary" style={{ marginTop: spacing[2] }}>
-            Collection history will appear here when payments are recorded.
-          </Text>
-        </Card>
+        {/* Collections */}
+        <Text variant="title" style={{ marginTop: spacing[4], marginBottom: spacing[2] }}>
+          Collections
+        </Text>
+        {payments.length === 0 ? (
+          <EmptyState
+            title="No collections yet"
+            description="Payment history will appear here once collectors record collections."
+          />
+        ) : (
+          <Card padding={0} style={{ overflow: 'hidden' }}>
+            {payments.map((p, idx) => (
+              <PaymentRow key={p.id} payment={p} last={idx === payments.length - 1} />
+            ))}
+          </Card>
+        )}
 
         {/* Actions */}
         {isInvestor && loan.status === 'active' ? (
@@ -293,6 +326,54 @@ function Term({ label, value }: TermProps) {
   );
 }
 
+interface PaymentRowProps {
+  payment: Payment;
+  last: boolean;
+}
+function PaymentRow({ payment, last }: PaymentRowProps) {
+  return (
+    <View
+      style={[
+        styles.paymentRow,
+        !last && { borderBottomWidth: 1, borderBottomColor: colors.border.subtle },
+      ]}
+    >
+      <View
+        style={[
+          styles.paymentDot,
+          { backgroundColor: payment.is_missed ? colors.danger : colors.success },
+        ]}
+      />
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text variant="bodyStrong" color={payment.is_missed ? colors.danger : colors.text.primary}>
+            {payment.is_missed ? 'Missed' : `₹${payment.amount.toLocaleString('en-IN')}`}
+          </Text>
+          {payment.mode ? (
+            <Text variant="caption" color="tertiary">
+              {payment.mode}
+            </Text>
+          ) : null}
+        </View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
+          <Text variant="caption" color="tertiary">
+            {new Date(payment.collected_at).toLocaleDateString('en-IN', {
+              day: '2-digit',
+              month: 'short',
+              year: '2-digit',
+            })}
+          </Text>
+          {payment.missed_reason ? (
+            <Text variant="caption" color="tertiary" numberOfLines={1} style={{ maxWidth: '60%' }}>
+              {payment.missed_reason}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', alignItems: 'center' },
   outstandingRow: {
@@ -324,5 +405,25 @@ const styles = StyleSheet.create({
     padding: spacing[3],
     borderRadius: radii.lg,
     marginTop: spacing[6],
+  },
+  collectorOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing[2],
+    borderRadius: radii.md,
+    backgroundColor: colors.slate[50],
+  },
+  paymentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: spacing[3],
+    gap: spacing[2],
+  },
+  paymentDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 6,
+    flexShrink: 0,
   },
 });

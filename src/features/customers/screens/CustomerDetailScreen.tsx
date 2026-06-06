@@ -3,6 +3,7 @@
  */
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as ImagePicker from 'expo-image-picker';
 import {
   Ban,
   FileText,
@@ -11,7 +12,8 @@ import {
   Plus,
   Upload,
 } from 'lucide-react-native';
-import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Linking, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigator';
@@ -33,16 +35,17 @@ import {
   useBlacklistCustomer,
   useCustomer,
   useCustomerDocuments,
+  useUploadDocument,
 } from '@/features/customers/hooks/useCustomers';
 import { useCustomerLoans } from '@/features/loans/hooks/useLoans';
-import { colors, layout, radii, spacing } from '@/theme';
+import { colors, fontFamily, layout, radii, spacing } from '@/theme';
 import { LoanListItem } from '@/features/loans/components/LoanListItem';
 
 type Nav = NativeStackNavigationProp<CustomersStackParamList, 'CustomerDetail'>;
 type Route = RouteProp<CustomersStackParamList, 'CustomerDetail'>;
 
 const RISK_TONE = { low: 'success', medium: 'warning', high: 'danger' } as const;
-const DOC_PLACEHOLDERS = ['ID Proof', 'Address Proof', 'Signed Agreement'];
+const DOC_TYPES = ['ID Proof', 'Address Proof', 'Signed Agreement', 'Other'] as const;
 
 export function CustomerDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -56,7 +59,11 @@ export function CustomerDetailScreen() {
   const { data: documents } = useCustomerDocuments(params.id);
   const { data: loansPage } = useCustomerLoans(params.id);
   const blacklist = useBlacklistCustomer();
+  const upload = useUploadDocument(params.id);
   const loans = loansPage?.items ?? [];
+  const [blacklistReason, setBlacklistReason] = useState('');
+  const [showBlacklistModal, setShowBlacklistModal] = useState(false);
+  const [uploadDocType, setUploadDocType] = useState<string>(DOC_TYPES[0]);
   const activeLoans = loans.filter((l) => l.status === 'active' || l.status === 'overdue');
   const closedLoans = loans.filter((l) => l.status === 'closed');
 
@@ -71,11 +78,34 @@ export function CustomerDetailScreen() {
   }
 
   const handleBlacklist = async () => {
+    const reason = blacklistReason.trim() || 'Flagged by investor';
     try {
-      await blacklist.mutateAsync({ id: customer.id, reason: 'Flagged by investor' });
+      await blacklist.mutateAsync({ id: customer.id, reason });
+      setShowBlacklistModal(false);
+      setBlacklistReason('');
       toast.success('Customer blacklisted');
     } catch {
       toast.error('Could not blacklist');
+    }
+  };
+
+  const handleUploadDoc = async (docType: string) => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      toast.warning('Gallery permission needed');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+    if (result.canceled) return;
+    const uri = result.assets[0].uri;
+    try {
+      await upload.mutateAsync({ doc_type: docType, file_url: uri });
+      toast.success(`${docType} uploaded`);
+    } catch {
+      toast.error('Upload failed');
     }
   };
 
@@ -236,18 +266,9 @@ export function CustomerDetailScreen() {
 
         <View style={styles.sectionRow}>
           <Text variant="title">Documents</Text>
-          {isInvestor ? (
-            <Button
-              label="Upload"
-              variant="ghost"
-              size="sm"
-              leadingIcon={<Upload size={14} color={colors.brand[700]} />}
-              onPress={() => toast.info('Document upload — coming soon')}
-            />
-          ) : null}
         </View>
         <View style={styles.docGrid}>
-          {DOC_PLACEHOLDERS.map((label) => {
+          {DOC_TYPES.map((label) => {
             const existing = documents?.find((d) => d.doc_type === label);
             return (
               <Card
@@ -255,7 +276,13 @@ export function CustomerDetailScreen() {
                 padding={3}
                 style={styles.docTile}
                 shadow="xs"
-                onPress={existing ? () => Linking.openURL(existing.file_url) : undefined}
+                onPress={
+                  existing
+                    ? () => Linking.openURL(existing.file_url)
+                    : isInvestor
+                    ? () => handleUploadDoc(label)
+                    : undefined
+                }
               >
                 <View
                   style={{
@@ -272,8 +299,8 @@ export function CustomerDetailScreen() {
                 <Text variant="label" style={{ marginTop: spacing[1.5] }}>
                   {label}
                 </Text>
-                <Text variant="caption" color="tertiary">
-                  {existing ? 'View' : 'Missing'}
+                <Text variant="caption" color={existing ? colors.brand[600] : 'tertiary'}>
+                  {existing ? 'Tap to view' : isInvestor ? 'Tap to upload' : 'Missing'}
                 </Text>
               </Card>
             );
@@ -286,12 +313,57 @@ export function CustomerDetailScreen() {
             variant="danger"
             fullWidth
             size="lg"
-            onPress={handleBlacklist}
-            loading={blacklist.isPending}
+            onPress={() => setShowBlacklistModal(true)}
             leadingIcon={<Ban size={16} color={colors.white} />}
             style={{ marginTop: spacing[6] }}
           />
         ) : null}
+
+        {/* Blacklist reason modal */}
+        <Modal
+          visible={showBlacklistModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowBlacklistModal(false)}
+        >
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => setShowBlacklistModal(false)}
+          >
+            <Pressable style={styles.modalSheet} onPress={() => {}}>
+              <Text variant="h2" style={{ marginBottom: spacing[2] }}>
+                Blacklist reason
+              </Text>
+              <Text variant="body" color="secondary" style={{ marginBottom: spacing[4] }}>
+                Provide a reason for blacklisting {customer.name}.
+              </Text>
+              <TextInput
+                value={blacklistReason}
+                onChangeText={setBlacklistReason}
+                placeholder="e.g. Defaulted on loan repayment"
+                placeholderTextColor={colors.text.placeholder}
+                style={styles.reasonInput}
+                multiline
+                autoFocus
+              />
+              <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[4] }}>
+                <Button
+                  label="Cancel"
+                  variant="secondary"
+                  style={{ flex: 1 }}
+                  onPress={() => setShowBlacklistModal(false)}
+                />
+                <Button
+                  label="Confirm"
+                  variant="danger"
+                  style={{ flex: 1 }}
+                  loading={blacklist.isPending}
+                  onPress={handleBlacklist}
+                />
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </View>
     </Screen>
   );
@@ -334,5 +406,29 @@ const styles = StyleSheet.create({
   docTile: {
     flex: 1,
     alignItems: 'flex-start',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: radii['3xl'],
+    borderTopRightRadius: radii['3xl'],
+    padding: spacing[6],
+    paddingBottom: spacing[10],
+  },
+  reasonInput: {
+    minHeight: 80,
+    backgroundColor: colors.slate[50],
+    borderRadius: radii.lg,
+    padding: spacing[3],
+    fontFamily: fontFamily.regular,
+    fontSize: 14,
+    color: colors.text.primary,
+    textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: colors.border.default,
   },
 });
