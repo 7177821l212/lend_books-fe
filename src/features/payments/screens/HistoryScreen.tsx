@@ -14,10 +14,12 @@ import {
   Text,
 } from '@/components/ui';
 import { usePaymentHistory } from '@/features/payments/hooks/usePayments';
+import { useT } from '@/i18n';
 import { colors, layout, radii, spacing } from '@/theme';
 import type { Payment } from '@/types';
 
 export function HistoryScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { data, isRefetching, refetch } = usePaymentHistory();
 
@@ -39,11 +41,11 @@ export function HistoryScreen() {
         <View style={{ flex: 1, marginLeft: spacing[3], minWidth: 0 }}>
           <View style={styles.titleRow}>
             <Text variant="bodyStrong" numberOfLines={1} style={{ flex: 1 }}>
-              {item.is_missed ? item.missed_reason ?? 'Missed visit' : `Collected · ${item.mode ?? 'CASH'}`}
+              {item.is_missed ? item.missed_reason ?? t('missed_visit') : `${t('collected')} · ${item.mode ?? 'CASH'}`}
             </Text>
             {item.is_missed ? (
               <Text variant="caption" color={colors.danger}>
-                missed
+                {t('missed')}
               </Text>
             ) : (
               <AmountText value={item.amount} size="md" color={colors.success} short />
@@ -75,14 +77,14 @@ export function HistoryScreen() {
         }}
       >
         <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-          ALL TIME
+          {t('all_time').toUpperCase()}
         </Text>
         <Text variant="h1" color="onDark">
-          History
+          {t('nav_history')}
         </Text>
         {data ? (
           <Text variant="body" color="onDark" style={{ opacity: 0.7, marginTop: 4 }}>
-            {data.total} entries
+            {data.total} {t('entries')}
           </Text>
         ) : null}
       </GradientBackground>
@@ -98,8 +100,8 @@ export function HistoryScreen() {
         ListEmptyComponent={
           <EmptyState
             icon={<FileText size={24} color={colors.brand[700]} />}
-            title="No entries yet"
-            description="Your collections will appear here."
+            title={t('no_entries_yet')}
+            description={t('your_collections_desc')}
           />
         }
       />

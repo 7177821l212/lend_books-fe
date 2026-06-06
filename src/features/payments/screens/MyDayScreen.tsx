@@ -22,12 +22,14 @@ import {
   Text,
 } from '@/components/ui';
 import { useMyDay } from '@/features/payments/hooks/usePayments';
+import { useT } from '@/i18n';
 import { colors, layout, radii, spacing } from '@/theme';
 import type { PickupItem } from '@/features/payments/api/paymentApi';
 
 type Nav = NativeStackNavigationProp<CollectorStackParamList, 'MyDay'>;
 
 export function MyDayScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const nav = useNavigation<Nav>();
   const { data, isLoading, isRefetching, refetch } = useMyDay();
@@ -72,9 +74,9 @@ export function MyDayScreen() {
           ) : null}
           <View style={styles.badges}>
             {item.is_overdue ? (
-              <Badge label="Overdue" tone="danger" withDot size="sm" />
+              <Badge label={t('status_overdue')} tone="danger" withDot size="sm" />
             ) : (
-              <Badge label="Due today" tone="warning" withDot size="sm" />
+              <Badge label={t('status_due_today')} tone="warning" withDot size="sm" />
             )}
             <Text variant="caption" color="tertiary" style={{ marginLeft: spacing[2] }}>
               #{item.sequence} · {item.due_date}
@@ -91,7 +93,7 @@ export function MyDayScreen() {
         >
           <Phone size={14} color={colors.brand[700]} />
           <Text variant="caption" color={colors.brand[700]} style={{ marginLeft: 4 }}>
-            Call
+            {t('call')}
           </Text>
         </Pressable>
       </View>
@@ -113,10 +115,10 @@ export function MyDayScreen() {
         <View style={styles.heroRow}>
           <View style={{ flex: 1 }}>
             <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-              TODAY
+              {t('today').toUpperCase()}
             </Text>
             <Text variant="h1" color="onDark">
-              My day
+              {t('my_day')}
             </Text>
           </View>
           <IconButton
@@ -132,13 +134,13 @@ export function MyDayScreen() {
             <View style={styles.kpiTop}>
               <View>
                 <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-                  TARGET
+                  {t('target').toUpperCase()}
                 </Text>
                 <AmountText value={data.target_total} size="2xl" color={colors.white} short />
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-                  COLLECTED
+                  {t('collected').toUpperCase()}
                 </Text>
                 <AmountText value={data.collected_today} size="xl" color={colors.brand[200]} short />
               </View>
@@ -152,10 +154,10 @@ export function MyDayScreen() {
             />
             <View style={styles.kpiFooter}>
               <Text variant="caption" color="onDark" style={{ opacity: 0.85 }}>
-                {pct}% done
+                {pct}% {t('done')}
               </Text>
               <Text variant="caption" color="onDark" style={{ opacity: 0.85 }}>
-                {data.pickup_count} pickups · {data.overdue_count} overdue
+                {data.pickup_count} {t('pickups')} · {data.overdue_count} {t('overdue').toLowerCase()}
               </Text>
             </View>
           </Card>
@@ -186,8 +188,8 @@ export function MyDayScreen() {
           ListEmptyComponent={
             <EmptyState
               icon={<PartyPopper size={28} color={colors.brand[700]} />}
-              title="You're all caught up"
-              description="No pickups due right now. Great work."
+              title={t('all_caught_up')}
+              description={t('no_pickups_desc')}
             />
           }
         />

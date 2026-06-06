@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { CalendarDays, Receipt, User, Users } from 'lucide-react-native';
 
 import { HistoryScreen } from '@/features/payments/screens/HistoryScreen';
+import { useT } from '@/i18n';
 import { CustomersNavigator } from './CustomersNavigator';
 import { MeNavigator } from './MeNavigator';
 import { TodayNavigator } from './TodayNavigator';
@@ -14,6 +15,7 @@ const Tab = createBottomTabNavigator();
 const ICON_SIZE = 22;
 
 export function CollectorNavigator() {
+  const t = useT();
   const colors = useColors();
 
   return (
@@ -41,7 +43,7 @@ export function CollectorNavigator() {
         name="Today"
         component={TodayNavigator}
         options={{
-          tabBarLabel: 'Today',
+          tabBarLabel: t('nav_today'),
           tabBarIcon: ({ color }) => <CalendarDays size={ICON_SIZE} color={color} strokeWidth={2.1} />,
         }}
       />
@@ -49,7 +51,7 @@ export function CollectorNavigator() {
         name="Customers"
         component={CustomersNavigator}
         options={{
-          tabBarLabel: 'Customers',
+          tabBarLabel: t('nav_customers'),
           tabBarIcon: ({ color }) => <Users size={ICON_SIZE} color={color} strokeWidth={2.1} />,
         }}
       />
@@ -57,7 +59,7 @@ export function CollectorNavigator() {
         name="History"
         component={HistoryScreen}
         options={{
-          tabBarLabel: 'History',
+          tabBarLabel: t('nav_history'),
           tabBarIcon: ({ color }) => <Receipt size={ICON_SIZE} color={color} strokeWidth={2.1} />,
         }}
       />
@@ -65,7 +67,7 @@ export function CollectorNavigator() {
         name="Me"
         component={MeNavigator}
         options={{
-          tabBarLabel: 'Me',
+          tabBarLabel: t('nav_me'),
           tabBarIcon: ({ color }) => <User size={ICON_SIZE} color={color} strokeWidth={2.1} />,
         }}
       />

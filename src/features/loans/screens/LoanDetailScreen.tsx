@@ -24,6 +24,7 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCollectors } from '@/features/collectors/hooks/useCollectors';
+import { useT } from '@/i18n';
 import { useCloseLoan, useLoan, useReassignLoan } from '@/features/loans/hooks/useLoans';
 import { InstallmentRow } from '@/features/loans/components/InstallmentRow';
 import { usePaymentHistory } from '@/features/payments/hooks/usePayments';
@@ -52,6 +53,7 @@ const FREQ_LABEL: Record<string, string> = {
 };
 
 export function LoanDetailScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const nav = useNavigation<Nav>();
@@ -123,7 +125,7 @@ export function LoanDetailScreen() {
         <View style={styles.outstandingRow}>
           <View>
             <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-              OUTSTANDING
+              {t('outstanding').toUpperCase()}
             </Text>
             <AmountText
               value={loan.outstanding}
@@ -155,19 +157,19 @@ export function LoanDetailScreen() {
         <View style={styles.statsRow}>
           <Card padding={3} style={styles.stat}>
             <Text variant="caption" color="tertiary">
-              PRINCIPAL
+              {t('principal').toUpperCase()}
             </Text>
             <AmountText value={loan.principal} size="md" short />
           </Card>
           <Card padding={3} style={styles.stat}>
             <Text variant="caption" color="tertiary">
-              DISBURSED
+              {t('disbursed').toUpperCase()}
             </Text>
             <AmountText value={loan.disbursed} size="md" short />
           </Card>
           <Card padding={3} style={styles.stat}>
             <Text variant="caption" color="tertiary">
-              PROFIT
+              {t('profit').toUpperCase()}
             </Text>
             <AmountText value={loan.profit} size="md" color={colors.brand[700]} short />
           </Card>
@@ -176,9 +178,9 @@ export function LoanDetailScreen() {
         {/* Loan terms */}
         <Card padding={4} style={{ marginBottom: spacing[3] }}>
           <View style={styles.termsRow}>
-            <Term label="Model" value={MODEL_LABEL[loan.lending_model]} />
+            <Term label={t('loan')} value={MODEL_LABEL[loan.lending_model]} />
             <Term
-              label="Interest"
+              label={t('interest')}
               value={
                 loan.interest_type === 'pct'
                   ? `${loan.interest_value}%`
@@ -187,12 +189,12 @@ export function LoanDetailScreen() {
             />
           </View>
           <View style={styles.termsRow}>
-            <Term label="Frequency" value={FREQ_LABEL[loan.repayment_frequency] ?? loan.repayment_frequency} />
-            <Term label="Installments" value={`${paidCount}/${loan.total_installments}`} />
+            <Term label={t('frequency')} value={FREQ_LABEL[loan.repayment_frequency] ?? loan.repayment_frequency} />
+            <Term label={t('installments')} value={`${paidCount}/${loan.total_installments}`} />
           </View>
           <View style={styles.termsRow}>
-            <Term label="Per installment" value={`₹${loan.installment_amount.toLocaleString('en-IN')}`} />
-            <Term label="Started" value={loan.start_date} />
+            <Term label={t('installment')} value={`₹${loan.installment_amount.toLocaleString('en-IN')}`} />
+            <Term label={t('start_date')} value={loan.start_date} />
           </View>
         </Card>
 
@@ -202,13 +204,13 @@ export function LoanDetailScreen() {
             <Avatar name={loan.collector_name} id={loan.collector_id} size="md" />
             <View style={{ marginLeft: spacing[3], flex: 1 }}>
               <Text variant="caption" color="tertiary">
-                COLLECTOR
+                {t('collector').toUpperCase()}
               </Text>
               <Text variant="bodyStrong">{loan.collector_name}</Text>
             </View>
             {isInvestor && loan.status === 'active' ? (
               <Button
-                label={showReassign ? 'Cancel' : 'Reassign'}
+                label={showReassign ? t('cancel') : t('reassign')}
                 variant="ghost"
                 size="sm"
                 leadingIcon={showReassign ? <X size={14} color={colors.slate[500]} /> : <UserCog size={14} color={colors.brand[700]} />}
@@ -219,7 +221,7 @@ export function LoanDetailScreen() {
           {showReassign && collectors && collectors.length > 0 ? (
             <View style={{ marginTop: spacing[3], gap: spacing[2] }}>
               <Text variant="caption" color="secondary">
-                SELECT NEW COLLECTOR
+                {t('reassign').toUpperCase()} {t('collector').toUpperCase()}
               </Text>
               {collectors
                 .filter((c) => c.is_active && c.id !== loan.collector_id)
@@ -251,7 +253,7 @@ export function LoanDetailScreen() {
 
         {/* Schedule */}
         <Text variant="title" style={{ marginTop: spacing[2], marginBottom: spacing[2] }}>
-          Schedule
+          {t('schedule')}
         </Text>
         <Card padding={0} style={{ paddingTop: spacing[1] }}>
           {installments.length === 0 ? (
@@ -269,12 +271,12 @@ export function LoanDetailScreen() {
 
         {/* Collections */}
         <Text variant="title" style={{ marginTop: spacing[4], marginBottom: spacing[2] }}>
-          Collections
+          {t('collections')}
         </Text>
         {payments.length === 0 ? (
           <EmptyState
-            title="No collections yet"
-            description="Payment history will appear here once collectors record collections."
+            title={t('no_collections_yet')}
+            description={t('no_collections_desc')}
           />
         ) : (
           <Card padding={0} style={{ overflow: 'hidden' }}>
@@ -287,7 +289,7 @@ export function LoanDetailScreen() {
         {/* Actions */}
         {isInvestor && loan.status === 'active' ? (
           <Button
-            label="Close loan"
+            label={t('close_loan')}
             variant="secondary"
             fullWidth
             size="lg"
@@ -301,7 +303,7 @@ export function LoanDetailScreen() {
           <View style={styles.closedBanner}>
             <CircleCheck size={18} color={colors.success} />
             <Text variant="bodyStrong" color={colors.success} style={{ marginLeft: spacing[2] }}>
-              Loan closed
+              {t('loan_closed')}
             </Text>
           </View>
         ) : null}

@@ -44,6 +44,7 @@ import {
   useToast,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { useT } from '@/i18n';
 import {
   useBlacklistCustomer,
   useCustomer,
@@ -63,6 +64,7 @@ const RISK_TONE = { low: 'success', medium: 'warning', high: 'danger' } as const
 const DOC_TYPES = ['ID Proof', 'Address Proof', 'Signed Agreement', 'Other'] as const;
 
 export function CustomerDetailScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const nav = useNavigation<Nav>();
   const { params } = useRoute<Route>();
@@ -258,7 +260,7 @@ export function CustomerDetailScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View>
               <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-                OUTSTANDING
+                {t('outstanding').toUpperCase()}
               </Text>
               <AmountText
                 value={customer.total_outstanding}
@@ -294,7 +296,7 @@ export function CustomerDetailScreen() {
               <Ban size={18} color={colors.danger} />
               <View style={{ marginLeft: spacing[2], flex: 1 }}>
                 <Text variant="bodyStrong" style={{ color: colors.danger }}>
-                  Blacklisted
+                  {t('blacklisted')}
                 </Text>
                 {customer.blacklist_reason ? (
                   <Text variant="caption" style={{ color: colors.danger, opacity: 0.85 }}>
@@ -304,7 +306,7 @@ export function CustomerDetailScreen() {
               </View>
               {isInvestor ? (
                 <Button
-                  label="Remove"
+                  label={t('unblacklist')}
                   variant="ghost"
                   size="sm"
                   loading={unblacklist.isPending}
@@ -319,11 +321,11 @@ export function CustomerDetailScreen() {
         <View style={styles.kpiRow}>
           <Card padding={3} style={styles.kpi}>
             <Text variant="h2">{customer.active_loan_count}</Text>
-            <Text variant="overline" color="tertiary">Active</Text>
+            <Text variant="overline" color="tertiary">{t('active')}</Text>
           </Card>
           <Card padding={3} style={styles.kpi}>
             <Text variant="h2">{closedLoans.length}</Text>
-            <Text variant="overline" color="tertiary">Closed</Text>
+            <Text variant="overline" color="tertiary">{t('status_closed')}</Text>
           </Card>
           <Card padding={3} style={styles.kpi}>
             <Badge
@@ -332,15 +334,15 @@ export function CustomerDetailScreen() {
               size="md"
               uppercase
             />
-            <Text variant="overline" color="tertiary" style={{ marginTop: 6 }}>Risk</Text>
+            <Text variant="overline" color="tertiary" style={{ marginTop: 6 }}>{t('risk')}</Text>
           </Card>
         </View>
 
         <View style={styles.sectionRow}>
-          <Text variant="title">Loans</Text>
+          <Text variant="title">{t('loans')}</Text>
           {isInvestor && !customer.is_blacklisted ? (
             <Button
-              label="New"
+              label={t('new')}
               variant="ghost"
               size="sm"
               leadingIcon={<Plus size={14} color={colors.brand[700]} />}
@@ -351,8 +353,8 @@ export function CustomerDetailScreen() {
         {loans.length === 0 ? (
           <EmptyState
             icon={<FileText size={24} color={colors.brand[700]} />}
-            title="No loans yet"
-            description="Loan history will appear here once you create one."
+            title={t('no_loans_yet')}
+            description={t('no_loans_desc')}
           />
         ) : (
           <View>
@@ -367,7 +369,7 @@ export function CustomerDetailScreen() {
         )}
 
         <View style={styles.sectionRow}>
-          <Text variant="title">Documents</Text>
+          <Text variant="title">{t('documents')}</Text>
         </View>
         <View style={styles.docGrid}>
           {DOC_TYPES.map((label) => {
@@ -402,7 +404,7 @@ export function CustomerDetailScreen() {
                   {label}
                 </Text>
                 <Text variant="caption" style={{ color: existing ? colors.brand[600] : colors.text.tertiary }}>
-                  {existing ? 'Tap to view' : isInvestor ? 'Upload' : 'Missing'}
+                  {existing ? t('tap_to_view') : isInvestor ? t('upload') : t('missing')}
                 </Text>
               </Card>
             );
@@ -411,7 +413,7 @@ export function CustomerDetailScreen() {
 
         {isInvestor && !customer.is_blacklisted ? (
           <Button
-            label="Blacklist customer"
+            label={t('blacklist')}
             variant="danger"
             fullWidth
             size="lg"
@@ -434,7 +436,7 @@ export function CustomerDetailScreen() {
           >
             <Pressable style={[styles.modalSheet, { backgroundColor: colors.card }]} onPress={() => {}}>
               <Text variant="h2" style={{ marginBottom: spacing[2] }}>
-                Blacklist reason
+                {t('blacklist_reason')}
               </Text>
               <Text variant="body" color="secondary" style={{ marginBottom: spacing[4] }}>
                 Provide a reason for blacklisting {customer.name}.
@@ -454,13 +456,13 @@ export function CustomerDetailScreen() {
               />
               <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[4] }}>
                 <Button
-                  label="Cancel"
+                  label={t('cancel')}
                   variant="secondary"
                   style={{ flex: 1 }}
                   onPress={() => setShowBlacklistModal(false)}
                 />
                 <Button
-                  label="Confirm"
+                  label={t('confirm')}
                   variant="danger"
                   style={{ flex: 1 }}
                   loading={blacklist.isPending}

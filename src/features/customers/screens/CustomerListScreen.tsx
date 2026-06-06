@@ -23,6 +23,7 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCustomers } from '@/features/customers/hooks/useCustomers';
+import { useT } from '@/i18n';
 import { CustomerListItem } from '@/features/customers/components/CustomerListItem';
 import { useColors, layout, radii, spacing } from '@/theme';
 import type { Customer } from '@/types';
@@ -31,19 +32,20 @@ import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigato
 type Filter = 'all' | 'active' | 'overdue' | 'blacklisted';
 type Nav = NativeStackNavigationProp<CustomersStackParamList, 'CustomerList'>;
 
-const FILTERS: Array<{ key: Filter; label: string }> = [
-  { key: 'all', label: 'All' },
-  { key: 'active', label: 'Active' },
-  { key: 'overdue', label: 'Overdue' },
-  { key: 'blacklisted', label: 'Blacklisted' },
-];
-
 export function CustomerListScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const nav = useNavigation<Nav>();
   const colors = useColors();
   const { user } = useAuth();
   const isInvestor = user?.role === 'investor';
+
+  const FILTERS: Array<{ key: Filter; label: string }> = [
+    { key: 'all', label: t('all') },
+    { key: 'active', label: t('active') },
+    { key: 'overdue', label: t('status_overdue') },
+    { key: 'blacklisted', label: t('blacklisted') },
+  ];
 
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState<string>('');
@@ -85,7 +87,7 @@ export function CustomerListScreen() {
     return (
       <EmptyState
         icon={<UsersRound size={28} color={colors.brand[700]} />}
-        title={search ? 'No matching customers' : 'No customers yet'}
+        title={search ? 'No matching customers' : t('no_data')}
         description={
           search
             ? 'Try a different name or phone.'
@@ -93,7 +95,7 @@ export function CustomerListScreen() {
             ? 'Tap the + button to add your first customer.'
             : "You don't have any customers assigned right now."
         }
-        actionLabel={isInvestor && !search ? '+ Add customer' : undefined}
+        actionLabel={isInvestor && !search ? `+ ${t('new_customer')}` : undefined}
         onAction={isInvestor && !search ? () => nav.navigate('NewCustomer') : undefined}
       />
     );
@@ -113,7 +115,7 @@ export function CustomerListScreen() {
       >
         <View style={styles.headerRow}>
           <Text variant="h1" color="onDark" style={{ flex: 1 }}>
-            Customers
+            {t('customers')}
           </Text>
           {isInvestor ? (
             <IconButton
@@ -132,7 +134,7 @@ export function CustomerListScreen() {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search by name or phone..."
+            placeholder={`${t('search')}...`}
             placeholderTextColor={colors.slate[400]}
             style={[styles.searchInput, { color: colors.text.primary }]}
             autoCorrect={false}

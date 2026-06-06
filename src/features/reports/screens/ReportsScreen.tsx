@@ -15,23 +15,25 @@ import {
   Text,
 } from '@/components/ui';
 import { useReports } from '@/features/dashboard/hooks/useDashboard';
+import { useT } from '@/i18n';
 import { useColors, layout, radii, spacing } from '@/theme';
 
 type ActiveFilter = 'all' | 'overdue' | 'blacklisted';
 
-const FILTER_OPTIONS: { value: ActiveFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'overdue', label: 'Overdue' },
-  { value: 'blacklisted', label: 'Blacklisted' },
-];
-
 export function ReportsScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const colors = useColors();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nav = useNavigation<any>();
   const { data, isLoading, isRefetching, refetch } = useReports();
   const [filter, setFilter] = useState<ActiveFilter>('all');
+
+  const FILTER_OPTIONS: { value: ActiveFilter; label: string }[] = [
+    { value: 'all', label: t('all') },
+    { value: 'overdue', label: t('status_overdue') },
+    { value: 'blacklisted', label: t('blacklisted') },
+  ];
 
   const showOverdue = filter === 'all' || filter === 'overdue';
   const showBlacklisted = filter === 'all' || filter === 'blacklisted';
@@ -56,13 +58,10 @@ export function ReportsScreen() {
         }}
       >
         <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-          REPORTS
+          {t('reports').toUpperCase()}
         </Text>
         <Text variant="h1" color="onDark">
-          Insights
-        </Text>
-        <Text variant="body" color="onDark" style={{ opacity: 0.7, marginTop: 4 }}>
-          Overdue · blacklist · analytics
+          {t('insights')}
         </Text>
       </GradientBackground>
 
@@ -71,7 +70,7 @@ export function ReportsScreen() {
         <View style={styles.tileRow}>
           <AnalyticTile
             icon={<ReceiptText size={18} color={colors.brand[700]} />}
-            label="Total interest"
+            label={t('total_interest')}
             valueNode={
               <AmountText
                 value={data?.total_interest_earned ?? 0}
@@ -83,14 +82,14 @@ export function ReportsScreen() {
           />
           <AnalyticTile
             icon={<TrendingUp size={18} color={colors.info} />}
-            label="Avg loan"
+            label={t('avg_loan')}
             valueNode={
               <AmountText value={data?.avg_loan_size ?? 0} size="md" short />
             }
           />
           <AnalyticTile
             icon={<Percent size={18} color={colors.warning} />}
-            label="Avg rate"
+            label={t('avg_rate')}
             valueNode={
               <Text variant="bodyStrong">
                 {(data?.avg_interest_rate ?? 0).toFixed(1)}%
@@ -130,7 +129,7 @@ export function ReportsScreen() {
         {showOverdue ? (
           <>
             <View style={styles.sectionHead}>
-              <Text variant="title">Overdue loans</Text>
+              <Text variant="title">{t('overdue_loans')}</Text>
               {data ? (
                 <Text variant="caption" color="tertiary">
                   {data.overdue.length}
@@ -142,8 +141,8 @@ export function ReportsScreen() {
             ) : (data?.overdue ?? []).length === 0 ? (
               <EmptyState
                 icon={<AlertTriangle size={24} color={colors.success} />}
-                title="Nothing overdue"
-                description="Everything on schedule — nice."
+                title={t('nothing_overdue')}
+                description={t('nothing_overdue_desc')}
               />
             ) : (
               <View>
@@ -192,7 +191,7 @@ export function ReportsScreen() {
         {showBlacklisted ? (
           <>
             <View style={styles.sectionHead}>
-              <Text variant="title">Blacklisted</Text>
+              <Text variant="title">{t('blacklisted')}</Text>
               {data ? (
                 <Text variant="caption" color="tertiary">
                   {data.blacklisted.length}
@@ -202,8 +201,8 @@ export function ReportsScreen() {
             {(data?.blacklisted ?? []).length === 0 ? (
               <EmptyState
                 icon={<Ban size={24} color={colors.brand[700]} />}
-                title="Nobody blacklisted"
-                description="Customers will appear here when an investor blacklists them."
+                title={t('nobody_blacklisted')}
+                description={t('nobody_blacklisted_desc')}
               />
             ) : (
               <View>

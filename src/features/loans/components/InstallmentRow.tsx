@@ -5,6 +5,7 @@ import { Check, Circle, CircleDot, X } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { AmountText, Badge, Text } from '@/components/ui';
+import { useT } from '@/i18n';
 import { colors, spacing } from '@/theme';
 import type { Installment, InstallmentStatus } from '@/types';
 
@@ -12,16 +13,13 @@ interface InstallmentRowProps {
   installment: Installment;
 }
 
-const STATUS_META: Record<
-  InstallmentStatus,
-  { tone: 'success' | 'warning' | 'danger' | 'neutral'; label: string }
-> = {
-  paid: { tone: 'success', label: 'Paid' },
-  partial: { tone: 'warning', label: 'Partial' },
-  pending: { tone: 'neutral', label: 'Pending' },
-  due_today: { tone: 'warning', label: 'Due today' },
-  overdue: { tone: 'danger', label: 'Overdue' },
-  missed: { tone: 'danger', label: 'Missed' },
+const STATUS_TONE: Record<InstallmentStatus, 'success' | 'warning' | 'danger' | 'neutral'> = {
+  paid: 'success',
+  partial: 'warning',
+  pending: 'neutral',
+  due_today: 'warning',
+  overdue: 'danger',
+  missed: 'danger',
 };
 
 function StatusIcon({ status }: { status: InstallmentStatus }) {
@@ -41,7 +39,17 @@ function StatusIcon({ status }: { status: InstallmentStatus }) {
 }
 
 export function InstallmentRow({ installment }: InstallmentRowProps) {
-  const meta = STATUS_META[installment.status];
+  const t = useT();
+  const STATUS_LABEL: Record<InstallmentStatus, string> = {
+    paid: t('collected'),
+    partial: t('status_partial'),
+    pending: t('status_pending'),
+    due_today: t('status_due_today'),
+    overdue: t('status_overdue'),
+    missed: t('status_missed'),
+  };
+  const tone = STATUS_TONE[installment.status];
+  const label = STATUS_LABEL[installment.status];
   return (
     <View style={styles.row}>
       <View style={styles.iconCol}>
@@ -66,7 +74,7 @@ export function InstallmentRow({ installment }: InstallmentRowProps) {
           ) : null}
         </View>
       </View>
-      <Badge label={meta.label} tone={meta.tone} size="sm" />
+      <Badge label={label} tone={tone} size="sm" />
     </View>
   );
 }

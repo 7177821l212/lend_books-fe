@@ -25,11 +25,13 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCollector, useUpdateCollector } from '../hooks/useCollectors';
+import { useT } from '@/i18n';
 import { useColors, layout, radii, spacing } from '@/theme';
 
 type Route = RouteProp<TeamStackParamList, 'CollectorDetail'>;
 
 export function CollectorDetailScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const toast = useToast();
@@ -124,10 +126,10 @@ export function CollectorDetailScreen() {
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn} hitSlop={12}>
           <Text variant="h2" style={{ marginTop: -2 }}>‹</Text>
         </TouchableOpacity>
-        <Text variant="h2">Collector</Text>
+        <Text variant="h2">{t('collector')}</Text>
         {isInvestor && !editing ? (
           <TouchableOpacity onPress={startEdit} hitSlop={8}>
-            <Text variant="label" style={{ color: colors.brand[600] }}>Edit</Text>
+            <Text variant="label" style={{ color: colors.brand[600] }}>{t('edit')}</Text>
           </TouchableOpacity>
         ) : (
           <View style={{ width: 36 }} />
@@ -161,7 +163,7 @@ export function CollectorDetailScreen() {
             </Text>
             <View style={{ marginTop: spacing[2] }}>
               <Badge
-                label={collector.is_active ? 'Active' : 'Inactive'}
+                label={collector.is_active ? t('active') : t('inactive')}
                 tone={collector.is_active ? 'success' : 'neutral'}
               />
             </View>
@@ -171,7 +173,7 @@ export function CollectorDetailScreen() {
         {editing ? (
           <Card padding={4} style={{ marginTop: spacing[4] }}>
             <Input
-              label="Full name"
+              label={t('full_name')}
               value={name}
               onChangeText={setName}
               placeholder="e.g. Ravi Kumar"
@@ -179,7 +181,7 @@ export function CollectorDetailScreen() {
               containerStyle={{ marginBottom: spacing[3] }}
             />
             <Input
-              label="Phone (optional)"
+              label={t('collector_phone')}
               value={phone}
               onChangeText={setPhone}
               placeholder="10-digit mobile"
@@ -188,13 +190,13 @@ export function CollectorDetailScreen() {
             />
             <View style={{ flexDirection: 'row', gap: spacing[2] }}>
               <Button
-                label="Cancel"
+                label={t('cancel')}
                 variant="secondary"
                 style={{ flex: 1 }}
                 onPress={cancelEdit}
               />
               <Button
-                label="Save"
+                label={t('save')}
                 variant="primary"
                 style={{ flex: 1 }}
                 loading={updateCollector.isPending}
@@ -207,7 +209,7 @@ export function CollectorDetailScreen() {
             <View style={styles.infoRow}>
               <User size={16} color={colors.text.tertiary} />
               <View style={{ marginLeft: spacing[3] }}>
-                <Text variant="caption" color="tertiary">Name</Text>
+                <Text variant="caption" color="tertiary">{t('name')}</Text>
                 <Text variant="body">{collector.name}</Text>
               </View>
             </View>
@@ -218,7 +220,7 @@ export function CollectorDetailScreen() {
               >
                 <Phone size={16} color={colors.brand[600]} />
                 <View style={{ marginLeft: spacing[3] }}>
-                  <Text variant="caption" color="tertiary">Phone</Text>
+                  <Text variant="caption" color="tertiary">{t('phone')}</Text>
                   <Text variant="body" style={{ color: colors.brand[600] }}>
                     {collector.phone}
                   </Text>
@@ -228,8 +230,8 @@ export function CollectorDetailScreen() {
               <View style={[styles.infoRow, { marginTop: spacing[3] }]}>
                 <Phone size={16} color={colors.text.tertiary} />
                 <View style={{ marginLeft: spacing[3] }}>
-                  <Text variant="caption" color="tertiary">Phone</Text>
-                  <Text variant="caption" color="tertiary">Not added</Text>
+                  <Text variant="caption" color="tertiary">{t('phone')}</Text>
+                  <Text variant="caption" color="tertiary">{t('not_added')}</Text>
                 </View>
               </View>
             )}
