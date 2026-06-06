@@ -86,9 +86,12 @@ export interface Loan {
 export interface Payment {
   id: string;
   loan_id: string;
+  schedule_id: string | null;
   collector_id: string;
+  is_missed: boolean;
+  missed_reason: string | null;
   amount: number;
-  mode: PaymentMode;
+  mode: PaymentMode | null;
   notes: string | null;
   proof_photo_url: string | null;
   collected_at: string;
