@@ -11,10 +11,10 @@ import axios, {
   type AxiosRequestConfig,
 } from 'axios';
 import Constants from 'expo-constants';
-import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 import { SECURE_STORE_KEYS } from '@/config/constants';
+import { tokenStorage } from '@/lib/tokenStorage';
 
 const configuredApiUrl = (Constants.expoConfig?.extra as { apiUrl?: string | null } | undefined)
   ?.apiUrl;
@@ -58,7 +58,7 @@ export function setUnauthorizedHandler(fn: () => void): void {
 }
 
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  const token = await SecureStore.getItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
+  const token = await tokenStorage.getItem(SECURE_STORE_KEYS.ACCESS_TOKEN);
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -70,14 +70,14 @@ async function refreshAccessToken(): Promise<string | null> {
   if (refreshing) return refreshing;
   refreshing = (async () => {
     try {
-      const refreshToken = await SecureStore.getItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN);
+      const refreshToken = await tokenStorage.getItem(SECURE_STORE_KEYS.REFRESH_TOKEN);
       if (!refreshToken) return null;
       const res = await axios.post(`${BASE_URL}/auth/refresh`, { refresh_token: refreshToken });
       const access = res.data?.access_token as string | undefined;
       const refresh = res.data?.refresh_token as string | undefined;
       if (!access) return null;
-      await SecureStore.setItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN, access);
-      if (refresh) await SecureStore.setItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN, refresh);
+      await tokenStorage.setItem(SECURE_STORE_KEYS.ACCESS_TOKEN, access);
+      if (refresh) await tokenStorage.setItem(SECURE_STORE_KEYS.REFRESH_TOKEN, refresh);
       return access;
     } catch {
       return null;
@@ -98,8 +98,8 @@ apiClient.interceptors.response.use(
     original._retried = true;
     const newToken = await refreshAccessToken();
     if (!newToken) {
-      await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.ACCESS_TOKEN);
-      await SecureStore.deleteItemAsync(SECURE_STORE_KEYS.REFRESH_TOKEN);
+      await tokenStorage.deleteItem(SECURE_STORE_KEYS.ACCESS_TOKEN);
+      await tokenStorage.deleteItem(SECURE_STORE_KEYS.REFRESH_TOKEN);
       onUnauthorized?.();
       return Promise.reject(error);
     }
