@@ -12,12 +12,38 @@ import axios, {
 } from 'axios';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 import { SECURE_STORE_KEYS } from '@/config/constants';
 
-const BASE_URL: string =
-  (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl ??
-  'http://localhost:8000/api/v1';
+const configuredApiUrl = (Constants.expoConfig?.extra as { apiUrl?: string | null } | undefined)
+  ?.apiUrl;
+
+function resolveBaseUrl(): string {
+  if (configuredApiUrl) return configuredApiUrl;
+
+  // In production, refuse to silently fall back — devices cannot reach localhost
+  // and a misconfigured build should fail loudly so it's caught before shipping.
+  if (!__DEV__) {
+    throw new Error(
+      'API_URL is not configured. Set the `API_URL` env var when building (e.g. ' +
+        '`API_URL=https://api.example.com/api/v1`).'
+    );
+  }
+
+  // Dev fallback — only safe in the iOS simulator, which shares the Mac's loopback.
+  const fallback = 'http://localhost:8000/api/v1';
+  if (Platform.OS === 'android') {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[api] Falling back to localhost; on the Android emulator use `API_URL=http://10.0.2.2:8000/api/v1`. ' +
+        'On a physical device set your Mac\'s LAN IP.'
+    );
+  }
+  return fallback;
+}
+
+const BASE_URL: string = resolveBaseUrl();
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,

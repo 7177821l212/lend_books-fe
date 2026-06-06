@@ -1,5 +1,13 @@
 /**
  * Pure functions for loan terms preview. Mirrors `loan_terms.py` on the BE.
+ *
+ * Schedule split semantics — must match `split_installment` on the backend:
+ *   base = floor(repayable / n)
+ *   remainder = repayable - base * n
+ *   first `remainder` rows carry `base + 1`; the rest carry `base`.
+ *
+ * The UI exposes both values so users see exactly what the schedule will look
+ * like (`X for the first R installments, Y for the rest`).
  */
 import type { InterestType, LendingModel } from '@/types';
 
@@ -8,7 +16,12 @@ export interface LoanPreview {
   disbursed: number;
   repayable: number;
   profit: number;
-  installmentAmount: number;
+  /** Floor amount most rows carry — matches BE `installment_amount`. */
+  installmentBase: number;
+  /** Largest single-row amount — `base + 1` when `remainder > 0`, else `base`. */
+  installmentMax: number;
+  /** How many rows carry `installmentMax`. */
+  highRows: number;
   valid: boolean;
   error?: string;
 }
@@ -46,14 +59,20 @@ export function previewLoan(input: {
 
   const disbursed = lendingModel === 'model_a' ? principal - interestAmount : principal;
   const repayable = lendingModel === 'model_a' ? principal : principal + interestAmount;
-  const installmentAmount = Math.ceil(repayable / installments);
+
+  // Match BE: base = floor(repayable / n), remainder distributes to first rows.
+  const installmentBase = Math.floor(repayable / installments);
+  const remainder = repayable - installmentBase * installments;
+  const installmentMax = remainder > 0 ? installmentBase + 1 : installmentBase;
 
   return {
     interestAmount,
     disbursed,
     repayable,
     profit: interestAmount,
-    installmentAmount,
+    installmentBase,
+    installmentMax,
+    highRows: remainder,
     valid: true,
   };
 }
@@ -64,7 +83,9 @@ function _empty(error: string): LoanPreview {
     disbursed: 0,
     repayable: 0,
     profit: 0,
-    installmentAmount: 0,
+    installmentBase: 0,
+    installmentMax: 0,
+    highRows: 0,
     valid: false,
     error,
   };

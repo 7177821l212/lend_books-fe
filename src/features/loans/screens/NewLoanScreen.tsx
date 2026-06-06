@@ -13,7 +13,6 @@ import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigato
 import {
   AmountText,
   Avatar,
-  Badge,
   Button,
   Card,
   GradientBackground,
@@ -169,11 +168,20 @@ export function NewLoanScreen() {
                 INSTALLMENT
               </Text>
               <AmountText
-                value={preview.installmentAmount}
+                value={preview.installmentMax}
                 size="lg"
                 color={colors.white}
                 short
               />
+              {preview.highRows > 0 && preview.installmentMax !== preview.installmentBase ? (
+                <Text
+                  variant="caption"
+                  color="onDark"
+                  style={{ opacity: 0.7, marginTop: 2 }}
+                >
+                  first {preview.highRows} × ₹{preview.installmentMax.toLocaleString('en-IN')}, then ₹{preview.installmentBase.toLocaleString('en-IN')}
+                </Text>
+              ) : null}
             </View>
           </View>
           {!preview.valid && preview.error ? (
@@ -314,32 +322,34 @@ export function NewLoanScreen() {
             </View>
           </Section>
 
-          {/* Collector picker */}
+          {/* Collector picker — only active collectors are selectable, since the
+              backend rejects inactive ones during loan creation. */}
           <Section title="Assign collector">
             {collectors && collectors.length > 0 ? (
               <View style={{ gap: spacing[2] }}>
-                {collectors.map((c) => {
-                  const selected = collectorId === c.id;
-                  return (
-                    <Pressable
-                      key={c.id}
-                      onPress={() => setCollectorId(c.id)}
-                      style={[styles.collectorRow, selected && styles.collectorRowActive]}
-                    >
-                      <Avatar name={c.name} id={c.id} size="sm" />
-                      <View style={{ flex: 1, marginLeft: spacing[3] }}>
-                        <Text variant="bodyStrong">{c.name}</Text>
-                        <Text variant="caption" color="tertiary">
-                          {c.email}
-                        </Text>
-                      </View>
-                      {!c.is_active ? <Badge label="Inactive" tone="neutral" /> : null}
-                      {selected ? (
-                        <CheckCircle2 size={20} color={colors.brand[600]} />
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
+                {collectors
+                  .filter((c) => c.is_active)
+                  .map((c) => {
+                    const selected = collectorId === c.id;
+                    return (
+                      <Pressable
+                        key={c.id}
+                        onPress={() => setCollectorId(c.id)}
+                        style={[styles.collectorRow, selected && styles.collectorRowActive]}
+                      >
+                        <Avatar name={c.name} id={c.id} size="sm" />
+                        <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                          <Text variant="bodyStrong">{c.name}</Text>
+                          <Text variant="caption" color="tertiary">
+                            {c.email}
+                          </Text>
+                        </View>
+                        {selected ? (
+                          <CheckCircle2 size={20} color={colors.brand[600]} />
+                        ) : null}
+                      </Pressable>
+                    );
+                  })}
               </View>
             ) : (
               <Text variant="caption" color="tertiary">

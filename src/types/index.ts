@@ -68,6 +68,8 @@ export interface Loan {
   repayment_frequency: RepaymentFrequency;
   total_installments: number;
   installment_amount: number;
+  /** Largest single installment amount (= base+1 when remainder distributes a +1). */
+  installment_amount_max: number;
   start_date: string;
 
   status: LoanStatus;
