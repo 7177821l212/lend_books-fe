@@ -10,7 +10,7 @@ module.exports = {
     splash: {
       image: './assets/images/splash.png',
       resizeMode: 'contain',
-      backgroundColor: '#7B2FBE',
+      backgroundColor: '#0E1014',
     },
     ios: {
       supportsTablet: false,
@@ -19,13 +19,20 @@ module.exports = {
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/images/adaptive-icon.png',
-        backgroundColor: '#7B2FBE',
+        backgroundColor: '#0E1014',
       },
       package: 'ai.genworx.lendbook',
     },
-    plugins: ['expo-router', 'expo-secure-store'],
+    plugins: ['expo-secure-store'],
     extra: {
-      apiUrl: process.env.API_URL ?? 'http://localhost:8000/api/v1',
+      // `apiUrl` MUST be set explicitly for any non-dev build.
+      // In production we leave it `null` and let the runtime crash loudly rather
+      // than silently default to a localhost URL that mobile devices can't reach.
+      apiUrl:
+        process.env.API_URL ??
+        (process.env.EAS_BUILD || process.env.NODE_ENV === 'production'
+          ? null
+          : 'http://localhost:8000/api/v1'),
       eas: { projectId: '' },
     },
   },
