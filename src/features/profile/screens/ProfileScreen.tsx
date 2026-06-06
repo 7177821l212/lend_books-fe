@@ -1,7 +1,6 @@
-/**
- * ProfileScreen — current user identity + sign-out + stats.
- */
-import { LogOut } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { LogOut, Settings } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,15 +10,21 @@ import {
   Button,
   Card,
   GradientBackground,
+  IconButton,
   Screen,
   Text,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { usePaymentHistory } from '@/features/payments/hooks/usePayments';
-import { colors, layout, radii, spacing } from '@/theme';
+import type { MeStackParamList } from '@/app/navigation/MeNavigator';
+import { useColors, layout, radii, spacing } from '@/theme';
+
+type Nav = NativeStackNavigationProp<MeStackParamList, 'Profile'>;
 
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const nav = useNavigation<Nav>();
+  const colors = useColors();
   const { user, logout } = useAuth();
   const { data: history } = usePaymentHistory();
 
@@ -43,6 +48,14 @@ export function ProfileScreen() {
           alignItems: 'center',
         }}
       >
+        <View style={styles.settingsBtn}>
+          <IconButton
+            icon={<Settings size={18} color="rgba(255,255,255,0.85)" />}
+            variant="glass"
+            onPress={() => nav.navigate('Settings')}
+            accessibilityLabel="Settings"
+          />
+        </View>
         <Avatar name={user.name} id={user.id} size="2xl" />
         <Text variant="h2" color="onDark" style={{ marginTop: spacing[3] }}>
           {user.name}
@@ -96,6 +109,11 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  settingsBtn: {
+    position: 'absolute',
+    top: 0,
+    right: layout.screenPaddingX,
+  },
   roleChip: {
     marginTop: spacing[3],
     paddingHorizontal: spacing[3],

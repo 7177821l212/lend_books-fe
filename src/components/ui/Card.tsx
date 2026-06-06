@@ -15,7 +15,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { colors, radii, shadows, spacing, haptic, spring, type ShadowKey, type RadiusKey } from '@/theme';
+import { useColors, radii, shadows, spacing, haptic, spring, type ShadowKey, type RadiusKey } from '@/theme';
 
 interface CardProps extends ViewProps {
   children: React.ReactNode;
@@ -42,6 +42,7 @@ export function Card({
   style,
   ...rest
 }: CardProps) {
+  const colors = useColors();
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 

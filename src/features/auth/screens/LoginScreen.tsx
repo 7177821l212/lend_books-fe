@@ -9,11 +9,6 @@ import { Button, GradientBackground, Input, Screen, Text } from '@/components/ui
 import { colors, radii, spacing } from '@/theme';
 import { useLogin } from '../hooks/useLogin';
 
-const DEMO_ACCOUNTS = [
-  { role: 'Investor', tone: 'brand', email: 'owner@lendbook.app', password: 'owner123' },
-  { role: 'Collector', tone: 'success', email: 'ravi@lendbook.app', password: 'ravi123' },
-] as const;
-
 export function LoginScreen() {
   const { submit, isLoading, error } = useLogin();
   const [email, setEmail] = useState<string>('');
@@ -78,37 +73,6 @@ export function LoginScreen() {
           onPress={() => submit(email.trim(), password)}
         />
 
-        <View style={styles.demo}>
-          <Text variant="caption" color="tertiary" align="center" style={{ marginBottom: spacing[2] }}>
-            QUICK DEMO
-          </Text>
-          <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-            {DEMO_ACCOUNTS.map((acc) => (
-              <Text
-                key={acc.role}
-                onPress={() => {
-                  setEmail(acc.email);
-                  setPassword(acc.password);
-                }}
-                style={[
-                  styles.demoChip,
-                  { backgroundColor: acc.tone === 'brand' ? colors.brand[50] : colors.successSoft },
-                ]}
-              >
-                <Text
-                  variant="label"
-                  color={acc.tone === 'brand' ? colors.brand[700] : colors.success}
-                >
-                  {acc.role}
-                </Text>
-                {'\n'}
-                <Text variant="caption" color="tertiary">
-                  {acc.email}
-                </Text>
-              </Text>
-            ))}
-          </View>
-        </View>
       </KeyboardAvoidingView>
     </Screen>
   );
@@ -136,17 +100,5 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radii['3xl'],
     padding: spacing[6],
     paddingBottom: spacing[10],
-  },
-  demo: {
-    marginTop: spacing[6],
-    paddingTop: spacing[4],
-    borderTopWidth: 1,
-    borderTopColor: colors.border.subtle,
-  },
-  demoChip: {
-    flex: 1,
-    padding: spacing[3],
-    borderRadius: radii.lg,
-    textAlign: 'left',
   },
 });

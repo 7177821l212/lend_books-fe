@@ -6,7 +6,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   Banknote,
   Building2,
-  Camera,
   Check,
   ChevronLeft,
   Smartphone,
@@ -296,21 +295,6 @@ export function CollectScreen() {
 
               <Card padding={4} style={styles.section}>
                 <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
-                  PROOF
-                </Text>
-                <Pressable
-                  onPress={() => toast.info('Camera capture — coming soon')}
-                  style={styles.proofTile}
-                >
-                  <Camera size={28} color={colors.slate[400]} />
-                  <Text variant="label" color="tertiary" style={{ marginTop: 6 }}>
-                    Tap to capture
-                  </Text>
-                </Pressable>
-              </Card>
-
-              <Card padding={4} style={styles.section}>
-                <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
                   NOTES (OPTIONAL)
                 </Text>
                 <TextInput
@@ -449,15 +433,6 @@ const styles = StyleSheet.create({
   modeCardSelected: {
     backgroundColor: colors.brand[50],
     borderColor: colors.brand[600],
-  },
-  proofTile: {
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: colors.border.default,
-    borderRadius: radii.lg,
-    paddingVertical: spacing[6],
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   notesInput: {
     minHeight: 64,

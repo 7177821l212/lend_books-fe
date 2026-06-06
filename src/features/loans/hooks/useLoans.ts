@@ -53,3 +53,13 @@ export function useCloseLoan(loanId: string) {
     },
   });
 }
+
+export function useReassignLoan(loanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (collectorId: string) => loanApi.assign(loanId, collectorId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY] });
+    },
+  });
+}

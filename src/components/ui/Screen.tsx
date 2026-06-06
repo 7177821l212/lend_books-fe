@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { colors, layout } from '@/theme';
+import { useColors, useIsDark, layout } from '@/theme';
 
 interface ScreenProps extends ViewProps {
   children: React.ReactNode;
@@ -27,27 +27,31 @@ interface ScreenProps extends ViewProps {
   contentContainerStyle?: ScrollViewProps['contentContainerStyle'];
 }
 
-const BG = {
-  default: colors.background,
-  card: colors.card,
-  dark: colors.slate[900],
-  transparent: 'transparent',
-} as const;
-
 export function Screen({
   children,
   scroll = false,
   edges = ['top'],
   padded = true,
   background = 'default',
-  statusBar = 'dark',
+  statusBar,
   refreshing,
   onRefresh,
   contentContainerStyle,
   style,
   ...rest
 }: ScreenProps) {
+  const colors = useColors();
+  const isDark = useIsDark();
+
+  const BG = {
+    default: colors.background,
+    card: colors.card,
+    dark: colors.slate[900],
+    transparent: 'transparent',
+  };
+
   const bg = BG[background];
+  const resolvedStatusBar = statusBar ?? (isDark ? 'light' : 'dark');
   const padStyle = padded ? { paddingHorizontal: layout.screenPaddingX } : null;
 
   const inner = scroll ? (
@@ -78,7 +82,7 @@ export function Screen({
 
   return (
     <SafeAreaView edges={edges} style={[styles.flex, { backgroundColor: bg }, style]} {...rest}>
-      <StatusBar barStyle={statusBar === 'dark' ? 'dark-content' : 'light-content'} />
+      <StatusBar barStyle={resolvedStatusBar === 'dark' ? 'dark-content' : 'light-content'} />
       {inner}
     </SafeAreaView>
   );

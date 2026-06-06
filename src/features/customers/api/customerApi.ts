@@ -67,6 +67,11 @@ export const customerApi = {
     return data;
   },
 
+  async unblacklist(id: string): Promise<Customer> {
+    const { data } = await apiClient.delete<Customer>(`/customers/${id}/blacklist`);
+    return data;
+  },
+
   async listDocuments(customerId: string): Promise<CustomerDocument[]> {
     const { data } = await apiClient.get<CustomerDocument[]>(
       `/customers/${customerId}/documents`
