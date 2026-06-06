@@ -4,8 +4,10 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { CalendarDays, Receipt, User, Users } from 'lucide-react-native';
 
-import { Placeholder } from '../Placeholder';
+import { HistoryScreen } from '@/features/payments/screens/HistoryScreen';
+import { ProfileScreen } from '@/features/profile/screens/ProfileScreen';
 import { CustomersNavigator } from './CustomersNavigator';
+import { TodayNavigator } from './TodayNavigator';
 import { colors, fontFamily } from '@/theme';
 
 const Tab = createBottomTabNavigator();
@@ -35,7 +37,7 @@ export function CollectorNavigator() {
     >
       <Tab.Screen
         name="Today"
-        component={Placeholder}
+        component={TodayNavigator}
         options={{
           tabBarLabel: 'Today',
           tabBarIcon: ({ color }) => <CalendarDays size={ICON_SIZE} color={color} strokeWidth={2.1} />,
@@ -51,7 +53,7 @@ export function CollectorNavigator() {
       />
       <Tab.Screen
         name="History"
-        component={Placeholder}
+        component={HistoryScreen}
         options={{
           tabBarLabel: 'History',
           tabBarIcon: ({ color }) => <Receipt size={ICON_SIZE} color={color} strokeWidth={2.1} />,
@@ -59,7 +61,7 @@ export function CollectorNavigator() {
       />
       <Tab.Screen
         name="Me"
-        component={Placeholder}
+        component={ProfileScreen}
         options={{
           tabBarLabel: 'Me',
           tabBarIcon: ({ color }) => <User size={ICON_SIZE} color={color} strokeWidth={2.1} />,

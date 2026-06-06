@@ -1,11 +1,12 @@
 /**
  * Investor bottom-tab navigator.
- * Screens use Placeholder until Sprint 5.
  */
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BarChart3, Home, LayoutGrid, Users } from 'lucide-react-native';
 
-import { Placeholder } from '../Placeholder';
+import { DashboardScreen } from '@/features/dashboard/screens/DashboardScreen';
+import { TeamScreen } from '@/features/dashboard/screens/TeamScreen';
+import { ReportsScreen } from '@/features/reports/screens/ReportsScreen';
 import { CustomersNavigator } from './CustomersNavigator';
 import { colors, fontFamily } from '@/theme';
 
@@ -36,7 +37,7 @@ export function InvestorNavigator() {
     >
       <Tab.Screen
         name="Home"
-        component={Placeholder}
+        component={DashboardScreen}
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color }) => <Home size={ICON_SIZE} color={color} strokeWidth={2.1} />,
@@ -52,7 +53,7 @@ export function InvestorNavigator() {
       />
       <Tab.Screen
         name="Team"
-        component={Placeholder}
+        component={TeamScreen}
         options={{
           tabBarLabel: 'Team',
           tabBarIcon: ({ color }) => <LayoutGrid size={ICON_SIZE} color={color} strokeWidth={2.1} />,
@@ -60,7 +61,7 @@ export function InvestorNavigator() {
       />
       <Tab.Screen
         name="Reports"
-        component={Placeholder}
+        component={ReportsScreen}
         options={{
           tabBarLabel: 'Reports',
           tabBarIcon: ({ color }) => <BarChart3 size={ICON_SIZE} color={color} strokeWidth={2.1} />,
