@@ -36,7 +36,7 @@ import {
 } from '@/components/ui';
 import { useLoan } from '@/features/loans/hooks/useLoans';
 import { useCollect, useMarkMissed } from '@/features/payments/hooks/usePayments';
-import { colors, fontFamily, layout, radii, spacing } from '@/theme';
+import { colors, useColors, fontFamily, layout, radii, spacing } from '@/theme';
 import type { PaymentMode } from '@/types';
 
 type Nav = NativeStackNavigationProp<CollectorStackParamList, 'Collect'>;
@@ -60,6 +60,7 @@ const MISSED_REASONS = [
 
 export function CollectScreen() {
   const insets = useSafeAreaInsets();
+  const dynColors = useColors();
   const nav = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const toast = useToast();
@@ -233,11 +234,11 @@ export function CollectScreen() {
                 <View style={styles.amountWrap}>
                   <Text style={styles.amountSymbol}>₹</Text>
                   <TextInput
-                    style={styles.amountInput}
+                    style={[styles.amountInput, { color: dynColors.text.primary }]}
                     value={amount}
                     onChangeText={setAmount}
                     keyboardType="numeric"
-                    selectionColor={colors.brand[600]}
+                    selectionColor={dynColors.brand[600]}
                   />
                 </View>
                 <View style={styles.chipRow}>

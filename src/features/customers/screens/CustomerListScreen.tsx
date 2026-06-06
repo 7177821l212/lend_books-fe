@@ -1,6 +1,3 @@
-/**
- * CustomerListScreen — search, filter chips, paginated list.
- */
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Plus, Search, UsersRound, X } from 'lucide-react-native';
@@ -27,7 +24,7 @@ import {
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCustomers } from '@/features/customers/hooks/useCustomers';
 import { CustomerListItem } from '@/features/customers/components/CustomerListItem';
-import { colors, layout, radii, spacing } from '@/theme';
+import { useColors, layout, radii, spacing } from '@/theme';
 import type { Customer } from '@/types';
 import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigator';
 
@@ -44,6 +41,7 @@ const FILTERS: Array<{ key: Filter; label: string }> = [
 export function CustomerListScreen() {
   const insets = useSafeAreaInsets();
   const nav = useNavigation<Nav>();
+  const colors = useColors();
   const { user } = useAuth();
   const isInvestor = user?.role === 'investor';
 
@@ -73,7 +71,7 @@ export function CustomerListScreen() {
       return (
         <View style={{ marginTop: spacing[3] }}>
           {[0, 1, 2, 3].map((i) => (
-            <View key={i} style={styles.skeleton}>
+            <View key={i} style={[styles.skeleton, { backgroundColor: colors.card }]}>
               <SkeletonLoader width={48} height={48} radius={24} />
               <View style={{ flex: 1, marginLeft: spacing[3] }}>
                 <SkeletonLoader width="60%" height={14} />
@@ -93,7 +91,7 @@ export function CustomerListScreen() {
             ? 'Try a different name or phone.'
             : isInvestor
             ? 'Tap the + button to add your first customer.'
-            : 'You don’t have any customers assigned right now.'
+            : "You don't have any customers assigned right now."
         }
         actionLabel={isInvestor && !search ? '+ Add customer' : undefined}
         onAction={isInvestor && !search ? () => nav.navigate('NewCustomer') : undefined}
@@ -106,7 +104,7 @@ export function CustomerListScreen() {
       <GradientBackground
         gradient="hero"
         style={{
-          paddingTop: insets.top + spacing[2],
+          paddingTop: insets.top + spacing[4],
           paddingHorizontal: layout.screenPaddingX,
           paddingBottom: spacing[5],
           borderBottomLeftRadius: radii['3xl'],
@@ -114,17 +112,12 @@ export function CustomerListScreen() {
         }}
       >
         <View style={styles.headerRow}>
-          <View style={{ flex: 1 }}>
-            <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-              {isInvestor ? 'INVESTOR' : 'COLLECTOR'}
-            </Text>
-            <Text variant="h1" color="onDark">
-              {isInvestor ? 'Customers' : 'My Customers'}
-            </Text>
-          </View>
+          <Text variant="h1" color="onDark" style={{ flex: 1 }}>
+            Customers
+          </Text>
           {isInvestor ? (
             <IconButton
-              icon={<Plus size={20} color={colors.white} />}
+              icon={<Plus size={20} color="#fff" />}
               variant="glass"
               size="md"
               tone="onDark"
@@ -141,7 +134,7 @@ export function CustomerListScreen() {
             onChangeText={setSearch}
             placeholder="Search by name or phone..."
             placeholderTextColor={colors.slate[400]}
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text.primary }]}
             autoCorrect={false}
             autoCapitalize="none"
             returnKeyType="search"
@@ -154,7 +147,7 @@ export function CustomerListScreen() {
         </View>
       </GradientBackground>
 
-      <View style={styles.chipRow}>
+      <View style={[styles.chipRow, { backgroundColor: colors.background }]}>
         {FILTERS.map(({ key, label }) => {
           const active = filter === key;
           return (
@@ -163,13 +156,15 @@ export function CustomerListScreen() {
               onPress={() => setFilter(key)}
               style={[
                 styles.chip,
-                active && { backgroundColor: colors.brand[600] },
+                {
+                  backgroundColor: active ? colors.brand[600] : colors.card,
+                  borderColor: active ? colors.brand[600] : colors.border.default,
+                },
               ]}
             >
               <Text
                 variant="label"
-                color={active ? 'onBrand' : 'secondary'}
-                style={{ fontSize: 12 }}
+                style={{ fontSize: 12, color: active ? '#fff' : colors.text.secondary }}
               >
                 {label}
               </Text>
@@ -187,7 +182,10 @@ export function CustomerListScreen() {
         data={data?.items ?? []}
         keyExtractor={(c) => c.id}
         renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { backgroundColor: colors.background },
+        ]}
         ListEmptyComponent={listEmpty}
         refreshing={isRefetching}
         onRefresh={refetch}
@@ -222,7 +220,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: colors.text.primary,
     marginLeft: spacing[2],
     paddingVertical: 0,
   },
@@ -237,10 +234,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1.5],
     borderRadius: radii.full,
-    backgroundColor: colors.white,
     marginRight: spacing[2],
     borderWidth: 1,
-    borderColor: colors.border.default,
   },
   listContent: {
     paddingHorizontal: layout.screenPaddingX,
@@ -252,7 +247,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing[4],
-    backgroundColor: colors.card,
     borderRadius: radii['2xl'],
     marginBottom: spacing[2],
   },

@@ -38,6 +38,7 @@ export interface Customer {
   blacklist_reason: string | null;
   active_loan_count: number;
   total_outstanding: number;
+  photo_url: string | null;
 }
 
 export interface Installment {
@@ -100,8 +101,9 @@ export interface Payment {
 export interface Collector {
   id: string;
   name: string;
+  email: string;
   phone: string | null;
-  status: 'active' | 'inactive';
+  is_active: boolean;
   loan_count: number;
   total_collected: number;
   missed_count: number;

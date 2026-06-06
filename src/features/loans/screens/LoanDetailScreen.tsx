@@ -27,7 +27,7 @@ import { useCollectors } from '@/features/collectors/hooks/useCollectors';
 import { useCloseLoan, useLoan, useReassignLoan } from '@/features/loans/hooks/useLoans';
 import { InstallmentRow } from '@/features/loans/components/InstallmentRow';
 import { usePaymentHistory } from '@/features/payments/hooks/usePayments';
-import { colors, layout, radii, spacing } from '@/theme';
+import { colors, useColors, layout, radii, spacing } from '@/theme';
 import type { LoanStatus, Payment } from '@/types';
 import { useState } from 'react';
 
@@ -53,6 +53,7 @@ const FREQ_LABEL: Record<string, string> = {
 
 export function LoanDetailScreen() {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
   const nav = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const { user } = useAuth();
@@ -331,6 +332,7 @@ interface PaymentRowProps {
   last: boolean;
 }
 function PaymentRow({ payment, last }: PaymentRowProps) {
+  const colors = useColors();
   return (
     <View
       style={[

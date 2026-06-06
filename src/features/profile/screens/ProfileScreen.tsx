@@ -40,7 +40,7 @@ export function ProfileScreen() {
       <GradientBackground
         gradient="hero"
         style={{
-          paddingTop: insets.top + spacing[4],
+          paddingTop: insets.top + spacing[2],
           paddingHorizontal: layout.screenPaddingX,
           paddingBottom: spacing[6],
           borderBottomLeftRadius: radii['3xl'],
@@ -48,7 +48,7 @@ export function ProfileScreen() {
           alignItems: 'center',
         }}
       >
-        <View style={styles.settingsBtn}>
+        <View style={styles.topRow}>
           <IconButton
             icon={<Settings size={18} color="rgba(255,255,255,0.85)" />}
             variant="glass"
@@ -56,7 +56,7 @@ export function ProfileScreen() {
             accessibilityLabel="Settings"
           />
         </View>
-        <Avatar name={user.name} id={user.id} size="2xl" />
+        <Avatar name={user.name} id={user.id} size="2xl" style={{ marginTop: spacing[2] }} />
         <Text variant="h2" color="onDark" style={{ marginTop: spacing[3] }}>
           {user.name}
         </Text>
@@ -109,10 +109,9 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  settingsBtn: {
-    position: 'absolute',
-    top: 0,
-    right: layout.screenPaddingX,
+  topRow: {
+    alignSelf: 'stretch',
+    alignItems: 'flex-end',
   },
   roleChip: {
     marginTop: spacing[3],
