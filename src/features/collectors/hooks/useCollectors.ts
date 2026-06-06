@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { type CreateCollectorPayload, collectorApi } from '../api/collectorApi';
+import { type CreateCollectorPayload, type UpdateCollectorPayload, collectorApi } from '../api/collectorApi';
 
 export function useCollectors() {
   return useQuery({
@@ -15,6 +15,28 @@ export function useCreateCollector() {
   return useMutation({
     mutationFn: (payload: CreateCollectorPayload) => collectorApi.create(payload),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['collectors'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+export function useCollector(id: string) {
+  return useQuery({
+    queryKey: ['collector', id],
+    queryFn: () => collectorApi.get(id),
+    staleTime: 30_000,
+    enabled: !!id,
+  });
+}
+
+export function useUpdateCollector() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateCollectorPayload }) =>
+      collectorApi.update(id, payload),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ['collector', id] });
       qc.invalidateQueries({ queryKey: ['collectors'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
     },

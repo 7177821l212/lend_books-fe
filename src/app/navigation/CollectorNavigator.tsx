@@ -5,15 +5,17 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { CalendarDays, Receipt, User, Users } from 'lucide-react-native';
 
 import { HistoryScreen } from '@/features/payments/screens/HistoryScreen';
-import { ProfileScreen } from '@/features/profile/screens/ProfileScreen';
 import { CustomersNavigator } from './CustomersNavigator';
+import { MeNavigator } from './MeNavigator';
 import { TodayNavigator } from './TodayNavigator';
-import { colors, fontFamily } from '@/theme';
+import { useColors, fontFamily } from '@/theme';
 
 const Tab = createBottomTabNavigator();
 const ICON_SIZE = 22;
 
 export function CollectorNavigator() {
+  const colors = useColors();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -61,7 +63,7 @@ export function CollectorNavigator() {
       />
       <Tab.Screen
         name="Me"
-        component={ProfileScreen}
+        component={MeNavigator}
         options={{
           tabBarLabel: 'Me',
           tabBarIcon: ({ color }) => <User size={ICON_SIZE} color={color} strokeWidth={2.1} />,

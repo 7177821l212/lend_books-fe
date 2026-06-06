@@ -20,7 +20,7 @@ import {
 import { Sparkline } from '@/components/charts/Sparkline';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
-import { colors, layout, radii, spacing } from '@/theme';
+import { useColors, layout, radii, spacing } from '@/theme';
 
 type KPIIconKey = 'wallet' | 'income' | 'profit' | 'warning' | 'customers' | 'coins';
 
@@ -35,6 +35,7 @@ const ICONS: Record<KPIIconKey, typeof Wallet> = {
 
 export function DashboardScreen() {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
   const { user, logout } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
   const { data, isRefetching, refetch } = useDashboard();
@@ -55,7 +56,7 @@ export function DashboardScreen() {
       <GradientBackground
         gradient="hero"
         style={{
-          paddingTop: insets.top + spacing[2],
+          paddingTop: insets.top + spacing[4],
           paddingHorizontal: layout.screenPaddingX,
           paddingBottom: spacing[6],
           borderBottomLeftRadius: radii['3xl'],
@@ -255,6 +256,7 @@ interface KPITileProps {
 }
 
 function KPITile({ label, sub, value, iconKey, gradient, isCount = false }: KPITileProps) {
+  const colors = useColors();
   const Icon = ICONS[iconKey];
   return (
     <GradientBackground gradient={gradient} style={styles.kpiTile}>

@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { CustomerDetailScreen } from '@/features/customers/screens/CustomerDetailScreen';
 import { CustomerListScreen } from '@/features/customers/screens/CustomerListScreen';
+import { EditCustomerScreen } from '@/features/customers/screens/EditCustomerScreen';
 import { NewCustomerScreen } from '@/features/customers/screens/NewCustomerScreen';
 import { LoanDetailScreen } from '@/features/loans/screens/LoanDetailScreen';
 import { NewLoanScreen } from '@/features/loans/screens/NewLoanScreen';
@@ -13,6 +14,7 @@ import { NewLoanScreen } from '@/features/loans/screens/NewLoanScreen';
 export type CustomersStackParamList = {
   CustomerList: undefined;
   CustomerDetail: { id: string };
+  EditCustomer: { id: string };
   NewCustomer: undefined;
   NewLoan: { customerId: string };
   LoanDetail: { id: string };
@@ -28,6 +30,11 @@ export function CustomersNavigator() {
       <Stack.Screen
         name="NewCustomer"
         component={NewCustomerScreen}
+        options={{ presentation: 'modal' }}
+      />
+      <Stack.Screen
+        name="EditCustomer"
+        component={EditCustomerScreen}
         options={{ presentation: 'modal' }}
       />
       <Stack.Screen name="NewLoan" component={NewLoanScreen} />

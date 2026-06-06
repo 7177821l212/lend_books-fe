@@ -6,11 +6,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import {
   Ban,
+  CheckCircle,
+  Edit2,
   FileText,
   MessageSquare,
   Phone,
   Plus,
-  Upload,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Linking, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -35,6 +36,7 @@ import {
   useBlacklistCustomer,
   useCustomer,
   useCustomerDocuments,
+  useUnblacklistCustomer,
   useUploadDocument,
 } from '@/features/customers/hooks/useCustomers';
 import { useCustomerLoans } from '@/features/loans/hooks/useLoans';
@@ -59,6 +61,7 @@ export function CustomerDetailScreen() {
   const { data: documents } = useCustomerDocuments(params.id);
   const { data: loansPage } = useCustomerLoans(params.id);
   const blacklist = useBlacklistCustomer();
+  const unblacklist = useUnblacklistCustomer();
   const upload = useUploadDocument(params.id);
   const loans = loansPage?.items ?? [];
   const [blacklistReason, setBlacklistReason] = useState('');
@@ -86,6 +89,15 @@ export function CustomerDetailScreen() {
       toast.success('Customer blacklisted');
     } catch {
       toast.error('Could not blacklist');
+    }
+  };
+
+  const handleUnblacklist = async () => {
+    try {
+      await unblacklist.mutateAsync(customer.id);
+      toast.success('Customer removed from blacklist');
+    } catch {
+      toast.error('Could not unblacklist');
     }
   };
 
@@ -129,6 +141,15 @@ export function CustomerDetailScreen() {
             onPress={() => nav.goBack()}
             accessibilityLabel="Back"
           />
+          {isInvestor ? (
+            <IconButton
+              icon={<Edit2 size={16} color={colors.white} />}
+              variant="glass"
+              size="md"
+              onPress={() => nav.navigate('EditCustomer', { id: customer.id })}
+              accessibilityLabel="Edit customer"
+            />
+          ) : null}
         </View>
 
         <View style={styles.heroRow}>
@@ -204,6 +225,16 @@ export function CustomerDetailScreen() {
                   </Text>
                 ) : null}
               </View>
+              {isInvestor ? (
+                <Button
+                  label="Remove"
+                  variant="ghost"
+                  size="sm"
+                  loading={unblacklist.isPending}
+                  onPress={handleUnblacklist}
+                  leadingIcon={<CheckCircle size={14} color={colors.success} />}
+                />
+              ) : null}
             </View>
           </Card>
         ) : null}

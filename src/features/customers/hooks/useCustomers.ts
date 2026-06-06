@@ -63,6 +63,17 @@ export function useBlacklistCustomer() {
   });
 }
 
+export function useUnblacklistCustomer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => customerApi.unblacklist(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY] });
+      qc.invalidateQueries({ queryKey: ['reports'] });
+    },
+  });
+}
+
 export function useUploadDocument(customerId: string) {
   const qc = useQueryClient();
   return useMutation({

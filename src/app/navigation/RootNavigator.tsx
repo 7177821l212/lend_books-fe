@@ -2,13 +2,14 @@ import { ActivityIndicator, View } from 'react-native';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { LoginScreen } from '@/features/auth/screens/LoginScreen';
-import { colors } from '@/theme';
+import { useColors } from '@/theme';
 
 import { CollectorNavigator } from './CollectorNavigator';
 import { InvestorNavigator } from './InvestorNavigator';
 
 export function RootNavigator() {
   const { user, isLoading } = useAuth();
+  const colors = useColors();
 
   if (isLoading) {
     return (

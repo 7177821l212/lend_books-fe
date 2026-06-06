@@ -1,19 +1,19 @@
-/**
- * Investor bottom-tab navigator.
- */
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { BarChart3, Home, LayoutGrid, Users } from 'lucide-react-native';
+import { BarChart3, Home, LayoutGrid, User, Users } from 'lucide-react-native';
 
 import { DashboardScreen } from '@/features/dashboard/screens/DashboardScreen';
-import { TeamScreen } from '@/features/dashboard/screens/TeamScreen';
 import { ReportsScreen } from '@/features/reports/screens/ReportsScreen';
 import { CustomersNavigator } from './CustomersNavigator';
-import { colors, fontFamily } from '@/theme';
+import { MeNavigator } from './MeNavigator';
+import { TeamNavigator } from './TeamNavigator';
+import { useColors, fontFamily } from '@/theme';
 
 const Tab = createBottomTabNavigator();
 const ICON_SIZE = 22;
 
 export function InvestorNavigator() {
+  const colors = useColors();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -53,7 +53,7 @@ export function InvestorNavigator() {
       />
       <Tab.Screen
         name="Team"
-        component={TeamScreen}
+        component={TeamNavigator}
         options={{
           tabBarLabel: 'Team',
           tabBarIcon: ({ color }) => <LayoutGrid size={ICON_SIZE} color={color} strokeWidth={2.1} />,
@@ -65,6 +65,14 @@ export function InvestorNavigator() {
         options={{
           tabBarLabel: 'Reports',
           tabBarIcon: ({ color }) => <BarChart3 size={ICON_SIZE} color={color} strokeWidth={2.1} />,
+        }}
+      />
+      <Tab.Screen
+        name="Me"
+        component={MeNavigator}
+        options={{
+          tabBarLabel: 'Me',
+          tabBarIcon: ({ color }) => <User size={ICON_SIZE} color={color} strokeWidth={2.1} />,
         }}
       />
     </Tab.Navigator>

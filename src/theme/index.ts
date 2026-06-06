@@ -8,6 +8,8 @@
  * DO NOT inline colors, sizes, font names. Always token-driven.
  */
 export { colors, palette, type Colors } from './colors';
+export { darkColors } from './darkColors';
+export { ThemeProvider, useColors, useIsDark } from './ThemeContext';
 export {
   fontFamily,
   fontSize,

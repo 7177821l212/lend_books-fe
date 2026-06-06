@@ -1,7 +1,11 @@
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Plus, UserPlus, Users, X } from 'lucide-react-native';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import type { TeamStackParamList } from '@/app/navigation/TeamNavigator';
 
 import {
   AmountText,
@@ -21,9 +25,12 @@ import { useCreateCollector, useCollectors } from '@/features/collectors/hooks/u
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { colors, fontFamily, layout, radii, spacing } from '@/theme';
 
+type TeamNav = NativeStackNavigationProp<TeamStackParamList, 'TeamList'>;
+
 export function TeamScreen() {
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const nav = useNavigation<TeamNav>();
   const { data, isRefetching, refetch } = useDashboard();
   const { data: collectors, refetch: refetchCollectors } = useCollectors();
   const createCollector = useCreateCollector();
@@ -116,7 +123,7 @@ export function TeamScreen() {
             />
           ) : (
             team.map((c, i) => (
-              <Card key={c.id} padding={4} style={{ marginBottom: spacing[2] }}>
+              <Card key={c.id} padding={4} style={{ marginBottom: spacing[2] }} onPress={() => nav.navigate('CollectorDetail', { id: c.id })}>
                 <View style={styles.row}>
                   <View style={styles.rankBubble}>
                     <Text variant="caption" color="secondary">
