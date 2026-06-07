@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GradientBackground } from './GradientBackground';
 import { IconButton } from './IconButton';
 import { Text } from './Text';
-import { colors, radii, spacing, layout } from '@/theme';
+import { useColors, radii, spacing, layout } from '@/theme';
 
 interface HeaderProps extends ViewProps {
   title?: string;
@@ -36,6 +36,7 @@ export function Header({
   ...rest
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
 
   const content = (
     <View
@@ -99,7 +100,7 @@ export function Header({
   }
 
   if (variant === 'solid') {
-    return <View style={{ backgroundColor: colors.slate[900] }}>{content}</View>;
+    return <View style={{ backgroundColor: colors.background }}>{content}</View>;
   }
 
   return content;

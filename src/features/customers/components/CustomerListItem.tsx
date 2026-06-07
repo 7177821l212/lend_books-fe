@@ -5,7 +5,7 @@ import { Ban, Phone } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { AmountText, Avatar, Badge, Card, Text } from '@/components/ui';
-import { colors, spacing } from '@/theme';
+import { useColors, spacing } from '@/theme';
 import type { Customer } from '@/types';
 
 interface CustomerListItemProps {
@@ -20,6 +20,7 @@ const RISK_TONE: Record<Customer['risk_level'], 'success' | 'warning' | 'danger'
 };
 
 export function CustomerListItem({ customer, onPress }: CustomerListItemProps) {
+  const colors = useColors();
   const out = customer.total_outstanding;
   return (
     <Card padding={4} onPress={onPress} style={styles.card}>
@@ -67,7 +68,7 @@ export function CustomerListItem({ customer, onPress }: CustomerListItemProps) {
         </View>
       </View>
       {customer.is_blacklisted ? (
-        <View style={styles.banner}>
+        <View style={[styles.banner, { borderTopColor: colors.border.subtle }]}>
           <Ban size={12} color={colors.danger} />
           <Text variant="caption" color={colors.danger} style={{ marginLeft: 6 }} numberOfLines={1}>
             {customer.blacklist_reason ?? 'Customer is blacklisted'}
@@ -103,6 +104,5 @@ const styles = StyleSheet.create({
     marginTop: spacing[3],
     paddingTop: spacing[2.5],
     borderTopWidth: 1,
-    borderTopColor: colors.border.subtle,
   },
 });

@@ -9,7 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { colors, radii, duration as motion, easing } from '@/theme';
+import { useColors, radii, duration as motion, easing } from '@/theme';
 
 interface ProgressBarProps {
   value: number; // 0..100
@@ -23,11 +23,14 @@ interface ProgressBarProps {
 export function ProgressBar({
   value,
   height = 6,
-  trackColor = colors.slate[100],
-  fillColor = colors.brand[600],
+  trackColor,
+  fillColor,
   animated = true,
   style,
 }: ProgressBarProps) {
+  const colors = useColors();
+  const resolvedTrackColor = trackColor ?? colors.slate[100];
+  const resolvedFillColor = fillColor ?? colors.brand[600];
   const pct = Math.max(0, Math.min(100, value));
   const width = useSharedValue(0);
 
@@ -46,7 +49,7 @@ export function ProgressBar({
       style={[
         {
           height,
-          backgroundColor: trackColor,
+          backgroundColor: resolvedTrackColor,
           borderRadius: radii.full,
           overflow: 'hidden',
         },
@@ -57,7 +60,7 @@ export function ProgressBar({
         style={[
           {
             height: '100%',
-            backgroundColor: fillColor,
+            backgroundColor: resolvedFillColor,
             borderRadius: radii.full,
           },
           animStyle,

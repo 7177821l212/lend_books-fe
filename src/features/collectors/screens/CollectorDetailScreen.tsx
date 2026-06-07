@@ -144,6 +144,9 @@ export function CollectorDetailScreen() {
     }
   };
 
+  // Must be called before any early return (Rules of Hooks)
+  const resolvedCollectorPhoto = useSignedUrl(!editing ? collector?.photo_url : null);
+
   if (isLoading || !collector) {
     return (
       <Screen background="default" edges={[]}>
@@ -155,10 +158,7 @@ export function CollectorDetailScreen() {
   }
 
   const isInactive = !collector.is_active;
-  // When editing, show local file:// URI immediately; otherwise resolve GCS object path
-  const rawDisplayPhoto = editing ? photoUrl : collector.photo_url;
-  const resolvedCollectorPhoto = useSignedUrl(editing ? null : collector.photo_url);
-  const displayPhoto = editing ? rawDisplayPhoto : resolvedCollectorPhoto;
+  const displayPhoto = editing ? photoUrl : resolvedCollectorPhoto;
 
   return (
     <Screen padded={false} background="default" edges={[]}>
