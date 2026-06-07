@@ -24,12 +24,13 @@ import {
 import { useCollectors, useCreateCollector } from '@/features/collectors/hooks/useCollectors';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { useT } from '@/i18n';
-import { colors, fontFamily, layout, radii, spacing } from '@/theme';
+import { useColors, fontFamily, layout, radii, spacing } from '@/theme';
 
 type TeamNav = NativeStackNavigationProp<TeamStackParamList, 'TeamList'>;
 
 export function TeamScreen() {
   const t = useT();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const toast = useToast();
   const nav = useNavigation<TeamNav>();
@@ -165,7 +166,7 @@ export function TeamScreen() {
                   onPress={() => nav.navigate('CollectorDetail', { id: c.id })}
                 >
                   <View style={styles.row}>
-                    <View style={styles.rankBubble}>
+                    <View style={[styles.rankBubble, { backgroundColor: colors.brand[50] }]}>
                       <Text variant="caption" color="secondary">#{i + 1}</Text>
                     </View>
                     <Avatar name={c.name} id={c.id} size="md" imageUrl={c.photo_url} />
@@ -211,7 +212,7 @@ export function TeamScreen() {
             style={styles.overlay}
             onPress={() => { setShowModal(false); resetForm(); }}
           >
-            <Pressable style={styles.sheet} onPress={() => {}}>
+            <Pressable style={[styles.sheet, { backgroundColor: colors.card }]} onPress={() => {}}>
               <View style={styles.sheetHeader}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
                   <UserPlus size={20} color={colors.brand[700]} />
@@ -298,7 +299,6 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: colors.brand[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing[2],
@@ -311,7 +311,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: colors.card,
     borderTopLeftRadius: radii['3xl'],
     borderTopRightRadius: radii['3xl'],
     padding: spacing[6],

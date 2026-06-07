@@ -9,7 +9,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { colors, radii, haptic, spring } from '@/theme';
+import { useColors, radii, haptic, spring, type Colors } from '@/theme';
 
 type Size = 'sm' | 'md' | 'lg';
 type Variant = 'solid' | 'soft' | 'ghost' | 'glass';
@@ -27,7 +27,7 @@ const SIZE: Record<Size, number> = { sm: 32, md: 40, lg: 48 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const BG = (variant: Variant, tone: NonNullable<IconButtonProps['tone']>) => {
+const BG = (variant: Variant, tone: NonNullable<IconButtonProps['tone']>, colors: Colors) => {
   if (variant === 'solid') {
     return tone === 'brand'
       ? colors.brand[600]
@@ -35,7 +35,7 @@ const BG = (variant: Variant, tone: NonNullable<IconButtonProps['tone']>) => {
       ? colors.danger
       : tone === 'onDark'
       ? colors.white
-      : colors.slate[900];
+      : colors.card;
   }
   if (variant === 'soft') {
     return tone === 'brand'
@@ -59,6 +59,7 @@ export function IconButton({
   style,
   ...rest
 }: IconButtonProps) {
+  const colors = useColors();
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -89,7 +90,7 @@ export function IconButton({
           width: SIZE[size],
           height: SIZE[size],
           borderRadius: radii.full,
-          backgroundColor: BG(variant, tone),
+          backgroundColor: BG(variant, tone, colors),
           alignItems: 'center',
           justifyContent: 'center',
           opacity: disabled ? 0.5 : 1,

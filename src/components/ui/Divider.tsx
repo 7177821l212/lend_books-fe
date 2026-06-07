@@ -1,6 +1,6 @@
 import { View, type ViewStyle } from 'react-native';
 
-import { colors, spacing } from '@/theme';
+import { useColors, spacing } from '@/theme';
 
 interface DividerProps {
   vertical?: boolean;
@@ -9,9 +9,11 @@ interface DividerProps {
   style?: ViewStyle;
 }
 
-export function Divider({ vertical = false, inset = 0, color = colors.border.subtle, style }: DividerProps) {
+export function Divider({ vertical = false, inset = 0, color, style }: DividerProps) {
+  const colors = useColors();
+  const resolvedColor = color ?? colors.border.subtle;
   if (vertical) {
-    return <View style={[{ width: 1, backgroundColor: color, marginVertical: spacing[inset] }, style]} />;
+    return <View style={[{ width: 1, backgroundColor: resolvedColor, marginVertical: spacing[inset] }, style]} />;
   }
-  return <View style={[{ height: 1, backgroundColor: color, marginHorizontal: spacing[inset] }, style]} />;
+  return <View style={[{ height: 1, backgroundColor: resolvedColor, marginHorizontal: spacing[inset] }, style]} />;
 }

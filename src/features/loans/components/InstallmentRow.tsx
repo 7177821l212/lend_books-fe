@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AmountText, Badge, Text } from '@/components/ui';
 import { useT } from '@/i18n';
-import { colors, spacing } from '@/theme';
+import { useColors, spacing } from '@/theme';
 import type { Installment, InstallmentStatus } from '@/types';
 
 interface InstallmentRowProps {
@@ -23,6 +23,7 @@ const STATUS_TONE: Record<InstallmentStatus, 'success' | 'warning' | 'danger' | 
 };
 
 function StatusIcon({ status }: { status: InstallmentStatus }) {
+  const colors = useColors();
   switch (status) {
     case 'paid':
       return <Check size={14} color={colors.success} strokeWidth={3} />;
@@ -40,6 +41,7 @@ function StatusIcon({ status }: { status: InstallmentStatus }) {
 
 export function InstallmentRow({ installment }: InstallmentRowProps) {
   const t = useT();
+  const colors = useColors();
   const STATUS_LABEL: Record<InstallmentStatus, string> = {
     paid: t('collected'),
     partial: t('status_partial'),
@@ -51,7 +53,7 @@ export function InstallmentRow({ installment }: InstallmentRowProps) {
   const tone = STATUS_TONE[installment.status];
   const label = STATUS_LABEL[installment.status];
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { borderBottomColor: colors.border.subtle }]}>
       <View style={styles.iconCol}>
         <StatusIcon status={installment.status} />
         <Text variant="caption" color="tertiary" style={{ marginTop: 2 }}>
@@ -86,7 +88,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[2.5],
     paddingHorizontal: spacing[4],
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.subtle,
   },
   iconCol: {
     width: 36,

@@ -7,11 +7,12 @@ import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { Button, GradientBackground, Input, Screen, Text } from '@/components/ui';
 import { useT } from '@/i18n';
-import { colors, radii, spacing } from '@/theme';
+import { useColors, radii, spacing } from '@/theme';
 import { useLogin } from '../hooks/useLogin';
 
 export function LoginScreen() {
   const t = useT();
+  const colors = useColors();
   const { submit, isLoading, error } = useLogin();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -19,7 +20,7 @@ export function LoginScreen() {
   return (
     <Screen padded={false} background="dark" statusBar="light" edges={[]}>
       <GradientBackground gradient="hero" style={styles.hero}>
-        <View style={styles.brandBubble}>
+        <View style={[styles.brandBubble, { backgroundColor: colors.white }]}>
           <Wallet size={28} color={colors.brand[600]} />
         </View>
         <Text variant="display" color="onDark" style={{ marginTop: spacing[5] }}>
@@ -32,7 +33,7 @@ export function LoginScreen() {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.sheet}
+        style={[styles.sheet, { backgroundColor: colors.card }]}
       >
         <Text variant="h2">{t('welcome_back')}</Text>
         <Text variant="body" color="secondary" style={{ marginTop: 2, marginBottom: spacing[5] }}>
@@ -91,13 +92,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: radii['2xl'],
-    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sheet: {
     flex: 0.6,
-    backgroundColor: colors.card,
     borderTopLeftRadius: radii['3xl'],
     borderTopRightRadius: radii['3xl'],
     padding: spacing[6],
