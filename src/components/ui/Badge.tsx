@@ -4,7 +4,7 @@
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { Text } from './Text';
-import { colors, radii, spacing } from '@/theme';
+import { useColors, radii, spacing } from '@/theme';
 
 type Tone = 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'brand';
 
@@ -17,24 +17,6 @@ interface BadgeProps {
   style?: ViewStyle;
 }
 
-const TONE_BG: Record<Tone, string> = {
-  success: colors.successSoft,
-  warning: colors.warningSoft,
-  danger: colors.dangerSoft,
-  info: colors.infoSoft,
-  neutral: colors.slate[100],
-  brand: colors.brand[50],
-};
-
-const TONE_FG: Record<Tone, string> = {
-  success: colors.success,
-  warning: colors.warning,
-  danger: colors.danger,
-  info: colors.info,
-  neutral: colors.slate[600],
-  brand: colors.brand[700],
-};
-
 export function Badge({
   label,
   tone = 'neutral',
@@ -43,6 +25,26 @@ export function Badge({
   uppercase = true,
   style,
 }: BadgeProps) {
+  const colors = useColors();
+
+  const TONE_BG: Record<Tone, string> = {
+    success: colors.successSoft,
+    warning: colors.warningSoft,
+    danger: colors.dangerSoft,
+    info: colors.infoSoft,
+    neutral: colors.slate[100],
+    brand: colors.brand[50],
+  };
+
+  const TONE_FG: Record<Tone, string> = {
+    success: colors.success,
+    warning: colors.warning,
+    danger: colors.danger,
+    info: colors.info,
+    neutral: colors.slate[600],
+    brand: colors.brand[700],
+  };
+
   return (
     <View
       style={[

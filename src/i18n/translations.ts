@@ -187,6 +187,28 @@ export const translations = {
     name: 'Name',
     missed_visit: 'Missed visit',
 
+    // Collector detail
+    deactivate: 'Deactivate',
+    activate: 'Activate',
+    delete_collector: 'Delete collector',
+    delete_customer: 'Delete customer',
+    confirm_delete: 'Confirm delete',
+    delete_collector_warn: 'This will permanently delete the collector. Reassign their active loans first.',
+    delete_customer_warn: 'This will permanently delete the customer. Close their active loans first.',
+    cannot_undo: 'This cannot be undone.',
+    recovery_rate: 'Recovery rate',
+    no_trend_data: 'No collections recorded yet',
+    collection_rate: 'Collection rate',
+    high_risk: 'High risk',
+    sort_by: 'Sort',
+    sort_amount: 'Amount',
+    sort_installments: 'Installments',
+    this_week: 'This week',
+    this_month: 'This month',
+    this_year: 'This year',
+    period: 'Period',
+    collector_filter: 'Collector',
+
     // Profile
     profile: 'Profile',
 
@@ -397,6 +419,28 @@ export const translations = {
     collector: 'சேகரிப்பாளர்',
     name: 'பெயர்',
     missed_visit: 'வருகை தவறவிட்டது',
+
+    // Collector detail
+    deactivate: 'நிறுத்து',
+    activate: 'செயல்படுத்து',
+    delete_collector: 'சேகரிப்பாளரை நீக்கு',
+    delete_customer: 'வாடிக்கையாளரை நீக்கு',
+    confirm_delete: 'நீக்கலை உறுதிப்படுத்து',
+    delete_collector_warn: 'இந்த சேகரிப்பாளரை நிரந்தரமாக நீக்கும். முதலில் கடன்களை மாற்றவும்.',
+    delete_customer_warn: 'இந்த வாடிக்கையாளரை நிரந்தரமாக நீக்கும். முதலில் கடன்களை மூடவும்.',
+    cannot_undo: 'இதை மாற்ற முடியாது.',
+    recovery_rate: 'மீட்பு விகிதம்',
+    no_trend_data: 'இதுவரை சேகரிப்புகள் இல்லை',
+    collection_rate: 'சேகரிப்பு விகிதம்',
+    high_risk: 'அதிக ஆபத்து',
+    sort_by: 'வரிசை',
+    sort_amount: 'தொகை',
+    sort_installments: 'தவணைகள்',
+    this_week: 'இந்த வாரம்',
+    this_month: 'இந்த மாதம்',
+    this_year: 'இந்த ஆண்டு',
+    period: 'காலம்',
+    collector_filter: 'சேகரிப்பாளர்',
 
     // Profile
     profile: 'சுயவிவரம்',

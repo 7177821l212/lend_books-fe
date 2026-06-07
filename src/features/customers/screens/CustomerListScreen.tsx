@@ -174,7 +174,7 @@ export function CustomerListScreen() {
           );
         })}
         {data?.total != null ? (
-          <View style={{ marginLeft: 'auto' }}>
+          <View style={{ flex: 1, alignItems: 'flex-end' }}>
             <Badge label={`${data.total}`} tone="neutral" size="sm" />
           </View>
         ) : null}
