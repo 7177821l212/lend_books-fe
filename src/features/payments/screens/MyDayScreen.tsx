@@ -23,13 +23,14 @@ import {
 } from '@/components/ui';
 import { useMyDay } from '@/features/payments/hooks/usePayments';
 import { useT } from '@/i18n';
-import { colors, layout, radii, spacing } from '@/theme';
+import { useColors, layout, radii, spacing } from '@/theme';
 import type { PickupItem } from '@/features/payments/api/paymentApi';
 
 type Nav = NativeStackNavigationProp<CollectorStackParamList, 'MyDay'>;
 
 export function MyDayScreen() {
   const t = useT();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const nav = useNavigation<Nav>();
   const { data, isLoading, isRefetching, refetch } = useMyDay();
@@ -42,7 +43,7 @@ export function MyDayScreen() {
     <Card
       padding={4}
       onPress={() => nav.navigate('Collect', { loanId: item.loan_id, scheduleId: item.schedule_id })}
-      style={[styles.pickup, item.is_overdue && styles.pickupUrgent]}
+      style={[styles.pickup, item.is_overdue && { borderLeftWidth: 4, borderLeftColor: colors.warning }]}
     >
       <View style={styles.row}>
         <Avatar name={item.customer_name} id={item.customer_id} size="lg" />
@@ -85,7 +86,7 @@ export function MyDayScreen() {
         </View>
         <ChevronRight size={18} color={colors.slate[300]} />
       </View>
-      <View style={styles.actionRow}>
+      <View style={[styles.actionRow, { borderTopColor: colors.border.subtle }]}>
         <Pressable
           onPress={() => Linking.openURL(`tel:${item.customer_phone}`)}
           style={styles.miniAction}
@@ -167,7 +168,7 @@ export function MyDayScreen() {
       {isLoading ? (
         <View style={{ padding: layout.screenPaddingX }}>
           {[0, 1, 2].map((i) => (
-            <View key={i} style={styles.skeleton}>
+            <View key={i} style={[styles.skeleton, { backgroundColor: colors.card }]}>
               <SkeletonLoader width={48} height={48} radius={24} />
               <View style={{ flex: 1, marginLeft: spacing[3] }}>
                 <SkeletonLoader width="60%" height={14} />
@@ -210,7 +211,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   pickup: { marginBottom: spacing[2.5] },
-  pickupUrgent: { borderLeftWidth: 4, borderLeftColor: colors.warning },
   row: { flexDirection: 'row', alignItems: 'center' },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   subRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
@@ -220,14 +220,12 @@ const styles = StyleSheet.create({
     marginTop: spacing[3],
     paddingTop: spacing[2.5],
     borderTopWidth: 1,
-    borderTopColor: colors.border.subtle,
   },
   miniAction: { flexDirection: 'row', alignItems: 'center' },
   skeleton: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing[4],
-    backgroundColor: colors.card,
     borderRadius: radii['2xl'],
     marginBottom: spacing[2.5],
   },

@@ -4,7 +4,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AmountText, Badge, Card, ProgressBar, Text } from '@/components/ui';
-import { colors, spacing } from '@/theme';
+import { useColors, spacing } from '@/theme';
 import type { Loan } from '@/types';
 
 interface LoanListItemProps {
@@ -22,6 +22,7 @@ const STATUS_TONE = {
 const MODEL_LABEL = { model_a: 'Pre-deduct', model_b: 'Add-on' } as const;
 
 export function LoanListItem({ loan, onPress }: LoanListItemProps) {
+  const colors = useColors();
   return (
     <Card padding={4} onPress={onPress} style={{ marginBottom: spacing[2] }}>
       <View style={styles.headerRow}>
