@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Text } from './Text';
-import { colors, spacing, haptic, spring } from '@/theme';
+import { useColors, spacing, haptic, spring } from '@/theme';
 
 interface ListItemProps extends Omit<PressableProps, 'style'> {
   title: string;
@@ -39,6 +39,7 @@ export function ListItem({
   style,
   ...rest
 }: ListItemProps) {
+  const colors = useColors();
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 

@@ -1,8 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Plus, UserPlus, Users, X } from 'lucide-react-native';
+import { Plus, Search, UserPlus, Users, X } from 'lucide-react-native';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { TeamStackParamList } from '@/app/navigation/TeamNavigator';
@@ -21,7 +21,7 @@ import {
   Text,
   useToast,
 } from '@/components/ui';
-import { useCreateCollector, useCollectors } from '@/features/collectors/hooks/useCollectors';
+import { useCollectors, useCreateCollector } from '@/features/collectors/hooks/useCollectors';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { useT } from '@/i18n';
 import { colors, fontFamily, layout, radii, spacing } from '@/theme';
@@ -38,6 +38,11 @@ export function TeamScreen() {
   const createCollector = useCreateCollector();
 
   const team = data?.collector_performance ?? [];
+  const allCollectors = collectors ?? [];
+  const [search, setSearch] = useState('');
+  const filteredCollectors = search.trim()
+    ? allCollectors.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+    : allCollectors;
   const peak = team.length ? Math.max(...team.map((c) => c.collected), 1) : 1;
 
   const [showModal, setShowModal] = useState(false);
@@ -59,7 +64,7 @@ export function TeamScreen() {
       return;
     }
     try {
-      await createCollector.mutateAsync({
+      const newCollector = await createCollector.mutateAsync({
         name: name.trim(),
         email: email.trim().toLowerCase(),
         phone: phone.trim() || undefined,
@@ -70,6 +75,7 @@ export function TeamScreen() {
       resetForm();
       void refetch();
       void refetchCollectors();
+      nav.navigate('CollectorDetail', { id: newCollector.id });
     } catch (e) {
       const detail =
         (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
@@ -114,54 +120,78 @@ export function TeamScreen() {
               accessibilityLabel="Add collector"
             />
           </View>
+          {/* Search bar */}
+          <View style={styles.searchWrap}>
+            <Search size={16} color={colors.slate[400]} />
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search collectors…"
+              placeholderTextColor={colors.slate[400]}
+              style={[styles.searchInput, { color: colors.text.primary }]}
+              autoCorrect={false}
+              autoCapitalize="none"
+            />
+            {search.length > 0 ? (
+              <Pressable onPress={() => setSearch('')} hitSlop={8}>
+                <X size={14} color={colors.slate[400]} />
+              </Pressable>
+            ) : null}
+          </View>
         </GradientBackground>
 
         <View style={{ padding: layout.screenPaddingX }}>
-          {team.length === 0 ? (
+          {allCollectors.length === 0 ? (
             <EmptyState
               icon={<Users size={28} color={colors.brand[700]} />}
               title={t('no_collectors_yet')}
               description={t('no_collectors_desc')}
             />
+          ) : filteredCollectors.length === 0 ? (
+            <EmptyState
+              icon={<Search size={24} color={colors.brand[700]} />}
+              title="No results"
+              description={`No collectors matching "${search}"`}
+            />
           ) : (
-            team.map((c, i) => (
-              <Card key={c.id} padding={4} style={{ marginBottom: spacing[2] }} onPress={() => nav.navigate('CollectorDetail', { id: c.id })}>
-                <View style={styles.row}>
-                  <View style={styles.rankBubble}>
-                    <Text variant="caption" color="secondary">
-                      #{i + 1}
-                    </Text>
-                  </View>
-                  <Avatar name={c.name} id={c.id} size="md" />
-                  <View style={{ flex: 1, marginLeft: spacing[3] }}>
-                    <View style={styles.titleRow}>
-                      <Text variant="bodyStrong" numberOfLines={1} style={{ flex: 1 }}>
-                        {c.name}
-                      </Text>
-                      <AmountText
-                        value={c.collected}
-                        size="sm"
-                        color={colors.brand[700]}
-                        short
-                      />
+            filteredCollectors.map((c, i) => {
+              const perf = team.find((t) => t.id === c.id);
+              const isInactive = !c.is_active;
+              return (
+                <Card
+                  key={c.id}
+                  padding={4}
+                  style={[{ marginBottom: spacing[2] }, isInactive && { opacity: 0.5 }]}
+                  onPress={() => nav.navigate('CollectorDetail', { id: c.id })}
+                >
+                  <View style={styles.row}>
+                    <View style={styles.rankBubble}>
+                      <Text variant="caption" color="secondary">#{i + 1}</Text>
                     </View>
-                    <View style={styles.subRow}>
-                      <Text variant="caption" color="tertiary">
-                        {c.visits} {t('visits')}
-                      </Text>
-                      <Text variant="caption" color="tertiary">
-                        {c.missed} {t('missed').toLowerCase()}
-                      </Text>
+                    <Avatar name={c.name} id={c.id} size="md" imageUrl={c.photo_url} />
+                    <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                      <View style={styles.titleRow}>
+                        <Text variant="bodyStrong" numberOfLines={1} style={{ flex: 1, color: isInactive ? colors.text.tertiary : undefined }}>
+                          {c.name}
+                        </Text>
+                        {isInactive ? (
+                          <Text variant="caption" color="tertiary">{t('inactive')}</Text>
+                        ) : (
+                          <AmountText value={perf?.collected ?? 0} size="sm" color={colors.brand[700]} short />
+                        )}
+                      </View>
+                      <View style={styles.subRow}>
+                        <Text variant="caption" color="tertiary">{perf?.visits ?? 0} {t('visits')}</Text>
+                        <Text variant="caption" color="tertiary">{perf?.missed ?? 0} {t('missed').toLowerCase()}</Text>
+                      </View>
+                      {!isInactive && perf ? (
+                        <ProgressBar value={Math.round((perf.collected / peak) * 100)} height={4} style={{ marginTop: 6 }} />
+                      ) : null}
                     </View>
-                    <ProgressBar
-                      value={Math.round((c.collected / peak) * 100)}
-                      height={4}
-                      style={{ marginTop: 6 }}
-                    />
                   </View>
-                </View>
-              </Card>
-            ))
+                </Card>
+              );
+            })
           )}
         </View>
       </Screen>
@@ -248,6 +278,21 @@ export function TeamScreen() {
 
 const styles = StyleSheet.create({
   heroRow: { flexDirection: 'row', alignItems: 'center' },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: radii.xl,
+    paddingHorizontal: spacing[3],
+    marginTop: spacing[3],
+    height: 40,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    marginLeft: spacing[2],
+    paddingVertical: 0,
+  },
   row: { flexDirection: 'row', alignItems: 'center' },
   rankBubble: {
     width: 26,

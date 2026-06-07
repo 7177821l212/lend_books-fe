@@ -1,7 +1,7 @@
 /**
- * Avatar — initials with deterministic color from id, optional ring/badge.
+ * Avatar — shows photo if provided, falls back to deterministic-color initials.
  */
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { Image, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { Text } from './Text';
 import { colors, radii } from '@/theme';
@@ -12,6 +12,7 @@ interface AvatarProps {
   name: string;
   id?: string;
   size?: Size;
+  imageUrl?: string | null;
   ring?: 'success' | 'warning' | 'danger' | 'none';
   badge?: React.ReactNode;
   bgColor?: string;
@@ -60,6 +61,7 @@ export function Avatar({
   name,
   id,
   size = 'md',
+  imageUrl,
   ring = 'none',
   badge,
   bgColor,
@@ -80,13 +82,22 @@ export function Avatar({
           justifyContent: 'center',
           borderWidth: ring !== 'none' ? 2 : 0,
           borderColor: RING[ring],
+          overflow: 'hidden',
         },
         style,
       ]}
     >
-      <Text style={{ color: colors.white, fontSize: FONT[size], fontWeight: '700' }}>
-        {initials(name)}
-      </Text>
+      {imageUrl ? (
+        <Image
+          source={{ uri: imageUrl }}
+          style={{ width: dim, height: dim, borderRadius: radii.full }}
+          resizeMode="cover"
+        />
+      ) : (
+        <Text style={{ color: colors.white, fontSize: FONT[size], fontWeight: '700' }}>
+          {initials(name)}
+        </Text>
+      )}
       {badge ? <View style={styles.badge}>{badge}</View> : null}
     </View>
   );

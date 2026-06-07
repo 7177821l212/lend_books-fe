@@ -5,6 +5,7 @@ export interface CollectorSummary {
   name: string;
   email: string;
   phone: string | null;
+  photo_url: string | null;
   is_active: boolean;
 }
 
@@ -46,8 +47,17 @@ export const collectorApi = {
     return data;
   },
 
+  async activate(id: string): Promise<CollectorSummary> {
+    const { data } = await apiClient.patch<CollectorSummary>(`/collectors/${id}/activate`);
+    return data;
+  },
+
   async deactivate(id: string): Promise<CollectorSummary> {
     const { data } = await apiClient.patch<CollectorSummary>(`/collectors/${id}/deactivate`);
     return data;
+  },
+
+  async delete(id: string): Promise<void> {
+    await apiClient.delete(`/collectors/${id}`);
   },
 };

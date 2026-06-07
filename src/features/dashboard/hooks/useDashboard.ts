@@ -10,10 +10,15 @@ export function useDashboard() {
   });
 }
 
-export function useReports() {
+interface ReportFilters {
+  collector_id?: string;
+  period?: 'week' | 'month' | 'year';
+}
+
+export function useReports(filters: ReportFilters = {}) {
   return useQuery({
-    queryKey: ['reports'],
-    queryFn: () => dashboardApi.reports(),
+    queryKey: ['reports', filters],
+    queryFn: () => dashboardApi.reports(filters),
     staleTime: 60_000,
   });
 }

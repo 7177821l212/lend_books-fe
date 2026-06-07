@@ -18,6 +18,7 @@ export interface CreateCustomerPayload {
   phone: string;
   location?: string;
   risk_level?: RiskLevel;
+  photo_url?: string;
 }
 
 export interface UpdateCustomerPayload {
@@ -71,6 +72,10 @@ export const customerApi = {
   async unblacklist(id: string): Promise<Customer> {
     const { data } = await apiClient.delete<Customer>(`/customers/${id}/blacklist`);
     return data;
+  },
+
+  async delete(id: string): Promise<void> {
+    await apiClient.delete(`/customers/${id}`);
   },
 
   async listDocuments(customerId: string): Promise<CustomerDocument[]> {

@@ -5,7 +5,7 @@ import { View, type ViewStyle } from 'react-native';
 
 import { Text } from './Text';
 import { Button } from './Button';
-import { colors, spacing, radii } from '@/theme';
+import { useColors, spacing, radii } from '@/theme';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -17,6 +17,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, description, actionLabel, onAction, style }: EmptyStateProps) {
+  const colors = useColors();
   return (
     <View
       style={[
@@ -34,7 +35,7 @@ export function EmptyState({ icon, title, description, actionLabel, onAction, st
             width: 64,
             height: 64,
             borderRadius: radii.full,
-            backgroundColor: colors.brand[50],
+            backgroundColor: colors.slate[100],
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: spacing[3],
