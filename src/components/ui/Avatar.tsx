@@ -1,8 +1,11 @@
 /**
  * Avatar — shows photo if provided, falls back to deterministic-color initials.
+ * imageUrl may be a GCS object path (e.g. "photos/abc.jpg") or a full URL.
+ * GCS paths are resolved to signed URLs automatically via useSignedUrl.
  */
 import { Image, StyleSheet, View, type ViewStyle } from 'react-native';
 
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 import { Text } from './Text';
 import { colors, radii } from '@/theme';
 
@@ -69,6 +72,7 @@ export function Avatar({
 }: AvatarProps) {
   const dim = SIZE[size];
   const bg = bgColor ?? (id ? colorFromId(id) : colors.brand[600]);
+  const resolvedUrl = useSignedUrl(imageUrl);
 
   return (
     <View
@@ -87,9 +91,9 @@ export function Avatar({
         style,
       ]}
     >
-      {imageUrl ? (
+      {resolvedUrl ? (
         <Image
-          source={{ uri: imageUrl }}
+          source={{ uri: resolvedUrl }}
           style={{ width: dim, height: dim, borderRadius: radii.full }}
           resizeMode="cover"
         />

@@ -1,11 +1,17 @@
 /**
- * Uploads a local file:// URI to the backend and returns the hosted URL.
- * If the URI is already an http(s) URL it is returned as-is (already uploaded).
+ * Uploads a local file:// URI to the backend.
+ * Returns { objectName, signedUrl }:
+ *   - objectName  → save this to the DB as photo_url (e.g. "photos/abc.jpg")
+ *   - signedUrl   → use this for immediate display (valid 1 hour)
+ *
+ * If the URI is already an http(s) URL it is treated as an existing object name
+ * and returned unchanged (backwards-compat for already-stored full URLs).
  */
-import { tokenStorage } from '@/lib/tokenStorage';
-import { SECURE_STORE_KEYS } from '@/config/constants';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+
+import { SECURE_STORE_KEYS } from '@/config/constants';
+import { tokenStorage } from '@/lib/tokenStorage';
 
 function resolveServerRoot(): string {
   const apiUrl = (Constants.expoConfig?.extra as { apiUrl?: string | null } | undefined)?.apiUrl;
@@ -16,16 +22,19 @@ function resolveServerRoot(): string {
 
 const SERVER_ROOT = resolveServerRoot();
 
-export async function uploadPhoto(localUri: string): Promise<string> {
-  if (localUri.startsWith('http://') || localUri.startsWith('https://')) {
-    return localUri;
-  }
+export interface UploadResult {
+  objectName: string;
+  signedUrl: string;
+}
 
+export async function uploadPhoto(localUri: string): Promise<UploadResult> {
   const token = await tokenStorage.getItem(SECURE_STORE_KEYS.ACCESS_TOKEN);
 
   const filename = localUri.split('/').pop() ?? 'photo.jpg';
   const ext = filename.split('.').pop()?.toLowerCase() ?? 'jpg';
-  const mimeMap: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+  const mimeMap: Record<string, string> = {
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+  };
   const type = mimeMap[ext] ?? 'image/jpeg';
 
   const formData = new FormData();
@@ -33,10 +42,7 @@ export async function uploadPhoto(localUri: string): Promise<string> {
 
   const res = await fetch(`${SERVER_ROOT}/api/v1/upload/photo`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token ?? ''}`,
-      Accept: 'application/json',
-    },
+    headers: { Authorization: `Bearer ${token ?? ''}`, Accept: 'application/json' },
     body: formData,
   });
 
@@ -45,6 +51,6 @@ export async function uploadPhoto(localUri: string): Promise<string> {
     throw new Error(`Photo upload failed (${res.status}): ${text}`);
   }
 
-  const json = (await res.json()) as { url: string };
-  return json.url;
+  const json = (await res.json()) as { object_name: string; signed_url: string };
+  return { objectName: json.object_name, signedUrl: json.signed_url };
 }

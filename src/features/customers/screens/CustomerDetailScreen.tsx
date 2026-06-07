@@ -46,6 +46,7 @@ import {
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useT } from '@/i18n';
 import { uploadPhoto } from '@/lib/uploadPhoto';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 import {
   useBlacklistCustomer,
   useCustomer,
@@ -89,6 +90,7 @@ export function CustomerDetailScreen() {
   const [uploadDocType, setUploadDocType] = useState<string>(DOC_TYPES[0]);
   const activeLoans = loans.filter((l) => l.status === 'active' || l.status === 'overdue');
   const closedLoans = loans.filter((l) => l.status === 'closed');
+  const customerPhotoUrl = useSignedUrl(customer?.photo_url);
 
   if (isLoading || !customer) {
     return (
@@ -149,8 +151,8 @@ export function CustomerDetailScreen() {
         mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1],
       });
       if (!result.canceled) {
-        const hosted = await uploadPhoto(result.assets[0].uri);
-        await updateCustomer.mutateAsync({ photo_url: hosted });
+        const { objectName } = await uploadPhoto(result.assets[0].uri);
+        await updateCustomer.mutateAsync({ photo_url: objectName });
         toast.success('Photo updated');
       }
     };
@@ -162,8 +164,8 @@ export function CustomerDetailScreen() {
         mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1],
       });
       if (!result.canceled) {
-        const hosted = await uploadPhoto(result.assets[0].uri);
-        await updateCustomer.mutateAsync({ photo_url: hosted });
+        const { objectName } = await uploadPhoto(result.assets[0].uri);
+        await updateCustomer.mutateAsync({ photo_url: objectName });
         toast.success('Photo updated');
       }
     };
@@ -215,10 +217,10 @@ export function CustomerDetailScreen() {
 
         <View style={styles.heroRow}>
           <TouchableOpacity onPress={isInvestor ? handlePhotoUpload : undefined} activeOpacity={isInvestor ? 0.7 : 1}>
-            {customer.photo_url ? (
+            {customerPhotoUrl ? (
               <View style={{ position: 'relative' }}>
                 <Image
-                  source={{ uri: customer.photo_url }}
+                  source={{ uri: customerPhotoUrl }}
                   style={[styles.photo, { borderColor: customer.is_blacklisted ? colors.danger : 'rgba(255,255,255,0.3)' }]}
                 />
                 {isInvestor ? (
