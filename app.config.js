@@ -13,15 +13,18 @@ module.exports = {
     android: {
       package: 'ai.genworx.lendbook',
     },
-    plugins: ['expo-secure-store'],
+    plugins: ['expo-secure-store', 'expo-updates'],
+    updates: {
+      url: 'https://u.expo.dev/3f903d78-9a29-46c5-8b24-70e7a1e46269',
+    },
     extra: {
-      // `apiUrl` MUST be set explicitly for any non-dev build.
-      // In production we leave it `null` and let the runtime crash loudly rather
-      // than silently default to a localhost URL that mobile devices can't reach.
+      eas: {
+        projectId: '3f903d78-9a29-46c5-8b24-70e7a1e46269',
+      },
       apiUrl:
         process.env.API_URL ??
         (process.env.EAS_BUILD || process.env.NODE_ENV === 'production'
-          ? null
+          ? 'https://lendbook-be-638388576672.asia-south1.run.app/api/v1'
           : 'http://localhost:8000/api/v1'),
     },
     runtimeVersion: {
