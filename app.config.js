@@ -6,12 +6,26 @@ module.exports = {
     orientation: 'portrait',
     scheme: 'lendbook',
     userInterfaceStyle: 'light',
+    icon: './assets/icon.png',
+    splash: {
+      image: './assets/splash.png',
+      resizeMode: 'contain',
+      backgroundColor: '#ffffff',
+    },
     ios: {
       supportsTablet: false,
       bundleIdentifier: 'ai.genworx.lendbook',
+      icon: './assets/icon.png',
     },
     android: {
       package: 'ai.genworx.lendbook',
+      adaptiveIcon: {
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundColor: '#16a34a',
+      },
+    },
+    web: {
+      favicon: './assets/favicon.png',
     },
     plugins: ['expo-secure-store'],
     extra: {
