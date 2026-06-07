@@ -78,16 +78,17 @@ export function NewCustomerScreen() {
 
   const submit = async (values: FormValues) => {
     try {
-      let hostedPhotoUrl: string | undefined;
+      let photoObjectName: string | undefined;
       if (photoUrl) {
-        hostedPhotoUrl = await uploadPhoto(photoUrl);
+        const uploaded = await uploadPhoto(photoUrl);
+        photoObjectName = uploaded.objectName;
       }
       const customer = await create.mutateAsync({
         name: values.name.trim(),
         phone: values.phone.trim(),
         location: values.location?.trim() || undefined,
         risk_level: values.risk_level,
-        photo_url: hostedPhotoUrl,
+        photo_url: photoObjectName,
       });
       toast.success('Customer added');
       nav.replace('CustomerDetail', { id: customer.id });

@@ -40,6 +40,7 @@ import {
 } from '../hooks/useCollectors';
 import { useT } from '@/i18n';
 import { uploadPhoto } from '@/lib/uploadPhoto';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 import { useColors, layout, radii, spacing } from '@/theme';
 
 type Route = RouteProp<TeamStackParamList, 'CollectorDetail'>;
@@ -89,11 +90,12 @@ export function CollectorDetailScreen() {
   const handleSave = async () => {
     if (!name.trim()) { toast.warning('Name is required'); return; }
     try {
-      let hostedPhotoUrl: string | undefined = photoUrl;
-      if (photoUrl && !photoUrl.startsWith('http')) {
-        hostedPhotoUrl = await uploadPhoto(photoUrl);
+      let photoObjectName: string | undefined = photoUrl;
+      if (photoUrl && photoUrl.startsWith('file://')) {
+        const uploaded = await uploadPhoto(photoUrl);
+        photoObjectName = uploaded.objectName;
       }
-      await updateCollector.mutateAsync({ id: params.id, payload: { name: name.trim(), phone: phone.trim() || undefined, photo_url: hostedPhotoUrl } });
+      await updateCollector.mutateAsync({ id: params.id, payload: { name: name.trim(), phone: phone.trim() || undefined, photo_url: photoObjectName } });
       toast.success('Collector updated');
       setEditing(false);
     } catch { toast.error('Failed to save changes'); }
@@ -153,7 +155,10 @@ export function CollectorDetailScreen() {
   }
 
   const isInactive = !collector.is_active;
-  const displayPhoto = editing ? photoUrl : collector.photo_url;
+  // When editing, show local file:// URI immediately; otherwise resolve GCS object path
+  const rawDisplayPhoto = editing ? photoUrl : collector.photo_url;
+  const resolvedCollectorPhoto = useSignedUrl(editing ? null : collector.photo_url);
+  const displayPhoto = editing ? rawDisplayPhoto : resolvedCollectorPhoto;
 
   return (
     <Screen padded={false} background="default" edges={[]}>

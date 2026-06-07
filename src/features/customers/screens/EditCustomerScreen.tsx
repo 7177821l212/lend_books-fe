@@ -78,16 +78,17 @@ export function EditCustomerScreen() {
       return;
     }
     try {
-      let hostedPhotoUrl: string | undefined = photoUrl;
-      if (photoUrl && !photoUrl.startsWith('http')) {
-        hostedPhotoUrl = await uploadPhoto(photoUrl);
+      let photoObjectName: string | undefined = photoUrl;
+      if (photoUrl && photoUrl.startsWith('file://')) {
+        const uploaded = await uploadPhoto(photoUrl);
+        photoObjectName = uploaded.objectName;
       }
       await update.mutateAsync({
         name: name.trim(),
         phone: phone.trim(),
         location: location.trim() || undefined,
         risk_level: riskLevel,
-        photo_url: hostedPhotoUrl,
+        photo_url: photoObjectName,
       });
       toast.success('Customer updated');
       nav.goBack();
