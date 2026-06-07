@@ -18,7 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Text } from './Text';
-import { colors, radii, spacing, shadows, haptic, spring } from '@/theme';
+import { useColors, radii, spacing, shadows, haptic, spring } from '@/theme';
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
@@ -39,24 +39,6 @@ const HEIGHT: Record<Size, number> = { sm: 40, md: 48, lg: 56 };
 const PAD_X: Record<Size, number> = { sm: spacing[3], md: spacing[5], lg: spacing[6] };
 const RADII: Record<Size, number> = { sm: radii.md, md: radii.lg, lg: radii.xl };
 
-const VARIANT_BG: Record<Variant, string> = {
-  primary: colors.brand[600],
-  secondary: colors.slate[900],
-  outline: 'transparent',
-  ghost: 'transparent',
-  danger: colors.danger,
-};
-const VARIANT_LABEL: Record<Variant, ComponentProps<typeof Text>['color']> = {
-  primary: 'onBrand',
-  secondary: 'onDark',
-  outline: 'primary',
-  ghost: 'primary',
-  danger: 'onDark',
-};
-const VARIANT_BORDER: Partial<Record<Variant, string>> = {
-  outline: colors.brand[600],
-};
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function Button({
@@ -73,6 +55,26 @@ export function Button({
   style,
   ...rest
 }: ButtonProps) {
+  const colors = useColors();
+
+  const VARIANT_BG: Record<Variant, string> = {
+    primary: colors.brand[600],
+    secondary: colors.slate[200],
+    outline: 'transparent',
+    ghost: 'transparent',
+    danger: colors.danger,
+  };
+  const VARIANT_LABEL: Record<Variant, ComponentProps<typeof Text>['color']> = {
+    primary: 'onBrand',
+    secondary: 'primary',
+    outline: 'primary',
+    ghost: 'primary',
+    danger: 'onDark',
+  };
+  const VARIANT_BORDER: Partial<Record<Variant, string>> = {
+    outline: colors.brand[600],
+  };
+
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -124,7 +126,7 @@ export function Button({
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' || variant === 'secondary' || variant === 'danger' ? colors.white : colors.brand[700]} />
+        <ActivityIndicator color={variant === 'primary' || variant === 'danger' ? colors.white : colors.brand[700]} />
       ) : (
         <>
           {leadingIcon}

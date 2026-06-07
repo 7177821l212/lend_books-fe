@@ -7,10 +7,10 @@ import {
   CheckCircle,
   Edit2,
   FileText,
-  Image as ImageIcon,
   MessageSquare,
   Phone,
   Plus,
+  Trash2,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import {
@@ -45,10 +45,13 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useT } from '@/i18n';
+import { uploadPhoto } from '@/lib/uploadPhoto';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 import {
   useBlacklistCustomer,
   useCustomer,
   useCustomerDocuments,
+  useDeleteCustomer,
   useUnblacklistCustomer,
   useUpdateCustomer,
   useUploadDocument,
@@ -78,6 +81,7 @@ export function CustomerDetailScreen() {
   const { data: loansPage } = useCustomerLoans(params.id);
   const blacklist = useBlacklistCustomer();
   const unblacklist = useUnblacklistCustomer();
+  const deleteCustomer = useDeleteCustomer();
   const upload = useUploadDocument(params.id);
   const updateCustomer = useUpdateCustomer(params.id);
   const loans = loansPage?.items ?? [];
@@ -86,6 +90,7 @@ export function CustomerDetailScreen() {
   const [uploadDocType, setUploadDocType] = useState<string>(DOC_TYPES[0]);
   const activeLoans = loans.filter((l) => l.status === 'active' || l.status === 'overdue');
   const closedLoans = loans.filter((l) => l.status === 'closed');
+  const customerPhotoUrl = useSignedUrl(customer?.photo_url);
 
   if (isLoading || !customer) {
     return (
@@ -146,7 +151,8 @@ export function CustomerDetailScreen() {
         mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1],
       });
       if (!result.canceled) {
-        await updateCustomer.mutateAsync({ photo_url: result.assets[0].uri });
+        const { objectName } = await uploadPhoto(result.assets[0].uri);
+        await updateCustomer.mutateAsync({ photo_url: objectName });
         toast.success('Photo updated');
       }
     };
@@ -158,7 +164,8 @@ export function CustomerDetailScreen() {
         mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1],
       });
       if (!result.canceled) {
-        await updateCustomer.mutateAsync({ photo_url: result.assets[0].uri });
+        const { objectName } = await uploadPhoto(result.assets[0].uri);
+        await updateCustomer.mutateAsync({ photo_url: objectName });
         toast.success('Photo updated');
       }
     };
@@ -210,10 +217,10 @@ export function CustomerDetailScreen() {
 
         <View style={styles.heroRow}>
           <TouchableOpacity onPress={isInvestor ? handlePhotoUpload : undefined} activeOpacity={isInvestor ? 0.7 : 1}>
-            {customer.photo_url ? (
+            {customerPhotoUrl ? (
               <View style={{ position: 'relative' }}>
                 <Image
-                  source={{ uri: customer.photo_url }}
+                  source={{ uri: customerPhotoUrl }}
                   style={[styles.photo, { borderColor: customer.is_blacklisted ? colors.danger : 'rgba(255,255,255,0.3)' }]}
                 />
                 {isInvestor ? (
@@ -420,6 +427,43 @@ export function CustomerDetailScreen() {
             onPress={() => setShowBlacklistModal(true)}
             leadingIcon={<Ban size={16} color="#fff" />}
             style={{ marginTop: spacing[6] }}
+          />
+        ) : null}
+
+        {isInvestor ? (
+          <Button
+            label={t('delete_customer')}
+            variant="danger"
+            fullWidth
+            size="lg"
+            leadingIcon={<Trash2 size={16} color="#fff" />}
+            loading={deleteCustomer.isPending}
+            style={{ marginTop: spacing[2] }}
+            onPress={() => {
+              if (Platform.OS === 'ios' || Platform.OS === 'android') {
+                Alert.alert(
+                  t('delete_customer'),
+                  `${t('delete_customer_warn')}\n\n${t('cannot_undo')}`,
+                  [
+                    { text: t('cancel'), style: 'cancel' },
+                    {
+                      text: t('delete'),
+                      style: 'destructive',
+                      onPress: async () => {
+                        try {
+                          await deleteCustomer.mutateAsync(customer.id);
+                          toast.success('Customer deleted');
+                          nav.navigate('CustomerList');
+                        } catch (e) {
+                          const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Failed';
+                          toast.error(typeof detail === 'string' ? detail : 'Failed');
+                        }
+                      },
+                    },
+                  ]
+                );
+              }
+            }}
           />
         ) : null}
 

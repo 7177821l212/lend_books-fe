@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 import { Text } from './Text';
-import { colors, fontFamily, fontSize, radii, spacing } from '@/theme';
+import { useColors, fontFamily, fontSize, radii, spacing } from '@/theme';
 
 interface InputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
@@ -33,6 +33,7 @@ export function Input({
   onBlur,
   ...rest
 }: InputProps) {
+  const colors = useColors();
   const [focused, setFocused] = useState(false);
 
   const borderColor = error
@@ -50,16 +51,21 @@ export function Input({
       ) : null}
       <View
         style={[
-          styles.container,
           {
-            backgroundColor: colors.slate[50],
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderRadius: radii.lg,
+            borderWidth: 1.5,
+            paddingHorizontal: spacing[3],
+            minHeight: 48,
+            backgroundColor: colors.slate[100],
             borderColor,
           },
         ]}
       >
         {leadingIcon ? <View style={styles.icon}>{leadingIcon}</View> : null}
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: colors.text.primary }]}
           placeholderTextColor={colors.text.placeholder}
           selectionColor={colors.brand[600]}
           onFocus={(e) => {
@@ -88,19 +94,10 @@ export function Input({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: radii.lg,
-    borderWidth: 1.5,
-    paddingHorizontal: spacing[3],
-    minHeight: 48,
-  },
   input: {
     flex: 1,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.base,
-    color: colors.text.primary,
     paddingVertical: 0,
   },
   icon: {

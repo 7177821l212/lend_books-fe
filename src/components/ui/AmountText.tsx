@@ -5,7 +5,7 @@
 import { View, type StyleProp, type TextStyle } from 'react-native';
 
 import { Text } from './Text';
-import { colors, fontFamily } from '@/theme';
+import { useColors, fontFamily } from '@/theme';
 
 type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
 
@@ -47,17 +47,18 @@ export function AmountText({
   bold = true,
   style,
 }: AmountTextProps) {
+  const colors = useColors();
   const formatted = formatINR(value, short);
   const px = SIZE_PX[size];
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       {symbol ? (
         <Text
           style={[
             {
               fontFamily: bold ? fontFamily.semibold : fontFamily.regular,
-              fontSize: px * 0.7,
+              fontSize: px,
               color: color ?? colors.text.primary,
               marginRight: 1,
             },

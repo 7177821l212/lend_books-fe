@@ -1,12 +1,15 @@
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import { Camera } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigator';
-import { Button, Card, Input, Screen, Text, useToast } from '@/components/ui';
+import { Avatar, Button, Card, Input, Screen, Text, useToast } from '@/components/ui';
 import { useCustomer, useUpdateCustomer } from '../hooks/useCustomers';
 import { useT } from '@/i18n';
+import { uploadPhoto } from '@/lib/uploadPhoto';
 import { useColors, layout, radii, spacing } from '@/theme';
 import type { RiskLevel } from '@/types';
 
@@ -34,6 +37,7 @@ export function EditCustomerScreen() {
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('');
   const [riskLevel, setRiskLevel] = useState<RiskLevel>('low');
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [initialised, setInitialised] = useState(false);
 
   if (customer && !initialised) {
@@ -41,8 +45,18 @@ export function EditCustomerScreen() {
     setPhone(customer.phone);
     setLocation(customer.location ?? '');
     setRiskLevel(customer.risk_level);
+    setPhotoUrl(customer.photo_url ?? undefined);
     setInitialised(true);
   }
+
+  const handlePickPhoto = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { toast.warning('Gallery permission needed'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1],
+    });
+    if (!result.canceled) setPhotoUrl(result.assets[0].uri);
+  };
 
   if (isLoading || !customer) {
     return (
@@ -64,11 +78,17 @@ export function EditCustomerScreen() {
       return;
     }
     try {
+      let photoObjectName: string | undefined = photoUrl;
+      if (photoUrl && photoUrl.startsWith('file://')) {
+        const uploaded = await uploadPhoto(photoUrl);
+        photoObjectName = uploaded.objectName;
+      }
       await update.mutateAsync({
         name: name.trim(),
         phone: phone.trim(),
         location: location.trim() || undefined,
         risk_level: riskLevel,
+        photo_url: photoObjectName,
       });
       toast.success('Customer updated');
       nav.goBack();
@@ -99,6 +119,23 @@ export function EditCustomerScreen() {
       </View>
 
       <View style={{ padding: layout.screenPaddingX, marginTop: spacing[4] }}>
+        {/* Photo picker */}
+        <View style={{ alignItems: 'center', marginBottom: spacing[4] }}>
+          <TouchableOpacity onPress={handlePickPhoto} style={styles.photoPicker}>
+            {photoUrl ? (
+              <Image source={{ uri: photoUrl }} style={styles.photoImg} />
+            ) : (
+              <Avatar name={name || '?'} id={params.id} size="2xl" />
+            )}
+            <View style={[styles.cameraBtn, { backgroundColor: colors.brand[600] }]}>
+              <Camera size={14} color="#fff" />
+            </View>
+          </TouchableOpacity>
+          <Text variant="caption" color="tertiary" style={{ marginTop: spacing[2] }}>
+            Tap to change photo
+          </Text>
+        </View>
+
         <Input
           label={t('full_name')}
           value={name}
@@ -178,6 +215,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing[3],
   },
   backBtn: { width: 36, alignItems: 'flex-start' },
+  photoPicker: { position: 'relative' },
+  photoImg: { width: 72, height: 72, borderRadius: 36 },
+  cameraBtn: {
+    position: 'absolute', bottom: 0, right: 0,
+    width: 24, height: 24, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
   riskRow: { flexDirection: 'row', gap: spacing[2] },
   riskBtn: {
     flex: 1,

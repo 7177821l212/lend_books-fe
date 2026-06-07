@@ -43,10 +43,35 @@ export function useUpdateCollector() {
   });
 }
 
+export function useActivateCollector() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => collectorApi.activate(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['collectors'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
 export function useDeactivateCollector() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => collectorApi.deactivate(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['collectors'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['collectors'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+export function useDeleteCollector() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => collectorApi.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['collectors'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
   });
 }

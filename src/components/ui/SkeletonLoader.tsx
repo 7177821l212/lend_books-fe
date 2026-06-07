@@ -12,7 +12,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 
-import { colors, radii } from '@/theme';
+import { useColors, radii } from '@/theme';
 
 interface SkeletonLoaderProps {
   width?: DimensionValue;
@@ -27,6 +27,7 @@ export function SkeletonLoader({
   radius = radii.md,
   style,
 }: SkeletonLoaderProps) {
+  const colors = useColors();
   const shimmer = useSharedValue(0);
 
   useEffect(() => {

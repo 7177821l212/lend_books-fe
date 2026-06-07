@@ -5,14 +5,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ChevronLeft, MapPin, Phone, User } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { Camera, ChevronLeft, MapPin, Phone, User } from 'lucide-react-native';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
 import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigator';
 import {
+  Avatar,
   Button,
   Card,
   GradientBackground,
@@ -24,7 +27,8 @@ import {
 } from '@/components/ui';
 import { useCreateCustomer } from '@/features/customers/hooks/useCustomers';
 import { useT } from '@/i18n';
-import { colors, layout, radii, spacing } from '@/theme';
+import { uploadPhoto } from '@/lib/uploadPhoto';
+import { useColors, layout, radii, spacing } from '@/theme';
 import type { RiskLevel } from '@/types';
 
 type Nav = NativeStackNavigationProp<CustomersStackParamList, 'NewCustomer'>;
@@ -42,9 +46,20 @@ type FormValues = z.infer<typeof schema>;
 export function NewCustomerScreen() {
   const t = useT();
   const insets = useSafeAreaInsets();
+  const colors = useColors();
   const nav = useNavigation<Nav>();
   const toast = useToast();
   const create = useCreateCustomer();
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
+
+  const handlePickPhoto = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { toast.warning('Gallery permission needed'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1],
+    });
+    if (!result.canceled) setPhotoUrl(result.assets[0].uri);
+  };
 
   const RISKS: Array<{ key: RiskLevel; label: string; tone: 'success' | 'warning' | 'danger' }> = [
     { key: 'low', label: t('risk_low'), tone: 'success' },
@@ -63,11 +78,17 @@ export function NewCustomerScreen() {
 
   const submit = async (values: FormValues) => {
     try {
+      let photoObjectName: string | undefined;
+      if (photoUrl) {
+        const uploaded = await uploadPhoto(photoUrl);
+        photoObjectName = uploaded.objectName;
+      }
       const customer = await create.mutateAsync({
         name: values.name.trim(),
         phone: values.phone.trim(),
         location: values.location?.trim() || undefined,
         risk_level: values.risk_level,
+        photo_url: photoObjectName,
       });
       toast.success('Customer added');
       nav.replace('CustomerDetail', { id: customer.id });
@@ -110,6 +131,23 @@ export function NewCustomerScreen() {
         style={{ flex: 1 }}
       >
         <View style={styles.body}>
+          {/* Photo picker */}
+          <View style={{ alignItems: 'center', marginBottom: spacing[4] }}>
+            <TouchableOpacity onPress={handlePickPhoto} style={styles.photoPicker}>
+              {photoUrl ? (
+                <Image source={{ uri: photoUrl }} style={styles.photoImg} />
+              ) : (
+                <Avatar name="?" size="2xl" />
+              )}
+              <View style={[styles.cameraBtn, { backgroundColor: colors.brand[600] }]}>
+                <Camera size={14} color="#fff" />
+              </View>
+            </TouchableOpacity>
+            <Text variant="caption" color="tertiary" style={{ marginTop: spacing[2] }}>
+              Tap to add photo
+            </Text>
+          </View>
+
           <Card padding={5}>
             <Controller
               control={control}
@@ -219,28 +257,21 @@ export function NewCustomerScreen() {
 }
 
 const styles = StyleSheet.create({
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  topRow: { flexDirection: 'row', alignItems: 'center' },
+  body: { flex: 1, padding: layout.screenPaddingX },
+  photoPicker: { position: 'relative' },
+  photoImg: { width: 72, height: 72, borderRadius: 36 },
+  cameraBtn: {
+    position: 'absolute', bottom: 0, right: 0,
+    width: 24, height: 24, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
   },
-  body: {
-    flex: 1,
-    padding: layout.screenPaddingX,
-  },
-  riskRow: {
-    flexDirection: 'row',
-    gap: spacing[2],
-  },
+  riskRow: { flexDirection: 'row', gap: spacing[2] },
   riskChip: {
     flex: 1,
     paddingVertical: spacing[3],
     borderRadius: radii.lg,
     borderWidth: 1.5,
-    borderColor: colors.border.default,
-    backgroundColor: colors.slate[50],
   },
-  riskChipSelected: {
-    borderColor: colors.brand[600],
-    backgroundColor: colors.brand[50],
-  },
+  riskChipSelected: {},
 });

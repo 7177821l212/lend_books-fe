@@ -65,8 +65,8 @@ export const dashboardApi = {
     const { data } = await apiClient.get<DashboardResponse>('/dashboard');
     return data;
   },
-  async reports(): Promise<ReportsResponse> {
-    const { data } = await apiClient.get<ReportsResponse>('/reports');
+  async reports(params?: { collector_id?: string; period?: 'week' | 'month' | 'year' }): Promise<ReportsResponse> {
+    const { data } = await apiClient.get<ReportsResponse>('/reports', { params });
     return data;
   },
 };

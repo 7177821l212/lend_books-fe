@@ -28,6 +28,7 @@ export function CustomerListItem({ customer, onPress }: CustomerListItemProps) {
           name={customer.name}
           id={customer.id}
           size="lg"
+          imageUrl={customer.photo_url}
           ring={customer.is_blacklisted ? 'danger' : 'none'}
         />
         <View style={styles.body}>

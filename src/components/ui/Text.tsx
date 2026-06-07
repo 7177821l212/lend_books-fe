@@ -3,7 +3,7 @@
  */
 import { Text as RNText, type TextProps as RNTextProps, type StyleProp, type TextStyle } from 'react-native';
 
-import { colors, textVariants, type TextVariantKey } from '@/theme';
+import { useColors, textVariants, type TextVariantKey } from '@/theme';
 
 type ColorKey = 'primary' | 'secondary' | 'tertiary' | 'onBrand' | 'onDark' | 'placeholder' | 'disabled';
 
@@ -24,6 +24,7 @@ export function Text({
   children,
   ...rest
 }: TextProps) {
+  const colors = useColors();
   const resolvedColor =
     (colors.text as Record<string, string>)[color] ?? color;
 
