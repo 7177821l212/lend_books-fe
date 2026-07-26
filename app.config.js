@@ -27,7 +27,17 @@ module.exports = {
     web: {
       favicon: './assets/favicon.png',
     },
-    plugins: ['expo-secure-store', 'expo-updates'],
+    plugins: [
+      'expo-secure-store',
+      'expo-updates',
+      [
+        'expo-location',
+        {
+          locationWhenInUsePermission:
+            'LendBook uses your location while the app is open so your investor can see where you are during collections.',
+        },
+      ],
+    ],
     updates: {
       url: 'https://u.expo.dev/3f903d78-9a29-46c5-8b24-70e7a1e46269',
     },

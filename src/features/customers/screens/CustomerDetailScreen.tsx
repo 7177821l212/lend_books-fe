@@ -15,7 +15,6 @@ import {
 import { useState } from 'react';
 import {
   ActionSheetIOS,
-  ActivityIndicator,
   Alert,
   Image,
   Linking,
@@ -30,6 +29,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigator';
+import type { CustomerDocument } from '@/features/customers/api/customerApi';
 import {
   AmountText,
   Avatar,
@@ -40,6 +40,7 @@ import {
   GradientBackground,
   IconButton,
   Screen,
+  SkeletonLoader,
   Text,
   useToast,
 } from '@/components/ui';
@@ -92,14 +93,21 @@ export function CustomerDetailScreen() {
   const closedLoans = loans.filter((l) => l.status === 'closed');
   const customerPhotoUrl = useSignedUrl(customer?.photo_url);
 
+  // When reached via a cross-tab deep link (e.g. Reports' overdue/blacklisted
+  // lists), this screen may be the only entry in the Customers stack —
+  // navigate('CustomerList') would then push a NEW list screen instead of
+  // popping back to one, leaving a phantom entry that a second back-press
+  // loops back into. Prefer a true pop when history exists.
+  const goBackOrToList = () => {
+    if (nav.canGoBack()) {
+      nav.goBack();
+    } else {
+      nav.navigate('CustomerList');
+    }
+  };
+
   if (isLoading || !customer) {
-    return (
-      <Screen background="default" edges={['top']}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.brand[600]} />
-        </View>
-      </Screen>
-    );
+    return <CustomerDetailSkeleton insetsTop={insets.top} onBack={goBackOrToList} />;
   }
 
   const handleBlacklist = async () => {
@@ -136,7 +144,7 @@ export function CustomerDetailScreen() {
     if (result.canceled) return;
     const uri = result.assets[0].uri;
     try {
-      await upload.mutateAsync({ doc_type: docType, file_url: uri });
+      await upload.mutateAsync({ doc_type: docType, local_uri: uri });
       toast.success(`${docType} uploaded`);
     } catch {
       toast.error('Upload failed');
@@ -201,7 +209,7 @@ export function CustomerDetailScreen() {
             icon={<Text variant="h2" color="onDark" style={{ marginTop: -2 }}>‹</Text>}
             variant="glass"
             size="md"
-            onPress={() => nav.navigate('CustomerList')}
+            onPress={goBackOrToList}
             accessibilityLabel="Back"
           />
           {isInvestor ? (
@@ -379,43 +387,15 @@ export function CustomerDetailScreen() {
           <Text variant="title">{t('documents')}</Text>
         </View>
         <View style={styles.docGrid}>
-          {DOC_TYPES.map((label) => {
-            const existing = documents?.find((d) => d.doc_type === label);
-            return (
-              <Card
-                key={label}
-                padding={3}
-                style={styles.docTile}
-                shadow="xs"
-                onPress={
-                  existing
-                    ? () => Linking.openURL(existing.file_url)
-                    : isInvestor
-                    ? () => handleUploadDoc(label)
-                    : undefined
-                }
-              >
-                <View
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: radii.full,
-                    backgroundColor: existing ? colors.brand[50] : colors.slate[100],
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <FileText size={18} color={existing ? colors.brand[700] : colors.slate[400]} />
-                </View>
-                <Text variant="label" style={{ marginTop: spacing[1.5] }}>
-                  {label}
-                </Text>
-                <Text variant="caption" style={{ color: existing ? colors.brand[600] : colors.text.tertiary }}>
-                  {existing ? t('tap_to_view') : isInvestor ? t('upload') : t('missing')}
-                </Text>
-              </Card>
-            );
-          })}
+          {DOC_TYPES.map((label) => (
+            <DocTile
+              key={label}
+              label={label}
+              existing={documents?.find((d) => d.doc_type === label)}
+              canUpload={isInvestor}
+              onUpload={() => handleUploadDoc(label)}
+            />
+          ))}
         </View>
 
         {isInvestor && !customer.is_blacklisted ? (
@@ -518,6 +498,126 @@ export function CustomerDetailScreen() {
         </Modal>
       </View>
     </Screen>
+  );
+}
+
+/** Mirrors the loaded screen's shape: gradient hero, KPI row, loan list rows. */
+function CustomerDetailSkeleton({ insetsTop, onBack }: { insetsTop: number; onBack: () => void }) {
+  return (
+    <Screen padded={false} background="default" edges={[]} scroll>
+      <GradientBackground
+        gradient="hero"
+        style={{
+          paddingTop: insetsTop + spacing[2],
+          paddingHorizontal: layout.screenPaddingX,
+          paddingBottom: spacing[6],
+          borderBottomLeftRadius: radii['3xl'],
+          borderBottomRightRadius: radii['3xl'],
+        }}
+      >
+        <View style={styles.topRow}>
+          <IconButton
+            icon={<Text variant="h2" color="onDark" style={{ marginTop: -2 }}>‹</Text>}
+            variant="glass"
+            size="md"
+            onPress={onBack}
+            accessibilityLabel="Back"
+          />
+        </View>
+
+        <View style={styles.heroRow}>
+          <SkeletonLoader width={72} height={72} radius={36} />
+          <View style={{ flex: 1, marginLeft: spacing[4] }}>
+            <SkeletonLoader width="65%" height={22} delay={0} />
+            <SkeletonLoader width="40%" height={13} style={{ marginTop: spacing[2] }} delay={1} />
+          </View>
+        </View>
+
+        <Card padding={4} style={{ marginTop: spacing[5], backgroundColor: 'rgba(255,255,255,0.12)' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ gap: spacing[2] }}>
+              <SkeletonLoader width={90} height={11} delay={0} />
+              <SkeletonLoader width={120} height={30} delay={1} />
+            </View>
+            <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+              <SkeletonLoader width={40} height={40} radius={radii.full} delay={0} />
+              <SkeletonLoader width={40} height={40} radius={radii.full} delay={1} />
+            </View>
+          </View>
+        </Card>
+      </GradientBackground>
+
+      <View style={{ padding: layout.screenPaddingX }}>
+        <View style={styles.kpiRow}>
+          {[0, 1, 2].map((i) => (
+            <Card key={i} padding={3} style={styles.kpi}>
+              <SkeletonLoader width={28} height={22} delay={i} />
+              <SkeletonLoader width={44} height={10} style={{ marginTop: spacing[1.5] }} delay={i} />
+            </Card>
+          ))}
+        </View>
+
+        <SkeletonLoader width={70} height={18} style={{ marginBottom: spacing[3] }} />
+        {[0, 1].map((i) => (
+          <Card key={i} padding={4} style={{ marginBottom: spacing[2.5] }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flex: 1, gap: spacing[2] }}>
+                <SkeletonLoader width="50%" height={15} delay={i} />
+                <SkeletonLoader width="30%" height={11} delay={i} />
+              </View>
+              <SkeletonLoader width={60} height={20} delay={i} />
+            </View>
+          </Card>
+        ))}
+      </View>
+    </Screen>
+  );
+}
+
+interface DocTileProps {
+  label: string;
+  existing: CustomerDocument | undefined;
+  canUpload: boolean;
+  onUpload: () => void;
+}
+
+function DocTile({ label, existing, canUpload, onUpload }: DocTileProps) {
+  const t = useT();
+  const colors = useColors();
+  const toast = useToast();
+  const resolvedUrl = useSignedUrl(existing?.file_url);
+
+  const handleOpen = () => {
+    if (!resolvedUrl) return;
+    Linking.openURL(resolvedUrl).catch(() => toast.error('Could not open document'));
+  };
+
+  return (
+    <Card
+      padding={3}
+      style={styles.docTile}
+      shadow="xs"
+      onPress={existing ? handleOpen : canUpload ? onUpload : undefined}
+    >
+      <View
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: radii.full,
+          backgroundColor: existing ? colors.brand[50] : colors.slate[100],
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <FileText size={18} color={existing ? colors.brand[700] : colors.slate[400]} />
+      </View>
+      <Text variant="label" style={{ marginTop: spacing[1.5] }}>
+        {label}
+      </Text>
+      <Text variant="caption" style={{ color: existing ? colors.brand[600] : colors.text.tertiary }}>
+        {existing ? t('tap_to_view') : canUpload ? t('upload') : t('missing')}
+      </Text>
+    </Card>
   );
 }
 

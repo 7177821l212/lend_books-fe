@@ -47,7 +47,8 @@ export function useActivateCollector() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => collectorApi.activate(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['collector', id] });
       qc.invalidateQueries({ queryKey: ['collectors'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
@@ -58,7 +59,8 @@ export function useDeactivateCollector() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => collectorApi.deactivate(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['collector', id] });
       qc.invalidateQueries({ queryKey: ['collectors'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
@@ -73,5 +75,15 @@ export function useDeleteCollector() {
       qc.invalidateQueries({ queryKey: ['collectors'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
+  });
+}
+
+/** Investor-only — last-known location for every active collector. Refetches while the screen is open. */
+export function useCollectorLocations() {
+  return useQuery({
+    queryKey: ['collector-locations'],
+    queryFn: () => collectorApi.listLocations(),
+    staleTime: 20_000,
+    refetchInterval: 30_000,
   });
 }

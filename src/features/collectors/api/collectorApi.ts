@@ -26,6 +26,23 @@ export interface UpdateCollectorPayload {
   photo_url?: string;
 }
 
+export interface LocationReportPayload {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  recorded_at?: string;
+}
+
+export interface CollectorLocation {
+  collector_id: string;
+  collector_name: string;
+  photo_url: string | null;
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+  recorded_at: string;
+}
+
 export const collectorApi = {
   async list(): Promise<CollectorSummary[]> {
     const { data } = await apiClient.get<CollectorSummary[]>('/collectors');
@@ -59,5 +76,14 @@ export const collectorApi = {
 
   async delete(id: string): Promise<void> {
     await apiClient.delete(`/collectors/${id}`);
+  },
+
+  async reportLocation(payload: LocationReportPayload): Promise<void> {
+    await apiClient.post('/collectors/me/location', payload);
+  },
+
+  async listLocations(): Promise<CollectorLocation[]> {
+    const { data } = await apiClient.get<CollectorLocation[]>('/collectors/locations');
+    return data;
   },
 };
