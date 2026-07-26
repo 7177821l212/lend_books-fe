@@ -40,7 +40,20 @@ export interface CustomerDocument {
 
 export interface UploadDocumentPayload {
   doc_type: string;
-  file_url: string;
+  /** Local file:// URI from the image/document picker. */
+  local_uri: string;
+}
+
+function guessMimeType(uri: string): string {
+  const ext = uri.split('.').pop()?.toLowerCase() ?? '';
+  const map: Record<string, string> = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    pdf: 'application/pdf',
+  };
+  return map[ext] ?? 'application/octet-stream';
 }
 
 export const customerApi = {
@@ -89,9 +102,17 @@ export const customerApi = {
     customerId: string,
     payload: UploadDocumentPayload
   ): Promise<CustomerDocument> {
+    const filename = payload.local_uri.split('/').pop() ?? 'document';
+    const type = guessMimeType(payload.local_uri);
+
+    const formData = new FormData();
+    formData.append('doc_type', payload.doc_type);
+    formData.append('file', { uri: payload.local_uri, name: filename, type } as unknown as Blob);
+
     const { data } = await apiClient.post<CustomerDocument>(
       `/customers/${customerId}/documents`,
-      payload
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
     );
     return data;
   },

@@ -11,6 +11,7 @@ import {
   EmptyState,
   GradientBackground,
   Screen,
+  SkeletonLoader,
   Text,
 } from '@/components/ui';
 import { usePaymentHistory } from '@/features/payments/hooks/usePayments';
@@ -21,7 +22,7 @@ import type { Payment } from '@/types';
 export function HistoryScreen() {
   const t = useT();
   const insets = useSafeAreaInsets();
-  const { data, isRefetching, refetch } = usePaymentHistory();
+  const { data, isLoading, isRefetching, refetch } = usePaymentHistory();
 
   const renderItem = ({ item }: ListRenderItemInfo<Payment>) => (
     <Card padding={4} style={{ marginBottom: spacing[2] }}>
@@ -89,22 +90,38 @@ export function HistoryScreen() {
         ) : null}
       </GradientBackground>
 
-      <FlatList
-        data={data?.items ?? []}
-        keyExtractor={(p) => p.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
-        refreshing={isRefetching}
-        onRefresh={refetch}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <EmptyState
-            icon={<FileText size={24} color={colors.brand[700]} />}
-            title={t('no_entries_yet')}
-            description={t('your_collections_desc')}
-          />
-        }
-      />
+      {isLoading ? (
+        <View style={styles.listContent}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Card key={i} padding={4} style={{ marginBottom: spacing[2] }}>
+              <View style={styles.row}>
+                <SkeletonLoader width={36} height={36} radius={18} delay={i} />
+                <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                  <SkeletonLoader width="55%" height={14} delay={i} />
+                  <SkeletonLoader width="70%" height={11} style={{ marginTop: 6 }} delay={i} />
+                </View>
+              </View>
+            </Card>
+          ))}
+        </View>
+      ) : (
+        <FlatList
+          data={data?.items ?? []}
+          keyExtractor={(p) => p.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          refreshing={isRefetching}
+          onRefresh={refetch}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <EmptyState
+              icon={<FileText size={24} color={colors.brand[700]} />}
+              title={t('no_entries_yet')}
+              description={t('your_collections_desc')}
+            />
+          }
+        />
+      )}
     </Screen>
   );
 }

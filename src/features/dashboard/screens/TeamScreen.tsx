@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Plus, Search, UserPlus, Users, X } from 'lucide-react-native';
+import { MapPin, Plus, Search, UserPlus, Users, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +18,7 @@ import {
   Input,
   ProgressBar,
   Screen,
+  SkeletonLoader,
   Text,
   useToast,
 } from '@/components/ui';
@@ -35,7 +36,7 @@ export function TeamScreen() {
   const toast = useToast();
   const nav = useNavigation<TeamNav>();
   const { data, isRefetching, refetch } = useDashboard();
-  const { data: collectors, refetch: refetchCollectors } = useCollectors();
+  const { data: collectors, isLoading: collectorsLoading, refetch: refetchCollectors } = useCollectors();
   const createCollector = useCreateCollector();
 
   const team = data?.collector_performance ?? [];
@@ -114,12 +115,20 @@ export function TeamScreen() {
                 {collectors?.length ?? 0} {t('collectors')}
               </Text>
             </View>
-            <IconButton
-              icon={<Plus size={20} color={colors.white} />}
-              variant="glass"
-              onPress={() => setShowModal(true)}
-              accessibilityLabel="Add collector"
-            />
+            <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+              <IconButton
+                icon={<MapPin size={18} color={colors.white} />}
+                variant="glass"
+                onPress={() => nav.navigate('LiveLocations')}
+                accessibilityLabel="Live locations"
+              />
+              <IconButton
+                icon={<Plus size={20} color={colors.white} />}
+                variant="glass"
+                onPress={() => setShowModal(true)}
+                accessibilityLabel="Add collector"
+              />
+            </View>
           </View>
           {/* Search bar */}
           <View style={styles.searchWrap}>
@@ -142,7 +151,22 @@ export function TeamScreen() {
         </GradientBackground>
 
         <View style={{ padding: layout.screenPaddingX }}>
-          {allCollectors.length === 0 ? (
+          {collectorsLoading ? (
+            <View>
+              {[0, 1, 2, 3].map((i) => (
+                <Card key={i} padding={4} style={{ marginBottom: spacing[2] }}>
+                  <View style={styles.row}>
+                    <SkeletonLoader width={40} height={40} radius={20} delay={i} />
+                    <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                      <SkeletonLoader width="55%" height={14} delay={i} />
+                      <SkeletonLoader width="35%" height={11} style={{ marginTop: 6 }} delay={i} />
+                    </View>
+                    <SkeletonLoader width={50} height={20} delay={i} />
+                  </View>
+                </Card>
+              ))}
+            </View>
+          ) : allCollectors.length === 0 ? (
             <EmptyState
               icon={<Users size={28} color={colors.brand[700]} />}
               title={t('no_collectors_yet')}

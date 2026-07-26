@@ -1,11 +1,13 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { CollectorDetailScreen } from '@/features/collectors/screens/CollectorDetailScreen';
+import { LiveLocationsScreen } from '@/features/collectors/screens/LiveLocationsScreen';
 import { TeamScreen } from '@/features/dashboard/screens/TeamScreen';
 
 export type TeamStackParamList = {
   TeamList: undefined;
   CollectorDetail: { id: string };
+  LiveLocations: undefined;
 };
 
 const Stack = createNativeStackNavigator<TeamStackParamList>();
@@ -15,6 +17,7 @@ export function TeamNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="TeamList" component={TeamScreen} />
       <Stack.Screen name="CollectorDetail" component={CollectorDetailScreen} />
+      <Stack.Screen name="LiveLocations" component={LiveLocationsScreen} />
     </Stack.Navigator>
   );
 }
