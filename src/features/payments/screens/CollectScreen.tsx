@@ -3,16 +3,20 @@
  */
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as ImagePicker from 'expo-image-picker';
 import {
   Banknote,
   Building2,
+  Camera,
   Check,
   ChevronLeft,
+  RefreshCw,
   Smartphone,
   X,
 } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -31,13 +35,15 @@ import {
   GradientBackground,
   IconButton,
   Screen,
+  SkeletonLoader,
   Text,
   useToast,
 } from '@/components/ui';
 import { useLoan } from '@/features/loans/hooks/useLoans';
 import { useCollect, useMarkMissed } from '@/features/payments/hooks/usePayments';
 import { useT } from '@/i18n';
-import { colors, useColors, fontFamily, layout, radii, spacing } from '@/theme';
+import { uploadPhoto } from '@/lib/uploadPhoto';
+import { useColors, fontFamily, layout, radii, spacing } from '@/theme';
 import type { PaymentMode } from '@/types';
 
 type Nav = NativeStackNavigationProp<CollectorStackParamList, 'Collect'>;
@@ -62,7 +68,7 @@ type MissedReason = typeof MISSED_REASONS[number];
 export function CollectScreen() {
   const t = useT();
   const insets = useSafeAreaInsets();
-  const dynColors = useColors();
+  const colors = useColors();
 
   const REASON_LABEL: Record<MissedReason, string> = {
     'Customer unavailable': t('customer_unavailable'),
@@ -102,6 +108,21 @@ export function CollectScreen() {
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('CASH');
   const [notes, setNotes] = useState<string>('');
   const [reason, setReason] = useState<string>(MISSED_REASONS[0]);
+  const [proofUri, setProofUri] = useState<string | undefined>(undefined);
+  const [uploadingProof, setUploadingProof] = useState(false);
+
+  const captureProof = async () => {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      toast.warning('Camera permission needed to capture proof');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.7,
+    });
+    if (!result.canceled) setProofUri(result.assets[0].uri);
+  };
 
   const submit = async () => {
     if (!loan || !targetInstallment) return;
@@ -112,12 +133,23 @@ export function CollectScreen() {
           toast.warning('Enter a valid amount');
           return;
         }
+        let proofObjectName: string | undefined;
+        if (proofUri) {
+          setUploadingProof(true);
+          try {
+            const uploaded = await uploadPhoto(proofUri);
+            proofObjectName = uploaded.objectName;
+          } finally {
+            setUploadingProof(false);
+          }
+        }
         await collect.mutateAsync({
           loan_id: loan.id,
           amount: amt,
           mode: paymentMode,
           schedule_id: targetInstallment.id,
           notes: notes.trim() || undefined,
+          proof_photo_url: proofObjectName,
         });
         toast.success(`Collected ₹${amt.toLocaleString('en-IN')}`);
       } else {
@@ -139,15 +171,7 @@ export function CollectScreen() {
   };
 
   if (!loan || !targetInstallment) {
-    return (
-      <Screen background="default" edges={['top']}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text variant="body" color="secondary">
-            Loading…
-          </Text>
-        </View>
-      </Screen>
-    );
+    return <CollectSkeleton insetsTop={insets.top} onBack={() => nav.goBack()} />;
   }
 
   return (
@@ -211,7 +235,11 @@ export function CollectScreen() {
           <View style={styles.toggleRow}>
             <Pressable
               onPress={() => setMode('PAID')}
-              style={[styles.toggle, mode === 'PAID' && styles.togglePaid]}
+              style={[
+                styles.toggle,
+                { backgroundColor: colors.card, borderColor: colors.border.default },
+                mode === 'PAID' && { backgroundColor: colors.success, borderColor: colors.success },
+              ]}
             >
               <Check size={16} color={mode === 'PAID' ? colors.white : colors.success} />
               <Text
@@ -224,7 +252,11 @@ export function CollectScreen() {
             </Pressable>
             <Pressable
               onPress={() => setMode('MISSED')}
-              style={[styles.toggle, mode === 'MISSED' && styles.toggleMissed]}
+              style={[
+                styles.toggle,
+                { backgroundColor: colors.card, borderColor: colors.border.default },
+                mode === 'MISSED' && { backgroundColor: colors.danger, borderColor: colors.danger },
+              ]}
             >
               <X size={16} color={mode === 'MISSED' ? colors.white : colors.danger} />
               <Text
@@ -244,13 +276,13 @@ export function CollectScreen() {
                   {t('amount').toUpperCase()}
                 </Text>
                 <View style={styles.amountWrap}>
-                  <Text style={styles.amountSymbol}>₹</Text>
+                  <Text color="secondary" style={styles.amountSymbol}>₹</Text>
                   <TextInput
-                    style={[styles.amountInput, { color: dynColors.text.primary }]}
+                    style={[styles.amountInput, { color: colors.text.primary }]}
                     value={amount}
                     onChangeText={setAmount}
                     keyboardType="numeric"
-                    selectionColor={dynColors.brand[600]}
+                    selectionColor={colors.brand[600]}
                   />
                 </View>
                 <View style={styles.chipRow}>
@@ -262,7 +294,7 @@ export function CollectScreen() {
                     <Pressable
                       key={c.label}
                       onPress={() => setAmount(String(c.value))}
-                      style={styles.chip}
+                      style={[styles.chip, { backgroundColor: colors.slate[50] }]}
                     >
                       <Text variant="label" color="secondary">
                         {c.label}
@@ -291,7 +323,14 @@ export function CollectScreen() {
                       <Pressable
                         key={m.key}
                         onPress={() => setPaymentMode(m.key)}
-                        style={[styles.modeCard, selected && styles.modeCardSelected]}
+                        style={[
+                          styles.modeCard,
+                          { backgroundColor: colors.slate[50] },
+                          selected && {
+                            backgroundColor: colors.brand[50],
+                            borderColor: colors.brand[600],
+                          },
+                        ]}
                       >
                         <Icon
                           size={20}
@@ -319,9 +358,52 @@ export function CollectScreen() {
                   onChangeText={setNotes}
                   placeholder="Anything to add?"
                   placeholderTextColor={colors.text.placeholder}
-                  style={styles.notesInput}
+                  style={[
+                    styles.notesInput,
+                    { color: colors.text.primary, backgroundColor: colors.slate[50] },
+                  ]}
                   multiline
                 />
+              </Card>
+
+              <Card padding={4} style={styles.section}>
+                <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
+                  PROOF OF PAYMENT (OPTIONAL)
+                </Text>
+                {proofUri ? (
+                  <View style={styles.proofPreviewWrap}>
+                    <Image source={{ uri: proofUri }} style={styles.proofPreview} />
+                    <Pressable
+                      onPress={() => void captureProof()}
+                      style={[styles.proofRetakeBtn, { backgroundColor: colors.card }]}
+                    >
+                      <RefreshCw size={14} color={colors.brand[600]} />
+                      <Text variant="label" style={{ color: colors.brand[600], marginLeft: 4 }}>
+                        Retake
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setProofUri(undefined)}
+                      style={[styles.proofRemoveBtn, { backgroundColor: colors.card }]}
+                      hitSlop={8}
+                    >
+                      <X size={14} color={colors.danger} />
+                    </Pressable>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => void captureProof()}
+                    style={[styles.proofCaptureBtn, { borderColor: colors.border.default }]}
+                  >
+                    <Camera size={20} color={colors.brand[600]} />
+                    <Text variant="label" style={{ color: colors.brand[600], marginTop: spacing[1] }}>
+                      Capture photo proof
+                    </Text>
+                    <Text variant="caption" color="tertiary" style={{ marginTop: 2 }}>
+                      e.g. cash in hand, receipt, UPI screen
+                    </Text>
+                  </Pressable>
+                )}
               </Card>
             </>
           ) : (
@@ -337,15 +419,25 @@ export function CollectScreen() {
                       <Pressable
                         key={r}
                         onPress={() => setReason(r)}
-                        style={[styles.reasonRow, selected && styles.reasonRowSelected]}
+                        style={[
+                          styles.reasonRow,
+                          { backgroundColor: colors.slate[50] },
+                          selected && {
+                            backgroundColor: colors.brand[50],
+                            borderColor: colors.brand[600],
+                          },
+                        ]}
                       >
                         <View
                           style={[
                             styles.radio,
+                            { borderColor: colors.slate[300] },
                             selected && { borderColor: colors.brand[600] },
                           ]}
                         >
-                          {selected ? <View style={styles.radioDot} /> : null}
+                          {selected ? (
+                            <View style={[styles.radioDot, { backgroundColor: colors.brand[600] }]} />
+                          ) : null}
                         </View>
                         <Text variant="body" style={{ marginLeft: spacing[2] }}>
                           {REASON_LABEL[r]}
@@ -365,7 +457,10 @@ export function CollectScreen() {
                   onChangeText={setNotes}
                   placeholder="Add detail…"
                   placeholderTextColor={colors.text.placeholder}
-                  style={styles.notesInput}
+                  style={[
+                    styles.notesInput,
+                    { color: colors.text.primary, backgroundColor: colors.slate[50] },
+                  ]}
                   multiline
                 />
               </Card>
@@ -377,13 +472,79 @@ export function CollectScreen() {
             fullWidth
             size="lg"
             variant={mode === 'PAID' ? 'primary' : 'danger'}
-            loading={collect.isPending || markMissed.isPending}
+            loading={collect.isPending || markMissed.isPending || uploadingProof}
             onPress={submit}
             hapticFeedback={mode === 'PAID' ? 'success' : 'medium'}
             style={{ marginTop: spacing[5] }}
           />
         </ScrollView>
       </KeyboardAvoidingView>
+    </Screen>
+  );
+}
+
+/** Mirrors the loaded screen's shape: gradient hero, toggle row, amount + mode cards. */
+function CollectSkeleton({ insetsTop, onBack }: { insetsTop: number; onBack: () => void }) {
+  const colors = useColors();
+  return (
+    <Screen padded={false} background="default" edges={[]} scroll={false}>
+      <GradientBackground
+        gradient="hero"
+        style={{
+          paddingTop: insetsTop + spacing[2],
+          paddingHorizontal: layout.screenPaddingX,
+          paddingBottom: spacing[5],
+          borderBottomLeftRadius: radii['3xl'],
+          borderBottomRightRadius: radii['3xl'],
+        }}
+      >
+        <View style={styles.topRow}>
+          <IconButton
+            icon={<ChevronLeft size={20} color={colors.white} />}
+            variant="glass"
+            onPress={onBack}
+            accessibilityLabel="Back"
+          />
+          <View style={{ flex: 1, marginLeft: spacing[2], gap: spacing[1.5] }}>
+            <SkeletonLoader width={70} height={10} delay={0} />
+            <SkeletonLoader width="50%" height={16} delay={1} />
+          </View>
+        </View>
+
+        <View style={styles.heroRow}>
+          <SkeletonLoader width={48} height={48} radius={radii.full} />
+          <View style={{ flex: 1, marginLeft: spacing[3], gap: spacing[1.5] }}>
+            <SkeletonLoader width={90} height={10} delay={0} />
+            <SkeletonLoader width={120} height={26} delay={1} />
+            <SkeletonLoader width={80} height={10} delay={2} />
+          </View>
+        </View>
+      </GradientBackground>
+
+      <View style={{ padding: layout.screenPaddingX }}>
+        <View style={styles.toggleRow}>
+          <View style={{ flex: 1 }}>
+            <SkeletonLoader width="100%" height={48} radius={radii.lg} delay={0} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <SkeletonLoader width="100%" height={48} radius={radii.lg} delay={1} />
+          </View>
+        </View>
+        <Card padding={4} style={styles.section}>
+          <SkeletonLoader width={60} height={11} style={{ marginBottom: spacing[2] }} />
+          <SkeletonLoader width="50%" height={36} />
+        </Card>
+        <Card padding={4} style={styles.section}>
+          <SkeletonLoader width={100} height={11} style={{ marginBottom: spacing[2] }} />
+          <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+            {[0, 1, 2].map((i) => (
+              <View key={i} style={{ flex: 1 }}>
+                <SkeletonLoader width="100%" height={64} radius={radii.lg} delay={i} />
+              </View>
+            ))}
+          </View>
+        </Card>
+      </View>
     </Screen>
   );
 }
@@ -401,16 +562,45 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: radii.lg,
-    backgroundColor: colors.card,
     borderWidth: 1.5,
-    borderColor: colors.border.default,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  togglePaid: { backgroundColor: colors.success, borderColor: colors.success },
-  toggleMissed: { backgroundColor: colors.danger, borderColor: colors.danger },
   section: { marginBottom: spacing[3] },
+  proofCaptureBtn: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderRadius: radii.lg,
+    paddingVertical: spacing[5],
+    alignItems: 'center',
+  },
+  proofPreviewWrap: { position: 'relative' },
+  proofPreview: {
+    width: '100%',
+    height: 180,
+    borderRadius: radii.lg,
+  },
+  proofRetakeBtn: {
+    position: 'absolute',
+    bottom: spacing[2],
+    left: spacing[2],
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[2.5],
+    paddingVertical: spacing[1.5],
+    borderRadius: radii.full,
+  },
+  proofRemoveBtn: {
+    position: 'absolute',
+    top: spacing[2],
+    right: spacing[2],
+    width: 28,
+    height: 28,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   amountWrap: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -419,20 +609,17 @@ const styles = StyleSheet.create({
   amountSymbol: {
     fontFamily: fontFamily.semibold,
     fontSize: 28,
-    color: colors.text.secondary,
     marginRight: 4,
   },
   amountInput: {
     flex: 1,
     fontFamily: fontFamily.bold,
     fontSize: 36,
-    color: colors.text.primary,
     padding: 0,
   },
   chipRow: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[3] },
   chip: {
     flex: 1,
-    backgroundColor: colors.slate[50],
     borderRadius: radii.md,
     padding: spacing[2],
     alignItems: 'center',
@@ -442,22 +629,15 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: spacing[3],
     borderRadius: radii.lg,
-    backgroundColor: colors.slate[50],
     borderWidth: 1.5,
     borderColor: 'transparent',
     alignItems: 'center',
-  },
-  modeCardSelected: {
-    backgroundColor: colors.brand[50],
-    borderColor: colors.brand[600],
   },
   notesInput: {
     minHeight: 64,
     fontFamily: fontFamily.regular,
     fontSize: 14,
-    color: colors.text.primary,
     textAlignVertical: 'top',
-    backgroundColor: colors.slate[50],
     borderRadius: radii.md,
     padding: spacing[3],
   },
@@ -466,17 +646,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing[3],
     borderRadius: radii.lg,
-    backgroundColor: colors.slate[50],
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
-  reasonRowSelected: { borderColor: colors.brand[600], backgroundColor: colors.brand[50] },
   radio: {
     width: 18,
     height: 18,
     borderRadius: 9,
     borderWidth: 2,
-    borderColor: colors.slate[300],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -484,6 +661,5 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.brand[600],
   },
 });

@@ -3,8 +3,16 @@
  */
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { CheckCircle2, ChevronLeft, CircleCheck, Lock, UserCog, X } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Camera, CheckCircle2, ChevronLeft, CircleCheck, Lock, UserCog, X } from 'lucide-react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigator';
@@ -19,11 +27,13 @@ import {
   IconButton,
   ProgressBar,
   Screen,
+  SkeletonLoader,
   Text,
   useToast,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCollectors } from '@/features/collectors/hooks/useCollectors';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 import { useT } from '@/i18n';
 import { useCloseLoan, useLoan, useReassignLoan } from '@/features/loans/hooks/useLoans';
 import { InstallmentRow } from '@/features/loans/components/InstallmentRow';
@@ -69,15 +79,22 @@ export function LoanDetailScreen() {
   const { data: paymentsPage } = usePaymentHistory({ loan_id: params.id });
   const payments = paymentsPage?.items ?? [];
   const [showReassign, setShowReassign] = useState(false);
+  const [viewProof, setViewProof] = useState<string | null>(null);
+
+  // When reached via a cross-tab deep link (e.g. Reports' overdue list), this
+  // screen may be the only entry in the Customers stack — goBack() would then
+  // have nothing to pop and fall through to the previously-focused tab instead
+  // of showing the customer list. Fall back to navigating to CustomerList.
+  const goBackOrToList = () => {
+    if (nav.canGoBack()) {
+      nav.goBack();
+    } else {
+      nav.navigate('CustomerList');
+    }
+  };
 
   if (isLoading || !loan) {
-    return (
-      <Screen background="default" edges={['top']}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.brand[600]} />
-        </View>
-      </Screen>
-    );
+    return <LoanDetailSkeleton insetsTop={insets.top} onBack={goBackOrToList} />;
   }
 
   const handleClose = async () => {
@@ -108,7 +125,7 @@ export function LoanDetailScreen() {
           <IconButton
             icon={<ChevronLeft size={20} color={colors.white} />}
             variant="glass"
-            onPress={() => nav.goBack()}
+            onPress={goBackOrToList}
             accessibilityLabel="Back"
           />
           <View style={{ flex: 1, marginLeft: spacing[2] }}>
@@ -237,7 +254,7 @@ export function LoanDetailScreen() {
                         toast.error('Could not reassign');
                       }
                     }}
-                    style={styles.collectorOption}
+                    style={[styles.collectorOption, { backgroundColor: colors.slate[50] }]}
                   >
                     <Avatar name={c.name} id={c.id} size="sm" />
                     <View style={{ flex: 1, marginLeft: spacing[2] }}>
@@ -281,7 +298,12 @@ export function LoanDetailScreen() {
         ) : (
           <Card padding={0} style={{ overflow: 'hidden' }}>
             {payments.map((p, idx) => (
-              <PaymentRow key={p.id} payment={p} last={idx === payments.length - 1} />
+              <PaymentRow
+                key={p.id}
+                payment={p}
+                last={idx === payments.length - 1}
+                onViewProof={setViewProof}
+              />
             ))}
           </Card>
         )}
@@ -308,6 +330,108 @@ export function LoanDetailScreen() {
           </View>
         ) : null}
       </View>
+
+      <ProofViewerModal objectName={viewProof} onClose={() => setViewProof(null)} />
+    </Screen>
+  );
+}
+
+/** Mirrors the loaded screen's shape: gradient hero, stat row, terms card, collector card, list rows. */
+function LoanDetailSkeleton({ insetsTop, onBack }: { insetsTop: number; onBack: () => void }) {
+  const colors = useColors();
+  return (
+    <Screen padded={false} background="default" edges={[]}>
+      <GradientBackground
+        gradient="hero"
+        style={{
+          paddingTop: insetsTop + spacing[2],
+          paddingHorizontal: layout.screenPaddingX,
+          paddingBottom: spacing[5],
+          borderBottomLeftRadius: radii['3xl'],
+          borderBottomRightRadius: radii['3xl'],
+        }}
+      >
+        <View style={styles.topRow}>
+          <IconButton
+            icon={<ChevronLeft size={20} color={colors.white} />}
+            variant="glass"
+            onPress={onBack}
+            accessibilityLabel="Back"
+          />
+          <View style={{ flex: 1, marginLeft: spacing[2], gap: spacing[1.5] }}>
+            <SkeletonLoader width={90} height={10} delay={0} />
+            <SkeletonLoader width="60%" height={16} delay={1} />
+          </View>
+          <SkeletonLoader width={64} height={22} radius={radii.full} delay={2} />
+        </View>
+
+        <View style={styles.outstandingRow}>
+          <View style={{ gap: spacing[2] }}>
+            <SkeletonLoader width={90} height={10} delay={0} />
+            <SkeletonLoader width={140} height={34} delay={1} />
+          </View>
+          <View style={{ alignItems: 'flex-end', gap: spacing[2] }}>
+            <SkeletonLoader width={80} height={10} delay={0} />
+            <SkeletonLoader width={100} height={10} delay={1} />
+          </View>
+        </View>
+        <SkeletonLoader width="100%" height={6} radius={radii.full} style={{ marginTop: spacing[3] }} />
+      </GradientBackground>
+
+      <ScrollView contentContainerStyle={{ padding: layout.screenPaddingX, paddingBottom: spacing[12] }}>
+        <View style={styles.statsRow}>
+          {[0, 1, 2].map((i) => (
+            <Card key={i} padding={3} style={styles.stat}>
+              <SkeletonLoader width="70%" height={10} delay={i} />
+              <SkeletonLoader width="50%" height={18} style={{ marginTop: spacing[1.5] }} delay={i} />
+            </Card>
+          ))}
+        </View>
+
+        <Card padding={4} style={{ marginBottom: spacing[3], gap: spacing[3] }}>
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={styles.termsRow}>
+              <View style={styles.term}>
+                <SkeletonLoader width="50%" height={10} delay={i} />
+                <SkeletonLoader width="65%" height={14} style={{ marginTop: spacing[1] }} delay={i} />
+              </View>
+              <View style={styles.term}>
+                <SkeletonLoader width="50%" height={10} delay={i} />
+                <SkeletonLoader width="65%" height={14} style={{ marginTop: spacing[1] }} delay={i} />
+              </View>
+            </View>
+          ))}
+        </Card>
+
+        <Card padding={3} style={{ marginBottom: spacing[3] }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <SkeletonLoader width={40} height={40} radius={radii.full} />
+            <View style={{ marginLeft: spacing[3], flex: 1, gap: spacing[1.5] }}>
+              <SkeletonLoader width="30%" height={10} delay={0} />
+              <SkeletonLoader width="50%" height={14} delay={1} />
+            </View>
+          </View>
+        </Card>
+
+        <SkeletonLoader width={110} height={16} style={{ marginBottom: spacing[2] }} />
+        <Card padding={0} style={{ overflow: 'hidden' }}>
+          {[0, 1, 2].map((i) => (
+            <View
+              key={i}
+              style={[
+                styles.paymentRow,
+                i < 2 && { borderBottomWidth: 1, borderBottomColor: colors.border.subtle },
+              ]}
+            >
+              <SkeletonLoader width={8} height={8} radius={4} style={{ marginTop: 6 }} delay={i} />
+              <View style={{ flex: 1, gap: spacing[1.5] }}>
+                <SkeletonLoader width="35%" height={14} delay={i} />
+                <SkeletonLoader width="45%" height={11} delay={i} />
+              </View>
+            </View>
+          ))}
+        </Card>
+      </ScrollView>
     </Screen>
   );
 }
@@ -332,8 +456,9 @@ function Term({ label, value }: TermProps) {
 interface PaymentRowProps {
   payment: Payment;
   last: boolean;
+  onViewProof: (objectName: string) => void;
 }
-function PaymentRow({ payment, last }: PaymentRowProps) {
+function PaymentRow({ payment, last, onViewProof }: PaymentRowProps) {
   const colors = useColors();
   return (
     <View
@@ -374,7 +499,40 @@ function PaymentRow({ payment, last }: PaymentRowProps) {
           ) : null}
         </View>
       </View>
+      {payment.proof_photo_url ? (
+        <Pressable
+          onPress={() => onViewProof(payment.proof_photo_url!)}
+          style={[styles.proofBadge, { backgroundColor: colors.brand[50] }]}
+          hitSlop={8}
+        >
+          <Camera size={14} color={colors.brand[600]} />
+        </Pressable>
+      ) : null}
     </View>
+  );
+}
+
+interface ProofViewerModalProps {
+  objectName: string | null;
+  onClose: () => void;
+}
+function ProofViewerModal({ objectName, onClose }: ProofViewerModalProps) {
+  const resolvedUrl = useSignedUrl(objectName);
+  return (
+    <Modal visible={objectName !== null} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.proofOverlay} onPress={onClose}>
+        <View style={styles.proofModalBody}>
+          {resolvedUrl ? (
+            <Image source={{ uri: resolvedUrl }} style={styles.proofFullImage} resizeMode="contain" />
+          ) : (
+            <ActivityIndicator color={colors.white} />
+          )}
+          <Pressable onPress={onClose} style={styles.proofCloseBtn} hitSlop={12}>
+            <X size={20} color={colors.white} />
+          </Pressable>
+        </View>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -415,7 +573,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing[2],
     borderRadius: radii.md,
-    backgroundColor: colors.slate[50],
   },
   paymentRow: {
     flexDirection: 'row',
@@ -429,5 +586,39 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginTop: 6,
     flexShrink: 0,
+  },
+  proofBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  proofOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  proofModalBody: {
+    width: '90%',
+    height: '70%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  proofFullImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: radii.lg,
+  },
+  proofCloseBtn: {
+    position: 'absolute',
+    top: -40,
+    right: 0,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

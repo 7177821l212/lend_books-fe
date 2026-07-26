@@ -26,7 +26,7 @@ import { useCollectors } from '@/features/collectors/hooks/useCollectors';
 import { useCustomer } from '@/features/customers/hooks/useCustomers';
 import { previewLoan } from '@/features/loans/utils/loanCalc';
 import { useCreateLoan } from '@/features/loans/hooks/useLoans';
-import { colors, layout, radii, spacing } from '@/theme';
+import { useColors, layout, radii, spacing } from '@/theme';
 import type { InterestType, LendingModel, RepaymentFrequency } from '@/types';
 
 type Nav = NativeStackNavigationProp<CustomersStackParamList, 'NewLoan'>;
@@ -47,6 +47,7 @@ function todayISO(): string {
 
 export function NewLoanScreen() {
   const insets = useSafeAreaInsets();
+  const colors = useColors();
   const nav = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const toast = useToast();
@@ -246,7 +247,14 @@ export function NewLoanScreen() {
                     onPress={() => setInterestType('pct')}
                     style={[
                       styles.smallToggle,
-                      interestType === 'pct' && styles.smallToggleActive,
+                      {
+                        backgroundColor: colors.slate[50],
+                        borderColor: colors.border.default,
+                      },
+                      interestType === 'pct' && {
+                        backgroundColor: colors.brand[600],
+                        borderColor: colors.brand[600],
+                      },
                     ]}
                   >
                     <Text
@@ -261,7 +269,14 @@ export function NewLoanScreen() {
                     onPress={() => setInterestType('fixed')}
                     style={[
                       styles.smallToggle,
-                      interestType === 'fixed' && styles.smallToggleActive,
+                      {
+                        backgroundColor: colors.slate[50],
+                        borderColor: colors.border.default,
+                      },
+                      interestType === 'fixed' && {
+                        backgroundColor: colors.brand[600],
+                        borderColor: colors.brand[600],
+                      },
                     ]}
                   >
                     <Text
@@ -301,7 +316,17 @@ export function NewLoanScreen() {
                   <Pressable
                     key={opt.key}
                     onPress={() => setFrequency(opt.key)}
-                    style={[styles.freqChip, active && styles.freqChipActive]}
+                    style={[
+                      styles.freqChip,
+                      {
+                        backgroundColor: colors.slate[100],
+                        borderColor: colors.border.default,
+                      },
+                      active && {
+                        backgroundColor: colors.brand[600],
+                        borderColor: colors.brand[600],
+                      },
+                    ]}
                   >
                     <Text
                       variant="label"
@@ -329,7 +354,7 @@ export function NewLoanScreen() {
               onChangeText={setInstallments}
               containerStyle={{ marginTop: spacing[3] }}
             />
-            <View style={styles.dateChip}>
+            <View style={[styles.dateChip, { backgroundColor: colors.slate[50] }]}>
               <Calendar size={14} color={colors.slate[500]} />
               <Text variant="label" color="secondary" style={{ marginLeft: 6 }}>
                 Starts today · {startDate}
@@ -350,7 +375,14 @@ export function NewLoanScreen() {
                       <Pressable
                         key={c.id}
                         onPress={() => setCollectorId(c.id)}
-                        style={[styles.collectorRow, selected && styles.collectorRowActive]}
+                        style={[
+                          styles.collectorRow,
+                          { backgroundColor: colors.slate[50] },
+                          selected && {
+                            backgroundColor: colors.brand[50],
+                            borderColor: colors.brand[600],
+                          },
+                        ]}
                       >
                         <Avatar name={c.name} id={c.id} size="sm" />
                         <View style={{ flex: 1, marginLeft: spacing[3] }}>
@@ -413,10 +445,15 @@ interface ToggleCardProps {
 }
 
 function ToggleCard({ label, sub, selected, onPress }: ToggleCardProps) {
+  const colors = useColors();
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.toggleCard, selected && styles.toggleCardActive]}
+      style={[
+        styles.toggleCard,
+        { borderColor: colors.border.default, backgroundColor: colors.slate[50] },
+        selected && { borderColor: colors.brand[600], backgroundColor: colors.brand[50] },
+      ]}
     >
       <View style={styles.toggleHeader}>
         <Text variant="bodyStrong" color={selected ? colors.brand[700] : 'primary'}>
@@ -460,12 +497,6 @@ const styles = StyleSheet.create({
     padding: spacing[3],
     borderRadius: radii.lg,
     borderWidth: 1.5,
-    borderColor: colors.border.default,
-    backgroundColor: colors.slate[50],
-  },
-  toggleCardActive: {
-    borderColor: colors.brand[600],
-    backgroundColor: colors.brand[50],
   },
   toggleHeader: {
     flexDirection: 'row',
@@ -477,34 +508,21 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: radii.lg,
-    backgroundColor: colors.slate[50],
     borderWidth: 1.5,
-    borderColor: colors.border.default,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  smallToggleActive: {
-    backgroundColor: colors.brand[600],
-    borderColor: colors.brand[600],
   },
   freqRow: { gap: spacing[2] },
   freqChip: {
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     borderRadius: radii.full,
-    backgroundColor: colors.slate[100],
     borderWidth: 1,
-    borderColor: colors.border.default,
     marginRight: spacing[2],
-  },
-  freqChipActive: {
-    backgroundColor: colors.brand[600],
-    borderColor: colors.brand[600],
   },
   dateChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.slate[50],
     borderRadius: radii.md,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
@@ -517,12 +535,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[2],
     paddingHorizontal: spacing[3],
     borderRadius: radii.lg,
-    backgroundColor: colors.slate[50],
     borderWidth: 1.5,
     borderColor: 'transparent',
-  },
-  collectorRowActive: {
-    backgroundColor: colors.brand[50],
-    borderColor: colors.brand[600],
   },
 });

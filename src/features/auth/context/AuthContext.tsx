@@ -6,6 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import { SECURE_STORE_KEYS } from '@/config/constants';
 import { setUnauthorizedHandler } from '@/lib/api';
+import { startLocationReporting, stopLocationReporting } from '@/lib/locationTracking';
 import { tokenStorage } from '@/lib/tokenStorage';
 import type { User } from '@/types';
 import { authApi, type LoginPayload } from '../api/authApi';
@@ -30,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const logout = useCallback(async () => {
+    stopLocationReporting();
     await tokenStorage.deleteItem(SECURE_STORE_KEYS.ACCESS_TOKEN);
     await tokenStorage.deleteItem(SECURE_STORE_KEYS.REFRESH_TOKEN);
     setUser(null);
@@ -63,6 +65,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  // Live location: only while a collector is signed in and the app is open.
+  useEffect(() => {
+    if (user?.role === 'collector') {
+      void startLocationReporting();
+    } else {
+      stopLocationReporting();
+    }
+    return () => stopLocationReporting();
+  }, [user?.role]);
 
   const login = useCallback(async (payload: LoginPayload) => {
     const tokens = await authApi.login(payload);

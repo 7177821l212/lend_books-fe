@@ -2,11 +2,11 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigator';
-import { Avatar, Button, Card, Input, Screen, Text, useToast } from '@/components/ui';
+import { Avatar, Button, Card, Input, Screen, SkeletonLoader, Text, useToast } from '@/components/ui';
 import { useCustomer, useUpdateCustomer } from '../hooks/useCustomers';
 import { useT } from '@/i18n';
 import { uploadPhoto } from '@/lib/uploadPhoto';
@@ -59,13 +59,7 @@ export function EditCustomerScreen() {
   };
 
   if (isLoading || !customer) {
-    return (
-      <Screen background="default" edges={[]}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.brand[600]} />
-        </View>
-      </Screen>
-    );
+    return <EditCustomerSkeleton insetsTop={insets.top} onBack={() => nav.goBack()} />;
   }
 
   const handleSave = async () => {
@@ -202,6 +196,58 @@ export function EditCustomerScreen() {
           loading={update.isPending}
           onPress={handleSave}
         />
+      </View>
+    </Screen>
+  );
+}
+
+/** Mirrors the loaded form's shape: header, avatar, input fields, risk row. */
+function EditCustomerSkeleton({ insetsTop, onBack }: { insetsTop: number; onBack: () => void }) {
+  const t = useT();
+  const colors = useColors();
+  return (
+    <Screen padded={false} background="default" edges={[]}>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: insetsTop + spacing[2],
+            paddingHorizontal: layout.screenPaddingX,
+            backgroundColor: colors.background,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border.subtle,
+          },
+        ]}
+      >
+        <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={12}>
+          <Text variant="h2" style={{ marginTop: -2 }}>‹</Text>
+        </TouchableOpacity>
+        <Text variant="h2">{t('edit')} {t('customer')}</Text>
+        <View style={{ width: 36 }} />
+      </View>
+
+      <View style={{ padding: layout.screenPaddingX, marginTop: spacing[4] }}>
+        <View style={{ alignItems: 'center', marginBottom: spacing[4] }}>
+          <SkeletonLoader width={72} height={72} radius={36} />
+        </View>
+
+        {[0, 1, 2].map((i) => (
+          <View key={i} style={{ marginBottom: spacing[3] }}>
+            <SkeletonLoader width={80} height={11} style={{ marginBottom: spacing[1.5] }} delay={i} />
+            <SkeletonLoader width="100%" height={48} radius={radii.lg} delay={i} />
+          </View>
+        ))}
+
+        <SkeletonLoader width={90} height={13} style={{ marginBottom: spacing[2] }} />
+        <Card padding={3} style={{ marginBottom: spacing[5] }}>
+          <View style={styles.riskRow}>
+            {[0, 1, 2].map((i) => (
+              <View key={i} style={{ flex: 1 }}>
+                <SkeletonLoader width="100%" height={40} radius={radii.lg} delay={i} />
+              </View>
+            ))}
+          </View>
+        </Card>
       </View>
     </Screen>
   );

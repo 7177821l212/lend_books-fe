@@ -1,9 +1,9 @@
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import { Banknote, Camera, Phone, Trash2, TrendingUp, User, X } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Image,
   Linking,
@@ -26,6 +26,7 @@ import {
   Card,
   Input,
   Screen,
+  SkeletonLoader,
   Text,
   useToast,
 } from '@/components/ui';
@@ -43,6 +44,7 @@ import { uploadPhoto } from '@/lib/uploadPhoto';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
 import { useColors, layout, radii, spacing } from '@/theme';
 
+type Nav = NativeStackNavigationProp<TeamStackParamList, 'CollectorDetail'>;
 type Route = RouteProp<TeamStackParamList, 'CollectorDetail'>;
 
 export function CollectorDetailScreen() {
@@ -50,7 +52,7 @@ export function CollectorDetailScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const toast = useToast();
-  const nav = useNavigation();
+  const nav = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const { user } = useAuth();
   const isInvestor = user?.role === 'investor';
@@ -68,6 +70,18 @@ export function CollectorDetailScreen() {
   const [phone, setPhone] = useState('');
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // When reached via a cross-tab deep link (e.g. Dashboard's leaderboard), this
+  // screen may be the only entry in the Team stack — goBack() would then have
+  // nothing to pop and fall through to the previously-focused tab instead of
+  // showing the collector list. Fall back to navigating to TeamList explicitly.
+  const goBackOrToList = () => {
+    if (nav.canGoBack()) {
+      nav.goBack();
+    } else {
+      nav.navigate('TeamList');
+    }
+  };
 
   const startEdit = () => {
     setName(collector?.name ?? '');
@@ -121,7 +135,7 @@ export function CollectorDetailScreen() {
     try {
       await deleteCollector.mutateAsync(params.id);
       toast.success('Collector deleted');
-      nav.goBack();
+      goBackOrToList();
     } catch (e) {
       const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Failed';
       toast.error(typeof detail === 'string' ? detail : 'Failed');
@@ -148,13 +162,7 @@ export function CollectorDetailScreen() {
   const resolvedCollectorPhoto = useSignedUrl(!editing ? collector?.photo_url : null);
 
   if (isLoading || !collector) {
-    return (
-      <Screen background="default" edges={[]}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={colors.brand[600]} />
-        </View>
-      </Screen>
-    );
+    return <CollectorDetailSkeleton insetsTop={insets.top} />;
   }
 
   const isInactive = !collector.is_active;
@@ -175,7 +183,7 @@ export function CollectorDetailScreen() {
           },
         ]}
       >
-        <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn} hitSlop={12}>
+        <TouchableOpacity onPress={goBackOrToList} style={styles.backBtn} hitSlop={12}>
           <Text variant="h2" style={{ marginTop: -2 }}>‹</Text>
         </TouchableOpacity>
         <Text variant="h2">{t('collector')}</Text>
@@ -376,6 +384,65 @@ function StatChip({ icon, label, valueNode }: StatChipProps) {
       </View>
       {valueNode}
     </Card>
+  );
+}
+
+/** Mirrors the loaded screen's shape: header, avatar + name, stat chips, info card. */
+function CollectorDetailSkeleton({ insetsTop }: { insetsTop: number }) {
+  const colors = useColors();
+  return (
+    <Screen padded={false} background="default" edges={[]}>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: insetsTop + spacing[2],
+            paddingHorizontal: layout.screenPaddingX,
+            backgroundColor: colors.background,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border.subtle,
+          },
+        ]}
+      >
+        <View style={styles.backBtn}>
+          <Text variant="h2" style={{ marginTop: -2 }}>‹</Text>
+        </View>
+        <SkeletonLoader width={90} height={18} />
+        <View style={{ width: 36 }} />
+      </View>
+
+      <View style={{ padding: layout.screenPaddingX }}>
+        <View style={styles.profileSection}>
+          <SkeletonLoader width={72} height={72} radius={36} />
+          <View style={{ flex: 1, marginLeft: spacing[4] }}>
+            <SkeletonLoader width="70%" height={20} delay={0} />
+            <SkeletonLoader width="50%" height={14} style={{ marginTop: spacing[2] }} delay={1} />
+            <SkeletonLoader width={64} height={22} radius={radii.full} style={{ marginTop: spacing[2] }} delay={2} />
+          </View>
+        </View>
+
+        <View style={[styles.statsRow, { marginTop: spacing[4] }]}>
+          {[0, 1, 2].map((i) => (
+            <Card key={i} padding={3} style={{ flex: 1 }}>
+              <SkeletonLoader width="60%" height={11} delay={i} />
+              <SkeletonLoader width="45%" height={18} style={{ marginTop: spacing[2] }} delay={i} />
+            </Card>
+          ))}
+        </View>
+
+        <Card padding={4} style={{ marginTop: spacing[4], gap: spacing[4] }}>
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={styles.infoRow}>
+              <SkeletonLoader width={16} height={16} radius={radii.sm} delay={i} />
+              <View style={{ marginLeft: spacing[3], flex: 1 }}>
+                <SkeletonLoader width="30%" height={11} delay={i} />
+                <SkeletonLoader width="55%" height={15} style={{ marginTop: spacing[1] }} delay={i} />
+              </View>
+            </View>
+          ))}
+        </Card>
+      </View>
+    </Screen>
   );
 }
 
