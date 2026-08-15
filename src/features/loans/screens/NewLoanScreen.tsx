@@ -4,7 +4,7 @@
  */
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ChevronLeft, Calculator, Calendar, CheckCircle2 } from 'lucide-react-native';
+import { ChevronLeft, Calculator, CheckCircle2 } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import {
   Avatar,
   Button,
   Card,
+  DatePickerField,
   GradientBackground,
   IconButton,
   Input,
@@ -63,7 +64,7 @@ export function NewLoanScreen() {
   const [frequency, setFrequency] = useState<RepaymentFrequency>('daily');
   const [customInterval, setCustomInterval] = useState<string>('7');
   const [installments, setInstallments] = useState<string>('10');
-  const [startDate] = useState<string>(todayISO());
+  const [startDate, setStartDate] = useState<string>(todayISO());
   const [collectorId, setCollectorId] = useState<string | undefined>(undefined);
 
   const preview = useMemo(
@@ -354,11 +355,12 @@ export function NewLoanScreen() {
               onChangeText={setInstallments}
               containerStyle={{ marginTop: spacing[3] }}
             />
-            <View style={[styles.dateChip, { backgroundColor: colors.slate[50] }]}>
-              <Calendar size={14} color={colors.slate[500]} />
-              <Text variant="label" color="secondary" style={{ marginLeft: 6 }}>
-                Starts today · {startDate}
-              </Text>
+            <View style={{ marginTop: spacing[3] }}>
+              <DatePickerField
+                label="Start date"
+                value={startDate}
+                onChange={setStartDate}
+              />
             </View>
           </Section>
 
@@ -519,15 +521,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     borderWidth: 1,
     marginRight: spacing[2],
-  },
-  dateChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: radii.md,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-    marginTop: spacing[3],
-    alignSelf: 'flex-start',
   },
   collectorRow: {
     flexDirection: 'row',
