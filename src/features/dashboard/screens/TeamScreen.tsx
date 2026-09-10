@@ -138,6 +138,8 @@ export function TeamScreen() {
               onChangeText={setSearch}
               placeholder="Search collectors…"
               placeholderTextColor={colors.slate[400]}
+              cursorColor={colors.text.primary}
+              selectionColor={colors.text.primary}
               style={[styles.searchInput, { color: colors.text.primary }]}
               autoCorrect={false}
               autoCapitalize="none"

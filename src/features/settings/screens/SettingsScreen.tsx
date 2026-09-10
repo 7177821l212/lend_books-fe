@@ -14,7 +14,7 @@ import { Button, Card, Input, Screen, Text, useToast } from '@/components/ui';
 import { authApi } from '@/features/auth/api/authApi';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAppSettings } from '@/store/appSettings';
-import { useColors, layout, radii, spacing } from '@/theme';
+import { haptic, useColors, layout, radii, spacing } from '@/theme';
 import { useT } from '@/i18n';
 
 type ThemeOption = 'light' | 'dark' | 'system';
@@ -120,7 +120,10 @@ export function SettingsScreen() {
                       borderColor: active ? colors.brand[600] : colors.border.default,
                     },
                   ]}
-                  onPress={() => setTheme(opt)}
+                  onPress={() => {
+                    haptic.selection();
+                    setTheme(opt);
+                  }}
                 >
                   <Text
                     variant="label"
@@ -151,7 +154,10 @@ export function SettingsScreen() {
                         borderColor: active ? colors.brand[600] : colors.border.default,
                       },
                     ]}
-                    onPress={() => setLanguage(lang)}
+                    onPress={() => {
+                      haptic.selection();
+                      setLanguage(lang);
+                    }}
                   >
                     <Text
                       variant="caption"
@@ -174,7 +180,10 @@ export function SettingsScreen() {
             </View>
             <Switch
               value={hapticsEnabled}
-              onValueChange={setHapticsEnabled}
+              onValueChange={(enabled) => {
+                setHapticsEnabled(enabled);
+                if (enabled) haptic.selection();
+              }}
               trackColor={{ true: colors.brand[600], false: colors.slate[300] }}
               thumbColor="#fff"
             />
