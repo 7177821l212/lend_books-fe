@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { View } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
-import { colors } from '@/theme';
+import { useColors } from '@/theme';
 
 interface SparklineProps {
   data: number[];
@@ -21,10 +21,12 @@ export function Sparkline({
   data,
   width = 300,
   height = 120,
-  strokeColor = colors.brand[600],
+  strokeColor,
   fillColor = 'rgba(0,200,83,0.15)',
   strokeWidth = 2,
 }: SparklineProps) {
+  const colors = useColors();
+  const resolvedStrokeColor = strokeColor ?? colors.brand[600];
   const { line, area } = useMemo(() => {
     if (!data.length) return { line: '', area: '' };
     const pad = strokeWidth;
@@ -54,14 +56,14 @@ export function Sparkline({
     <Svg width={width} height={height}>
       <Defs>
         <LinearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={strokeColor} stopOpacity="0.25" />
-          <Stop offset="1" stopColor={strokeColor} stopOpacity="0" />
+          <Stop offset="0" stopColor={fillColor} stopOpacity="0.25" />
+          <Stop offset="1" stopColor={resolvedStrokeColor} stopOpacity="0" />
         </LinearGradient>
       </Defs>
       <Path d={area} fill="url(#sparkFill)" />
       <Path
         d={line}
-        stroke={strokeColor}
+        stroke={resolvedStrokeColor}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"

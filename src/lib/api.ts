@@ -34,7 +34,6 @@ function resolveBaseUrl(): string {
   // Dev fallback — only safe in the iOS simulator, which shares the Mac's loopback.
   const fallback = 'http://localhost:8000/api/v1';
   if (Platform.OS === 'android') {
-    // eslint-disable-next-line no-console
     console.warn(
       '[api] Falling back to localhost; on the Android emulator use `API_URL=http://10.0.2.2:8000/api/v1`. ' +
         'On a physical device set your Mac\'s LAN IP.'
