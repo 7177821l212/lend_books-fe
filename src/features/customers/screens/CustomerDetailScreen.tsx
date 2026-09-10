@@ -88,7 +88,6 @@ export function CustomerDetailScreen() {
   const loans = loansPage?.items ?? [];
   const [blacklistReason, setBlacklistReason] = useState('');
   const [showBlacklistModal, setShowBlacklistModal] = useState(false);
-  const [uploadDocType, setUploadDocType] = useState<string>(DOC_TYPES[0]);
   const activeLoans = loans.filter((l) => l.status === 'active' || l.status === 'overdue');
   const closedLoans = loans.filter((l) => l.status === 'closed');
   const customerPhotoUrl = useSignedUrl(customer?.photo_url);

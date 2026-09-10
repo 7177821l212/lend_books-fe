@@ -5,9 +5,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ViewProps, type ViewStyle } from 'react-native';
 
-import { colors } from '@/theme';
+import { colors as lightColors, useColors } from '@/theme';
 
-type GradientKey = keyof typeof colors.gradients;
+type GradientKey = keyof typeof lightColors.gradients;
 
 interface GradientBackgroundProps extends ViewProps {
   gradient?: GradientKey;
@@ -27,6 +27,7 @@ export function GradientBackground({
   style,
   ...rest
 }: GradientBackgroundProps) {
+  const colors = useColors();
   const stops = colorsOverride ?? colors.gradients[gradient];
   return (
     <LinearGradient

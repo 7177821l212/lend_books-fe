@@ -25,7 +25,7 @@ import {
 import { useCollectors, useCreateCollector } from '@/features/collectors/hooks/useCollectors';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { useT } from '@/i18n';
-import { useColors, fontFamily, layout, radii, spacing } from '@/theme';
+import { useColors, layout, radii, spacing } from '@/theme';
 
 type TeamNav = NativeStackNavigationProp<TeamStackParamList, 'TeamList'>;
 

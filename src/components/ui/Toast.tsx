@@ -2,7 +2,7 @@
  * Toast — provider + hook. Wrap app once, then use `useToast().show(...)`.
  */
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle2, XCircle, AlertCircle, Info } from 'lucide-react-native';
 import Animated, {
