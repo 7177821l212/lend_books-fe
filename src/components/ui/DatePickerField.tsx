@@ -129,11 +129,13 @@ export function DatePickerField({ label, value, onChange, minDate, maxDate }: Da
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
+        <View style={styles.overlay}>
           <Pressable
-            style={[styles.sheet, { backgroundColor: colors.card }]}
-            onPress={() => {}}
-          >
+            accessibilityLabel="Close date picker"
+            onPress={() => setOpen(false)}
+            style={styles.backdrop}
+          />
+          <View style={[styles.sheet, { backgroundColor: colors.card }]}>
             {/* Month navigation */}
             <View style={styles.monthRow}>
               <Pressable onPress={() => goMonth(-1)} hitSlop={12} style={styles.navBtn}>
@@ -209,8 +211,8 @@ export function DatePickerField({ label, value, onChange, minDate, maxDate }: Da
                 Today
               </Text>
             </Pressable>
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
     </>
   );
@@ -230,6 +232,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     padding: spacing[6],
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
   },
   sheet: {
     borderRadius: radii['2xl'],
