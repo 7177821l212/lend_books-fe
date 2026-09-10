@@ -19,6 +19,7 @@ module.exports = {
     },
     android: {
       package: 'ai.genworx.lendbook',
+      permissions: ['VIBRATE'],
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#16a34a',

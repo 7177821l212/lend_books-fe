@@ -42,6 +42,8 @@ export interface UploadDocumentPayload {
   doc_type: string;
   /** Local file:// URI from the image/document picker. */
   local_uri: string;
+  filename?: string;
+  mime_type?: string;
 }
 
 function guessMimeType(uri: string): string {
@@ -102,17 +104,18 @@ export const customerApi = {
     customerId: string,
     payload: UploadDocumentPayload
   ): Promise<CustomerDocument> {
-    const filename = payload.local_uri.split('/').pop() ?? 'document';
-    const type = guessMimeType(payload.local_uri);
+    const filename = payload.filename ?? payload.local_uri.split('/').pop() ?? 'document';
+    const type = payload.mime_type ?? guessMimeType(filename);
 
     const formData = new FormData();
     formData.append('doc_type', payload.doc_type);
     formData.append('file', { uri: payload.local_uri, name: filename, type } as unknown as Blob);
 
+    // React Native supplies the multipart boundary. Setting Content-Type here
+    // omits it on some Android devices, causing FastAPI to reject the upload.
     const { data } = await apiClient.post<CustomerDocument>(
       `/customers/${customerId}/documents`,
-      formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      formData
     );
     return data;
   },
