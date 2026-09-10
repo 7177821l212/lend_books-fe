@@ -162,7 +162,7 @@ eas update --branch production --message "feat: add collect proof photo"
 
 ## Code Standards
 
-Follows [GenWorx COE React Standards](../docs/COE/react-standard.md):
+Follows the project React standards:
 - Feature-based folder structure
 - Hooks handle logic, components handle rendering
 - All API calls through `src/lib/api.ts`
