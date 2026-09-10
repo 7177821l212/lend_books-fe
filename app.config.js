@@ -14,11 +14,11 @@ module.exports = {
     },
     ios: {
       supportsTablet: false,
-      bundleIdentifier: 'ai.genworx.lendbook',
+      bundleIdentifier: 'com.lendbook.app',
       icon: './assets/icon.png',
     },
     android: {
-      package: 'ai.genworx.lendbook',
+      package: 'com.lendbook.app',
       permissions: ['VIBRATE'],
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
