@@ -88,7 +88,7 @@ export function LiveLocationsScreen() {
           </View>
         </View>
         <Text variant="caption" color="onDark" style={{ opacity: 0.7, marginTop: spacing[3] }}>
-          Reported while a collector's app is open — updates every 30s.
+          Reported while a collector's app is open — updates every 90s.
         </Text>
       </GradientBackground>
 

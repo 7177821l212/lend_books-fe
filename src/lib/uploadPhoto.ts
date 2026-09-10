@@ -8,7 +8,6 @@
  * and returned unchanged (backwards-compat for already-stored full URLs).
  */
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
 
 import { SECURE_STORE_KEYS } from '@/config/constants';
 import { tokenStorage } from '@/lib/tokenStorage';
