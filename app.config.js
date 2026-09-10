@@ -40,11 +40,11 @@ module.exports = {
       ],
     ],
     updates: {
-      url: 'https://u.expo.dev/3f903d78-9a29-46c5-8b24-70e7a1e46269',
+      url: 'https://u.expo.dev/da5098d4-eb8f-4b2c-8ad9-6a1637c9d887',
     },
     extra: {
       eas: {
-        projectId: '3f903d78-9a29-46c5-8b24-70e7a1e46269',
+        projectId: 'da5098d4-eb8f-4b2c-8ad9-6a1637c9d887',
       },
       apiUrl:
         process.env.API_URL ??
