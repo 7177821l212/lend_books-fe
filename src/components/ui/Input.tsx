@@ -67,7 +67,8 @@ export function Input({
         <TextInput
           style={[styles.input, { color: colors.text.primary }]}
           placeholderTextColor={colors.text.placeholder}
-          selectionColor={colors.brand[600]}
+          cursorColor={colors.text.primary}
+          selectionColor={colors.text.primary}
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);

@@ -282,7 +282,8 @@ export function CollectScreen() {
                     value={amount}
                     onChangeText={setAmount}
                     keyboardType="numeric"
-                    selectionColor={colors.brand[600]}
+                    cursorColor={colors.text.primary}
+                    selectionColor={colors.text.primary}
                   />
                 </View>
                 <View style={styles.chipRow}>
@@ -358,6 +359,8 @@ export function CollectScreen() {
                   onChangeText={setNotes}
                   placeholder="Anything to add?"
                   placeholderTextColor={colors.text.placeholder}
+                  cursorColor={colors.text.primary}
+                  selectionColor={colors.text.primary}
                   style={[
                     styles.notesInput,
                     { color: colors.text.primary, backgroundColor: colors.slate[50] },
@@ -457,6 +460,8 @@ export function CollectScreen() {
                   onChangeText={setNotes}
                   placeholder="Add detail…"
                   placeholderTextColor={colors.text.placeholder}
+                  cursorColor={colors.text.primary}
+                  selectionColor={colors.text.primary}
                   style={[
                     styles.notesInput,
                     { color: colors.text.primary, backgroundColor: colors.slate[50] },
