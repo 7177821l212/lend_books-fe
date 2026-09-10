@@ -1,5 +1,6 @@
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import {
   Ban,
@@ -131,22 +132,25 @@ export function CustomerDetailScreen() {
   };
 
   const handleUploadDoc = async (docType: string) => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      toast.warning('Gallery permission needed');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-    });
-    if (result.canceled) return;
-    const uri = result.assets[0].uri;
     try {
-      await upload.mutateAsync({ doc_type: docType, local_uri: uri });
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*', 'application/pdf'],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (result.canceled) return;
+
+      const file = result.assets[0];
+      await upload.mutateAsync({
+        doc_type: docType,
+        local_uri: file.uri,
+        filename: file.name,
+        mime_type: file.mimeType ?? undefined,
+      });
       toast.success(`${docType} uploaded`);
-    } catch {
-      toast.error('Upload failed');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      toast.error(message || 'Upload failed. Please try again.');
     }
   };
 
