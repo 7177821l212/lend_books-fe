@@ -58,7 +58,13 @@ export function ProfileScreen() {
             accessibilityLabel="Settings"
           />
         </View>
-        <Avatar name={user.name} id={user.id} size="2xl" style={{ marginTop: spacing[2] }} />
+        <Avatar
+          name={user.name}
+          id={user.id}
+          imageUrl={user.photo_url}
+          size="2xl"
+          style={{ marginTop: spacing[2] }}
+        />
         <Text variant="h2" color="onDark" style={{ marginTop: spacing[3] }}>
           {user.name}
         </Text>
