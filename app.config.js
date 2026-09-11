@@ -49,9 +49,7 @@ module.exports = {
       },
       apiUrl:
         process.env.API_URL ??
-        (process.env.EAS_BUILD || process.env.NODE_ENV === 'production'
-          ? 'https://lendbook-be-753aak7uga-el.a.run.app/api/v1'
-          : 'http://localhost:8000/api/v1'),
+        'https://lendbook-be-753aak7uga-el.a.run.app/api/v1',
     },
     runtimeVersion: {
       policy: 'appVersion',
