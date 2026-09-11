@@ -32,8 +32,8 @@ export function LoginScreen() {
       </GradientBackground>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 12}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        enabled={Platform.OS === 'ios'}
         style={[styles.sheet, { backgroundColor: colors.card }]}
       >
         <Text variant="h2">{t('welcome_back')}</Text>
