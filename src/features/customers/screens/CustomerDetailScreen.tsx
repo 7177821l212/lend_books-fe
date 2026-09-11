@@ -95,9 +95,7 @@ export function CustomerDetailScreen() {
   const [customerPhotoPreviewUrl, setCustomerPhotoPreviewUrl] = useState<string | undefined>();
   const activeLoans = loans.filter((l) => l.status === 'active' || l.status === 'overdue');
   const closedLoans = loans.filter((l) => l.status === 'closed');
-  const customerPhotoUrl = useSignedUrl(customer?.photo_url);
   const requestedPreviewUrl = useSignedUrl(previewDocument?.file_url);
-  const displayCustomerPhoto = customerPhotoPreviewUrl ?? customerPhotoUrl;
   const activePreviewUrl = previewUrl ?? requestedPreviewUrl;
 
   // When reached via a cross-tab deep link (e.g. Reports' overdue/blacklisted
@@ -241,7 +239,7 @@ export function CustomerDetailScreen() {
               <Avatar
                 name={customer.name}
                 id={customer.id}
-                imageUrl={displayCustomerPhoto ?? customer.photo_url}
+                imageUrl={customerPhotoPreviewUrl ?? customer.photo_url}
                 size="2xl"
                 ring={customer.is_blacklisted ? 'danger' : 'none'}
               />
