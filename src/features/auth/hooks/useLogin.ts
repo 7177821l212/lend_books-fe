@@ -14,8 +14,10 @@ export function useLogin() {
       await login({ email, password });
     } catch (e: unknown) {
       const msg =
-        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-        'Login failed. Check your credentials.';
+        e instanceof Error
+          ? e.message
+          : (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+            'Login failed. Please try again.';
       setError(msg);
     } finally {
       setIsLoading(false);
