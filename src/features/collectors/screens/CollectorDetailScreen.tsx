@@ -159,14 +159,15 @@ export function CollectorDetailScreen() {
   };
 
   // Must be called before any early return (Rules of Hooks)
-  const resolvedCollectorPhoto = useSignedUrl(!editing ? collector?.photo_url : null);
+  const resolvedCollectorPhoto = useSignedUrl(collector?.photo_url);
+  const resolvedEditingPhoto = useSignedUrl(photoUrl);
 
   if (isLoading || !collector) {
     return <CollectorDetailSkeleton insetsTop={insets.top} />;
   }
 
   const isInactive = !collector.is_active;
-  const displayPhoto = editing ? photoUrl : resolvedCollectorPhoto;
+  const displayPhoto = editing ? resolvedEditingPhoto : resolvedCollectorPhoto;
 
   return (
     <Screen padded={false} background="default" edges={[]}>

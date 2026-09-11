@@ -91,10 +91,14 @@ export function CustomerDetailScreen() {
   const [blacklistReason, setBlacklistReason] = useState('');
   const [showBlacklistModal, setShowBlacklistModal] = useState(false);
   const [previewDocument, setPreviewDocument] = useState<CustomerDocument | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | undefined>();
+  const [customerPhotoPreviewUrl, setCustomerPhotoPreviewUrl] = useState<string | undefined>();
   const activeLoans = loans.filter((l) => l.status === 'active' || l.status === 'overdue');
   const closedLoans = loans.filter((l) => l.status === 'closed');
   const customerPhotoUrl = useSignedUrl(customer?.photo_url);
-  const previewUrl = useSignedUrl(previewDocument?.file_url);
+  const requestedPreviewUrl = useSignedUrl(previewDocument?.file_url);
+  const displayCustomerPhoto = customerPhotoPreviewUrl ?? customerPhotoUrl;
+  const activePreviewUrl = previewUrl ?? requestedPreviewUrl;
 
   // When reached via a cross-tab deep link (e.g. Reports' overdue/blacklisted
   // lists), this screen may be the only entry in the Customers stack —
@@ -165,8 +169,9 @@ export function CustomerDetailScreen() {
         mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1],
       });
       if (!result.canceled) {
-        const { objectName } = await uploadPhoto(result.assets[0].uri);
+        const { objectName, signedUrl } = await uploadPhoto(result.assets[0].uri);
         await updateCustomer.mutateAsync({ photo_url: objectName });
+        setCustomerPhotoPreviewUrl(signedUrl);
         toast.success('Photo updated');
       }
     };
@@ -178,8 +183,9 @@ export function CustomerDetailScreen() {
         mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1],
       });
       if (!result.canceled) {
-        const { objectName } = await uploadPhoto(result.assets[0].uri);
+        const { objectName, signedUrl } = await uploadPhoto(result.assets[0].uri);
         await updateCustomer.mutateAsync({ photo_url: objectName });
+        setCustomerPhotoPreviewUrl(signedUrl);
         toast.success('Photo updated');
       }
     };
@@ -231,10 +237,10 @@ export function CustomerDetailScreen() {
 
         <View style={styles.heroRow}>
           <TouchableOpacity onPress={isInvestor ? handlePhotoUpload : undefined} activeOpacity={isInvestor ? 0.7 : 1}>
-            {customerPhotoUrl ? (
+            {displayCustomerPhoto ? (
               <View style={{ position: 'relative' }}>
                 <Image
-                  source={{ uri: customerPhotoUrl }}
+                  source={{ uri: displayCustomerPhoto }}
                   style={[styles.photo, { borderColor: customer.is_blacklisted ? colors.danger : 'rgba(255,255,255,0.3)' }]}
                 />
                 {isInvestor ? (
@@ -277,7 +283,7 @@ export function CustomerDetailScreen() {
           </View>
         </View>
 
-        <Card padding={4} style={{ marginTop: spacing[5], backgroundColor: 'rgba(255,255,255,0.12)' }}>
+        <View style={styles.outstandingPanel}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View>
               <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
@@ -307,7 +313,7 @@ export function CustomerDetailScreen() {
               />
             </View>
           </View>
-        </Card>
+        </View>
       </GradientBackground>
 
       <View style={{ padding: layout.screenPaddingX }}>
@@ -399,8 +405,12 @@ export function CustomerDetailScreen() {
               label={label}
               existing={documents?.find((d) => d.doc_type === label)}
               canUpload={isInvestor}
+              isUploading={upload.isPending}
               onUpload={() => handleUploadDoc(label)}
-              onOpen={setPreviewDocument}
+              onOpen={(document, url) => {
+                setPreviewDocument(document);
+                setPreviewUrl(url);
+              }}
             />
           ))}
         </View>
@@ -421,7 +431,10 @@ export function CustomerDetailScreen() {
           visible={previewDocument !== null}
           transparent
           animationType="fade"
-          onRequestClose={() => setPreviewDocument(null)}
+          onRequestClose={() => {
+            setPreviewDocument(null);
+            setPreviewUrl(undefined);
+          }}
         >
           <View style={styles.previewOverlay}>
             <View style={[styles.previewSheet, { backgroundColor: colors.card }]}>
@@ -434,12 +447,15 @@ export function CustomerDetailScreen() {
                 </View>
                 <IconButton
                   icon={<X size={20} color={colors.text.primary} />}
-                  onPress={() => setPreviewDocument(null)}
+                  onPress={() => {
+                    setPreviewDocument(null);
+                    setPreviewUrl(undefined);
+                  }}
                   accessibilityLabel="Close document preview"
                 />
               </View>
-              {previewUrl && isImageDocument(previewDocument?.file_url) ? (
-                <Image source={{ uri: previewUrl }} resizeMode="contain" style={styles.previewImage} />
+              {activePreviewUrl && isImageDocument(previewDocument?.file_url) ? (
+                <Image source={{ uri: activePreviewUrl }} resizeMode="contain" style={styles.previewImage} />
               ) : (
                 <View style={[styles.previewUnavailable, { backgroundColor: colors.slate[100] }]}>
                   <FileText size={40} color={colors.brand[700]} />
@@ -622,20 +638,23 @@ interface DocTileProps {
   label: string;
   existing: CustomerDocument | undefined;
   canUpload: boolean;
+  isUploading: boolean;
   onUpload: () => void;
-  onOpen: (document: CustomerDocument) => void;
+  onOpen: (document: CustomerDocument, url: string | undefined) => void;
 }
 
-function DocTile({ label, existing, canUpload, onUpload, onOpen }: DocTileProps) {
+function DocTile({ label, existing, canUpload, isUploading, onUpload, onOpen }: DocTileProps) {
   const t = useT();
   const colors = useColors();
+  // Start signing as soon as the tile appears so opening a document is immediate.
+  const resolvedUrl = useSignedUrl(existing?.file_url);
 
   return (
     <Card
       padding={3}
       style={styles.docTile}
       shadow="xs"
-      onPress={existing ? () => onOpen(existing) : canUpload ? onUpload : undefined}
+      onPress={existing ? () => onOpen(existing, resolvedUrl) : canUpload ? onUpload : undefined}
     >
       <View
         style={{
@@ -653,7 +672,7 @@ function DocTile({ label, existing, canUpload, onUpload, onOpen }: DocTileProps)
         {label}
       </Text>
       <Text variant="caption" style={{ color: existing ? colors.brand[600] : colors.text.tertiary }}>
-        {existing ? t('tap_to_view') : canUpload ? t('upload') : t('missing')}
+        {existing ? t('tap_to_view') : isUploading ? 'Uploading...' : canUpload ? t('upload') : t('missing')}
       </Text>
     </Card>
   );
@@ -716,6 +735,12 @@ const styles = StyleSheet.create({
   docTile: {
     width: '48%',
     alignItems: 'flex-start',
+  },
+  outstandingPanel: {
+    marginTop: spacing[5],
+    padding: spacing[4],
+    borderRadius: radii.xl,
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   modalOverlay: {
     flex: 1,
