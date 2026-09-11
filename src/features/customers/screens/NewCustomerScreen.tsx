@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Camera, ChevronLeft, MapPin, Phone, User } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
@@ -127,10 +127,16 @@ export function NewCustomerScreen() {
       </GradientBackground>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 12}
         style={{ flex: 1 }}
       >
-        <View style={styles.body}>
+        <ScrollView
+          contentContainerStyle={styles.body}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
           {/* Photo picker */}
           <View style={{ alignItems: 'center', marginBottom: spacing[4] }}>
             <TouchableOpacity onPress={handlePickPhoto} style={styles.photoPicker}>
@@ -250,7 +256,7 @@ export function NewCustomerScreen() {
             style={{ marginTop: spacing[5] }}
             hapticFeedback="medium"
           />
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
   );
@@ -258,7 +264,7 @@ export function NewCustomerScreen() {
 
 const styles = StyleSheet.create({
   topRow: { flexDirection: 'row', alignItems: 'center' },
-  body: { flex: 1, padding: layout.screenPaddingX },
+  body: { padding: layout.screenPaddingX, paddingBottom: spacing[12] },
   photoPicker: { position: 'relative' },
   photoImg: { width: 72, height: 72, borderRadius: 36 },
   cameraBtn: {

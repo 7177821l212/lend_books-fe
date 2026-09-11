@@ -473,8 +473,8 @@ export function CustomerDetailScreen() {
                 onChangeText={setBlacklistReason}
                 placeholder="e.g. Defaulted on loan repayment"
                 placeholderTextColor={colors.text.placeholder}
-                cursorColor={colors.text.primary}
-                selectionColor={colors.text.primary}
+                cursorColor={colors.brand[600]}
+                selectionColor={colors.brand[200]}
                 style={[styles.reasonInput, {
                   backgroundColor: colors.slate[100],
                   color: colors.text.primary,

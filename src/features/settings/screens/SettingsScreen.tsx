@@ -2,6 +2,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Switch,
@@ -90,12 +92,19 @@ export function SettingsScreen() {
         <View style={{ width: 36 }} />
       </View>
 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 12}
+        style={{ flex: 1 }}
+      >
       <ScrollView
         contentContainerStyle={{
           padding: layout.screenPaddingX,
           paddingBottom: spacing[12],
         }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         {/* Appearance */}
         <Text variant="overline" color="tertiary" style={{ marginBottom: spacing[2] }}>
@@ -239,6 +248,7 @@ export function SettingsScreen() {
           onPress={handleSignOut}
         />
       </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
