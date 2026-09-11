@@ -2,6 +2,9 @@
  * Customer API — typed wrappers over apiClient.
  */
 import { apiClient } from '@/lib/api';
+import { getApiServerRoot } from '@/lib/uploadPhoto';
+import { SECURE_STORE_KEYS } from '@/config/constants';
+import { tokenStorage } from '@/lib/tokenStorage';
 import type { Customer, Paginated, RiskLevel } from '@/types';
 
 export type CustomerStatusFilter = 'active' | 'overdue' | 'blacklisted';
@@ -111,12 +114,31 @@ export const customerApi = {
     formData.append('doc_type', payload.doc_type);
     formData.append('file', { uri: payload.local_uri, name: filename, type } as unknown as Blob);
 
-    // React Native supplies the multipart boundary. Setting Content-Type here
-    // omits it on some Android devices, causing FastAPI to reject the upload.
-    const { data } = await apiClient.post<CustomerDocument>(
-      `/customers/${customerId}/documents`,
-      formData
+    // Use React Native's native fetch implementation. It supplies the multipart
+    // boundary itself; Axios/global JSON headers caused Android uploads to arrive
+    // without the required Form fields.
+    const token = await tokenStorage.getItem(SECURE_STORE_KEYS.ACCESS_TOKEN);
+    const response = await fetch(
+      `${getApiServerRoot()}/api/v1/customers/${customerId}/documents`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token ?? ''}`, Accept: 'application/json' },
+        body: formData,
+      }
     );
-    return data;
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      let detail = '';
+      try {
+        const parsed = JSON.parse(body) as { detail?: string };
+        detail = parsed.detail ?? '';
+      } catch {
+        // Preserve the generic status message when a proxy returns non-JSON.
+      }
+      throw new Error(detail || `Document upload failed (${response.status})`);
+    }
+
+    return (await response.json()) as CustomerDocument;
   },
 };
