@@ -47,7 +47,6 @@ const BASE_URL: string = resolveBaseUrl();
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 15_000,
-  headers: { 'Content-Type': 'application/json' },
 });
 
 // Hook the auth store sets these so api.ts has no React dependency
