@@ -1,3 +1,5 @@
+import * as Updates from 'expo-updates';
+import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -10,6 +12,26 @@ import { InvestorNavigator } from './InvestorNavigator';
 export function RootNavigator() {
   const { user, isLoading } = useAuth();
   const colors = useColors();
+
+  useEffect(() => {
+    if (__DEV__ || !Updates.isEnabled) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const update = await Updates.checkForUpdateAsync();
+        if (!update.isAvailable || cancelled) return;
+        await Updates.fetchUpdateAsync();
+        if (!cancelled) await Updates.reloadAsync();
+      } catch {
+        // A temporary network failure must never block the app from opening.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (isLoading) {
     return (
