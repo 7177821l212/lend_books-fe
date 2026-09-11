@@ -131,8 +131,8 @@ const styles = StyleSheet.create({
   },
   sheet: {
     flex: 0.6,
-    borderTopLeftRadius: radii['3xl'],
-    borderTopRightRadius: radii['3xl'],
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
   },
   sheetExpanded: {
     flex: 1,

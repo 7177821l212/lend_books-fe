@@ -20,6 +20,7 @@ interface AuthState {
 interface AuthActions {
   login: (payload: LoginPayload) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfilePhoto: (photoUrl: string) => Promise<void>;
 }
 
 type AuthContextValue = AuthState & AuthActions;
@@ -99,6 +100,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const updateProfilePhoto = useCallback(async (photoUrl: string) => {
+    const updatedUser = await authApi.updateMyProfilePhoto(photoUrl);
+    setUser(updatedUser);
+  }, []);
+
   const value: AuthContextValue = useMemo(
     () => ({
       user,
@@ -106,8 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!user,
       login,
       logout,
+      updateProfilePhoto,
     }),
-    [user, isLoading, login, logout]
+    [user, isLoading, login, logout, updateProfilePhoto]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

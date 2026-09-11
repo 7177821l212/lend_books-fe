@@ -10,6 +10,7 @@ import { Avatar, Button, Card, Input, Screen, SkeletonLoader, Text, useToast } f
 import { useCustomer, useUpdateCustomer } from '../hooks/useCustomers';
 import { useT } from '@/i18n';
 import { uploadPhoto } from '@/lib/uploadPhoto';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 import { useColors, layout, radii, spacing } from '@/theme';
 import type { RiskLevel } from '@/types';
 
@@ -39,6 +40,7 @@ export function EditCustomerScreen() {
   const [riskLevel, setRiskLevel] = useState<RiskLevel>('low');
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [initialised, setInitialised] = useState(false);
+  const displayPhotoUrl = useSignedUrl(photoUrl);
 
   if (customer && !initialised) {
     setName(customer.name);
@@ -126,8 +128,8 @@ export function EditCustomerScreen() {
         {/* Photo picker */}
         <View style={{ alignItems: 'center', marginBottom: spacing[4] }}>
           <TouchableOpacity onPress={handlePickPhoto} style={styles.photoPicker}>
-            {photoUrl ? (
-              <Image source={{ uri: photoUrl }} style={styles.photoImg} />
+            {displayPhotoUrl ? (
+              <Image source={{ uri: displayPhotoUrl }} style={styles.photoImg} />
             ) : (
               <Avatar name={name || '?'} id={params.id} size="2xl" />
             )}

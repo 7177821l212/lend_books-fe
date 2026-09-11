@@ -31,6 +31,11 @@ export const authApi = {
     return data;
   },
 
+  async updateMyProfilePhoto(photoUrl: string): Promise<User> {
+    const { data } = await apiClient.patch<User>('/auth/me', { photo_url: photoUrl });
+    return data;
+  },
+
   async changePassword(payload: { current_password: string; new_password: string }): Promise<void> {
     await apiClient.post('/auth/change-password', payload);
   },
