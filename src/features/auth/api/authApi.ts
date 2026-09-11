@@ -1,7 +1,7 @@
 /**
  * Auth API endpoints — typed wrappers over apiClient.
  */
-import { apiClient } from '@/lib/api';
+import { apiClient, publicApiClient } from '@/lib/api';
 import type { User } from '@/types';
 
 export interface LoginPayload {
@@ -17,7 +17,7 @@ export interface TokenResponse {
 
 export const authApi = {
   async login(payload: LoginPayload): Promise<TokenResponse> {
-    const { data } = await apiClient.post<TokenResponse>('/auth/login', payload);
+    const { data } = await publicApiClient.post<TokenResponse>('/auth/login', payload);
     return data;
   },
   async refresh(refreshToken: string): Promise<TokenResponse> {
