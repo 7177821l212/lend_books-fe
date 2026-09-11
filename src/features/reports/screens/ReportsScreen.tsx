@@ -215,10 +215,10 @@ export function ReportsScreen() {
                       style={[styles.modalOption, { borderBottomColor: colors.border.subtle }]}
                       onPress={() => { setApiCollectorId(c.id); setShowCollectorModal(false); }}
                     >
-                      <Text variant="body" style={{ flex: 1, color: selected ? colors.brand[600] : colors.text.primary }}>
+                      <Text variant="body" style={{ flex: 1, color: selected ? colors.brand[800] : colors.text.primary }}>
                         {c.name}
                       </Text>
-                      {selected ? <Check size={16} color={colors.brand[600]} /> : null}
+                      {selected ? <Check size={16} color={colors.brand[800]} /> : null}
                     </TouchableOpacity>
                   );
                 })}

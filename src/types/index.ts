@@ -26,6 +26,7 @@ export interface User {
   phone: string | null;
   role: UserRole;
   is_active: boolean;
+  photo_url: string | null;
 }
 
 export interface Customer {

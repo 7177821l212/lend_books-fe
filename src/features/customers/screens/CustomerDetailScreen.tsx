@@ -12,6 +12,7 @@ import {
   Phone,
   Plus,
   Trash2,
+  X,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import {
@@ -89,9 +90,11 @@ export function CustomerDetailScreen() {
   const loans = loansPage?.items ?? [];
   const [blacklistReason, setBlacklistReason] = useState('');
   const [showBlacklistModal, setShowBlacklistModal] = useState(false);
+  const [previewDocument, setPreviewDocument] = useState<CustomerDocument | null>(null);
   const activeLoans = loans.filter((l) => l.status === 'active' || l.status === 'overdue');
   const closedLoans = loans.filter((l) => l.status === 'closed');
   const customerPhotoUrl = useSignedUrl(customer?.photo_url);
+  const previewUrl = useSignedUrl(previewDocument?.file_url);
 
   // When reached via a cross-tab deep link (e.g. Reports' overdue/blacklisted
   // lists), this screen may be the only entry in the Customers stack —
@@ -397,6 +400,7 @@ export function CustomerDetailScreen() {
               existing={documents?.find((d) => d.doc_type === label)}
               canUpload={isInvestor}
               onUpload={() => handleUploadDoc(label)}
+              onOpen={setPreviewDocument}
             />
           ))}
         </View>
@@ -412,6 +416,41 @@ export function CustomerDetailScreen() {
             style={{ marginTop: spacing[6] }}
           />
         ) : null}
+
+        <Modal
+          visible={previewDocument !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPreviewDocument(null)}
+        >
+          <View style={styles.previewOverlay}>
+            <View style={[styles.previewSheet, { backgroundColor: colors.card }]}>
+              <View style={styles.previewHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text variant="title">{previewDocument?.doc_type}</Text>
+                  <Text variant="caption" color="secondary" style={{ marginTop: 2 }}>
+                    {previewDocument?.file_url.split('/').pop()}
+                  </Text>
+                </View>
+                <IconButton
+                  icon={<X size={20} color={colors.text.primary} />}
+                  onPress={() => setPreviewDocument(null)}
+                  accessibilityLabel="Close document preview"
+                />
+              </View>
+              {previewUrl && isImageDocument(previewDocument?.file_url) ? (
+                <Image source={{ uri: previewUrl }} resizeMode="contain" style={styles.previewImage} />
+              ) : (
+                <View style={[styles.previewUnavailable, { backgroundColor: colors.slate[100] }]}>
+                  <FileText size={40} color={colors.brand[700]} />
+                  <Text variant="bodyStrong" style={{ marginTop: spacing[3] }}>
+                    Preview is not available for this file type
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </Modal>
 
         {isInvestor ? (
           <Button
@@ -584,25 +623,19 @@ interface DocTileProps {
   existing: CustomerDocument | undefined;
   canUpload: boolean;
   onUpload: () => void;
+  onOpen: (document: CustomerDocument) => void;
 }
 
-function DocTile({ label, existing, canUpload, onUpload }: DocTileProps) {
+function DocTile({ label, existing, canUpload, onUpload, onOpen }: DocTileProps) {
   const t = useT();
   const colors = useColors();
-  const toast = useToast();
-  const resolvedUrl = useSignedUrl(existing?.file_url);
-
-  const handleOpen = () => {
-    if (!resolvedUrl) return;
-    Linking.openURL(resolvedUrl).catch(() => toast.error('Could not open document'));
-  };
 
   return (
     <Card
       padding={3}
       style={styles.docTile}
       shadow="xs"
-      onPress={existing ? handleOpen : canUpload ? onUpload : undefined}
+      onPress={existing ? () => onOpen(existing) : canUpload ? onUpload : undefined}
     >
       <View
         style={{
@@ -624,6 +657,10 @@ function DocTile({ label, existing, canUpload, onUpload }: DocTileProps) {
       </Text>
     </Card>
   );
+}
+
+function isImageDocument(fileUrl?: string): boolean {
+  return Boolean(fileUrl && /\.(avif|gif|heic|jpeg|jpg|png|webp)(?:$|\?)/i.test(fileUrl));
 }
 
 const styles = StyleSheet.create({
@@ -690,6 +727,34 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radii['3xl'],
     padding: spacing[6],
     paddingBottom: spacing[10],
+  },
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    justifyContent: 'center',
+    padding: spacing[4],
+  },
+  previewSheet: {
+    borderRadius: radii['2xl'],
+    padding: spacing[4],
+    maxHeight: '86%',
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    marginBottom: spacing[3],
+  },
+  previewImage: {
+    width: '100%',
+    aspectRatio: 0.72,
+  },
+  previewUnavailable: {
+    minHeight: 260,
+    borderRadius: radii.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing[6],
   },
   reasonInput: {
     minHeight: 80,
