@@ -205,12 +205,15 @@ export function NewLoanScreen() {
       </GradientBackground>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 12}
         style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={styles.body}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* Principal */}
           <Section title="Loan amount">

@@ -2,7 +2,7 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'lucide-react-native';
 import { useState } from 'react';
-import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CustomersStackParamList } from '@/app/navigation/CustomersNavigator';
@@ -112,7 +112,17 @@ export function EditCustomerScreen() {
         <View style={{ width: 36 }} />
       </View>
 
-      <View style={{ padding: layout.screenPaddingX, marginTop: spacing[4] }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 12}
+        style={{ flex: 1 }}
+      >
+      <ScrollView
+        contentContainerStyle={{ padding: layout.screenPaddingX, paddingTop: spacing[4], paddingBottom: spacing[12] }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         {/* Photo picker */}
         <View style={{ alignItems: 'center', marginBottom: spacing[4] }}>
           <TouchableOpacity onPress={handlePickPhoto} style={styles.photoPicker}>
@@ -196,7 +206,8 @@ export function EditCustomerScreen() {
           loading={update.isPending}
           onPress={handleSave}
         />
-      </View>
+      </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }

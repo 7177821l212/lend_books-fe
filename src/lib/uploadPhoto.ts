@@ -12,14 +12,14 @@ import Constants from 'expo-constants';
 import { SECURE_STORE_KEYS } from '@/config/constants';
 import { tokenStorage } from '@/lib/tokenStorage';
 
-function resolveServerRoot(): string {
+export function getApiServerRoot(): string {
   const apiUrl = (Constants.expoConfig?.extra as { apiUrl?: string | null } | undefined)?.apiUrl;
   if (apiUrl) return apiUrl.replace(/\/api\/v1\/?$/, '');
   if (!__DEV__) throw new Error('API_URL not configured');
   return 'http://localhost:8000';
 }
 
-const SERVER_ROOT = resolveServerRoot();
+const SERVER_ROOT = getApiServerRoot();
 
 export interface UploadResult {
   objectName: string;

@@ -136,9 +136,9 @@ export function CustomerListScreen() {
             onChangeText={setSearch}
             placeholder={`${t('search')}...`}
             placeholderTextColor={colors.slate[400]}
-            cursorColor={colors.text.primary}
-            selectionColor={colors.text.primary}
-            style={[styles.searchInput, { color: colors.text.primary }]}
+            cursorColor={colors.white}
+            selectionColor="rgba(255,255,255,0.35)"
+            style={[styles.searchInput, { color: colors.white }]}
             autoCorrect={false}
             autoCapitalize="none"
             returnKeyType="search"

@@ -57,8 +57,8 @@ export function Input({
             borderRadius: radii.lg,
             borderWidth: 1.5,
             paddingHorizontal: spacing[3],
-            minHeight: 48,
-            backgroundColor: colors.slate[100],
+            minHeight: 52,
+            backgroundColor: focused ? colors.card : colors.slate[100],
             borderColor,
           },
         ]}
@@ -67,8 +67,8 @@ export function Input({
         <TextInput
           style={[styles.input, { color: colors.text.primary }]}
           placeholderTextColor={colors.text.placeholder}
-          cursorColor={colors.text.primary}
-          selectionColor={colors.text.primary}
+          cursorColor={colors.brand[600]}
+          selectionColor={colors.brand[200]}
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);
@@ -99,7 +99,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.base,
-    paddingVertical: 0,
+    minHeight: 50,
+    paddingVertical: spacing[2],
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   icon: {
     paddingHorizontal: spacing[1],

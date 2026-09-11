@@ -110,6 +110,7 @@ export function CollectScreen() {
   const [reason, setReason] = useState<string>(MISSED_REASONS[0]);
   const [proofUri, setProofUri] = useState<string | undefined>(undefined);
   const [uploadingProof, setUploadingProof] = useState(false);
+  const [amountFocused, setAmountFocused] = useState(false);
 
   const captureProof = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -225,12 +226,15 @@ export function CollectScreen() {
       </GradientBackground>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 12}
         style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={styles.body}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           <View style={styles.toggleRow}>
             <Pressable
@@ -275,15 +279,25 @@ export function CollectScreen() {
                 <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
                   {t('amount').toUpperCase()}
                 </Text>
-                <View style={styles.amountWrap}>
+                <View
+                  style={[
+                    styles.amountWrap,
+                    {
+                      backgroundColor: amountFocused ? colors.card : colors.slate[50],
+                      borderColor: amountFocused ? colors.brand[600] : colors.border.default,
+                    },
+                  ]}
+                >
                   <Text color="secondary" style={styles.amountSymbol}>₹</Text>
                   <TextInput
                     style={[styles.amountInput, { color: colors.text.primary }]}
                     value={amount}
                     onChangeText={setAmount}
                     keyboardType="numeric"
-                    cursorColor={colors.text.primary}
-                    selectionColor={colors.text.primary}
+                    cursorColor={colors.brand[600]}
+                    selectionColor={colors.brand[200]}
+                    onFocus={() => setAmountFocused(true)}
+                    onBlur={() => setAmountFocused(false)}
                   />
                 </View>
                 <View style={styles.chipRow}>
@@ -359,11 +373,15 @@ export function CollectScreen() {
                   onChangeText={setNotes}
                   placeholder="Anything to add?"
                   placeholderTextColor={colors.text.placeholder}
-                  cursorColor={colors.text.primary}
-                  selectionColor={colors.text.primary}
+                  cursorColor={colors.brand[600]}
+                  selectionColor={colors.brand[200]}
                   style={[
                     styles.notesInput,
-                    { color: colors.text.primary, backgroundColor: colors.slate[50] },
+                    {
+                      color: colors.text.primary,
+                      backgroundColor: colors.slate[50],
+                      borderColor: colors.border.default,
+                    },
                   ]}
                   multiline
                 />
@@ -460,11 +478,15 @@ export function CollectScreen() {
                   onChangeText={setNotes}
                   placeholder="Add detail…"
                   placeholderTextColor={colors.text.placeholder}
-                  cursorColor={colors.text.primary}
-                  selectionColor={colors.text.primary}
+                  cursorColor={colors.brand[600]}
+                  selectionColor={colors.brand[200]}
                   style={[
                     styles.notesInput,
-                    { color: colors.text.primary, backgroundColor: colors.slate[50] },
+                    {
+                      color: colors.text.primary,
+                      backgroundColor: colors.slate[50],
+                      borderColor: colors.border.default,
+                    },
                   ]}
                   multiline
                 />
@@ -608,8 +630,11 @@ const styles = StyleSheet.create({
   },
   amountWrap: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    paddingVertical: spacing[1],
+    alignItems: 'center',
+    minHeight: 64,
+    paddingHorizontal: spacing[3],
+    borderRadius: radii.lg,
+    borderWidth: 1.5,
   },
   amountSymbol: {
     fontFamily: fontFamily.semibold,
@@ -620,7 +645,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fontFamily.bold,
     fontSize: 36,
+    minHeight: 60,
     padding: 0,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   chipRow: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[3] },
   chip: {
@@ -644,6 +672,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlignVertical: 'top',
     borderRadius: radii.md,
+    borderWidth: 1,
     padding: spacing[3],
   },
   reasonRow: {

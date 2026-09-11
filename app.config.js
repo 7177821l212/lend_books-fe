@@ -20,6 +20,7 @@ module.exports = {
     android: {
       package: 'com.lendbook.app',
       permissions: ['VIBRATE'],
+      softwareKeyboardLayoutMode: 'resize',
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#16a34a',
