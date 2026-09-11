@@ -3,7 +3,7 @@
  */
 import { Lock, Mail, Wallet } from 'lucide-react-native';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, GradientBackground, Input, Screen, Text } from '@/components/ui';
 import { useT } from '@/i18n';
@@ -36,6 +36,12 @@ export function LoginScreen() {
         enabled={Platform.OS === 'ios'}
         style={[styles.sheet, { backgroundColor: colors.card }]}
       >
+        <ScrollView
+          contentContainerStyle={styles.sheetContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
         <Text variant="h2">{t('welcome_back')}</Text>
         <Text variant="body" color="secondary" style={{ marginTop: 2, marginBottom: spacing[5] }}>
           {t('sign_in_to_continue')}
@@ -76,7 +82,7 @@ export function LoginScreen() {
           disabled={!email || !password}
           onPress={() => submit(email.trim(), password)}
         />
-
+        </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
   );
@@ -100,6 +106,9 @@ const styles = StyleSheet.create({
     flex: 0.6,
     borderTopLeftRadius: radii['3xl'],
     borderTopRightRadius: radii['3xl'],
+  },
+  sheetContent: {
+    flexGrow: 1,
     padding: spacing[6],
     paddingBottom: spacing[10],
   },
