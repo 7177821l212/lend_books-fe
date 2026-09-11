@@ -278,7 +278,7 @@ export function LoanDetailScreen() {
               No installments
             </Text>
           ) : (
-            <ScrollView style={{ maxHeight: 360 }}>
+            <ScrollView style={{ maxHeight: 360 }} nestedScrollEnabled showsVerticalScrollIndicator>
               {installments.map((i) => (
                 <InstallmentRow key={i.id} installment={i} />
               ))}
@@ -460,6 +460,7 @@ interface PaymentRowProps {
 }
 function PaymentRow({ payment, last, onViewProof }: PaymentRowProps) {
   const colors = useColors();
+  const proofUrl = useSignedUrl(payment.proof_photo_url);
   return (
     <View
       style={[
@@ -505,7 +506,8 @@ function PaymentRow({ payment, last, onViewProof }: PaymentRowProps) {
           style={[styles.proofBadge, { backgroundColor: colors.brand[50] }]}
           hitSlop={8}
         >
-          <Camera size={14} color={colors.brand[600]} />
+          {proofUrl ? <Image source={{ uri: proofUrl }} style={styles.proofThumbnail} /> : <Camera size={14} color={colors.brand[600]} />}
+          <Text variant="caption" style={{ color: colors.brand[800], marginLeft: 5 }}>Proof</Text>
         </Pressable>
       ) : null}
     </View>
@@ -543,6 +545,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     marginTop: spacing[5],
+    gap: spacing[3],
   },
   statsRow: { flexDirection: 'row', gap: spacing[2], marginBottom: spacing[3] },
   stat: { flex: 1 },
@@ -588,13 +591,16 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   proofBadge: {
-    width: 28,
-    height: 28,
+    minWidth: 68,
+    minHeight: 32,
     borderRadius: radii.full,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    overflow: 'hidden',
     flexShrink: 0,
   },
+  proofThumbnail: { width: 28, height: 28, borderRadius: 14 },
   proofOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.85)',

@@ -237,33 +237,20 @@ export function CustomerDetailScreen() {
 
         <View style={styles.heroRow}>
           <TouchableOpacity onPress={isInvestor ? handlePhotoUpload : undefined} activeOpacity={isInvestor ? 0.7 : 1}>
-            {displayCustomerPhoto ? (
-              <View style={{ position: 'relative' }}>
-                <Image
-                  source={{ uri: displayCustomerPhoto }}
-                  style={[styles.photo, { borderColor: customer.is_blacklisted ? colors.danger : 'rgba(255,255,255,0.3)' }]}
-                />
-                {isInvestor ? (
-                  <View style={[styles.cameraOverlay, { backgroundColor: colors.brand[600] }]}>
-                    <Camera size={12} color="#fff" />
-                  </View>
-                ) : null}
-              </View>
-            ) : (
-              <View style={{ position: 'relative' }}>
-                <Avatar
-                  name={customer.name}
-                  id={customer.id}
-                  size="2xl"
-                  ring={customer.is_blacklisted ? 'danger' : 'none'}
-                />
-                {isInvestor ? (
-                  <View style={[styles.cameraOverlay, { backgroundColor: colors.brand[600] }]}>
-                    <Camera size={12} color="#fff" />
-                  </View>
-                ) : null}
-              </View>
-            )}
+            <View style={{ position: 'relative' }}>
+              <Avatar
+                name={customer.name}
+                id={customer.id}
+                imageUrl={displayCustomerPhoto ?? customer.photo_url}
+                size="2xl"
+                ring={customer.is_blacklisted ? 'danger' : 'none'}
+              />
+              {isInvestor ? (
+                <View style={[styles.cameraOverlay, { backgroundColor: colors.brand[600] }]}>
+                  <Camera size={12} color="#fff" />
+                </View>
+              ) : null}
+            </View>
           </TouchableOpacity>
           <View style={{ flex: 1, marginLeft: spacing[4], minWidth: 0 }}>
             <Text variant="h2" color="onDark" numberOfLines={1}>
@@ -690,12 +677,6 @@ const styles = StyleSheet.create({
     marginTop: spacing[4],
   },
   heroSub: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  photo: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 2,
-  },
   cameraOverlay: {
     position: 'absolute',
     bottom: 0,

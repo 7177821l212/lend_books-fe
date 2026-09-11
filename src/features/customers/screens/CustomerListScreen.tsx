@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Plus, Search, UsersRound, X } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Plus, Search, UsersRound, X } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
   FlatList,
@@ -49,13 +49,14 @@ export function CustomerListScreen() {
 
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState<string>('');
+  const [page, setPage] = useState(1);
 
   const queryStatus = filter === 'all' ? undefined : filter;
   const { data, isLoading, isFetching, isRefetching, refetch } = useCustomers({
     status: queryStatus,
     search: search.trim() || undefined,
-    page: 1,
-    page_size: 50,
+    page,
+    page_size: 20,
   });
 
   const renderItem = useCallback(
@@ -133,7 +134,7 @@ export function CustomerListScreen() {
           <Search size={18} color={colors.slate[400]} />
           <TextInput
             value={search}
-            onChangeText={setSearch}
+            onChangeText={(value) => { setSearch(value); setPage(1); }}
             placeholder={`${t('search')}...`}
             placeholderTextColor={colors.slate[400]}
             cursorColor={colors.white}
@@ -157,7 +158,7 @@ export function CustomerListScreen() {
           return (
             <Pressable
               key={key}
-              onPress={() => setFilter(key)}
+              onPress={() => { setFilter(key); setPage(1); }}
               style={[
                 styles.chip,
                 {
@@ -195,6 +196,13 @@ export function CustomerListScreen() {
         onRefresh={refetch}
         showsVerticalScrollIndicator={false}
       />
+      {data && data.total > data.page_size ? (
+        <View style={[styles.pagination, { backgroundColor: colors.background }]}>
+          <IconButton icon={<ChevronLeft size={18} color={colors.text.primary} />} variant="soft" disabled={page === 1} onPress={() => setPage((p) => Math.max(1, p - 1))} accessibilityLabel="Previous customers page" />
+          <Text variant="caption" color="secondary">Page {page} of {Math.ceil(data.total / data.page_size)}</Text>
+          <IconButton icon={<ChevronRight size={18} color={colors.text.primary} />} variant="soft" disabled={!data.has_next} onPress={() => setPage((p) => p + 1)} accessibilityLabel="Next customers page" />
+        </View>
+      ) : null}
       {isFetching && data ? (
         <View style={styles.fetchBadge}>
           <Text variant="caption" color="onDark">
@@ -246,6 +254,13 @@ const styles = StyleSheet.create({
     paddingTop: spacing[2],
     paddingBottom: layout.tabBarHeight + spacing[6],
     flexGrow: 1,
+  },
+  pagination: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: layout.screenPaddingX,
+    paddingVertical: spacing[2],
   },
   skeleton: {
     flexDirection: 'row',
