@@ -44,10 +44,6 @@ function resolveBaseUrl(): string {
 
 const BASE_URL: string = resolveBaseUrl();
 
-export function getApiBaseUrl(): string {
-  return BASE_URL;
-}
-
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 15_000,
