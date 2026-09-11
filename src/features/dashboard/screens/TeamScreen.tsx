@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MapPin, Plus, Search, UserPlus, Users, X } from 'lucide-react-native';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { TeamStackParamList } from '@/app/navigation/TeamNavigator';
@@ -138,9 +138,9 @@ export function TeamScreen() {
               onChangeText={setSearch}
               placeholder="Search collectors…"
               placeholderTextColor={colors.slate[400]}
-              cursorColor={colors.text.primary}
-              selectionColor={colors.text.primary}
-              style={[styles.searchInput, { color: colors.text.primary }]}
+              cursorColor={colors.white}
+              selectionColor="rgba(255,255,255,0.35)"
+              style={[styles.searchInput, { color: colors.white }]}
               autoCorrect={false}
               autoCapitalize="none"
             />
@@ -231,7 +231,8 @@ export function TeamScreen() {
         onRequestClose={() => { setShowModal(false); resetForm(); }}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 12}
           style={{ flex: 1 }}
         >
           <Pressable
@@ -239,6 +240,11 @@ export function TeamScreen() {
             onPress={() => { setShowModal(false); resetForm(); }}
           >
             <Pressable style={[styles.sheet, { backgroundColor: colors.card }]} onPress={() => {}}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+              >
               <View style={styles.sheetHeader}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
                   <UserPlus size={20} color={colors.brand[700]} />
@@ -295,6 +301,7 @@ export function TeamScreen() {
                 onPress={handleCreate}
                 hapticFeedback="medium"
               />
+              </ScrollView>
             </Pressable>
           </Pressable>
         </KeyboardAvoidingView>

@@ -78,10 +78,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (payload: LoginPayload) => {
     const tokens = await authApi.login(payload);
-    await tokenStorage.setItem(SECURE_STORE_KEYS.ACCESS_TOKEN, tokens.access_token);
-    await tokenStorage.setItem(SECURE_STORE_KEYS.REFRESH_TOKEN, tokens.refresh_token);
-    const me = await authApi.me();
-    setUser(me);
+    try {
+      await tokenStorage.setItem(SECURE_STORE_KEYS.ACCESS_TOKEN, tokens.access_token);
+      await tokenStorage.setItem(SECURE_STORE_KEYS.REFRESH_TOKEN, tokens.refresh_token);
+      const me = await authApi.me();
+      setUser(me);
+    } catch (error) {
+      // Never leave a partially-written or stale session behind after login.
+      await tokenStorage.deleteItem(SECURE_STORE_KEYS.ACCESS_TOKEN);
+      await tokenStorage.deleteItem(SECURE_STORE_KEYS.REFRESH_TOKEN);
+      throw error;
+    }
   }, []);
 
   const value: AuthContextValue = useMemo(
