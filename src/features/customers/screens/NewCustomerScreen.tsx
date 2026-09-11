@@ -234,7 +234,7 @@ export function NewCustomerScreen() {
                       >
                         <Text
                           variant="label"
-                          color={selected ? 'primary' : 'secondary'}
+                          color={selected ? colors.black : 'secondary'}
                           align="center"
                         >
                           {r.label}

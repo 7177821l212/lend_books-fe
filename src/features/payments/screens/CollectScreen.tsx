@@ -349,11 +349,11 @@ export function CollectScreen() {
                       >
                         <Icon
                           size={20}
-                          color={selected ? colors.brand[600] : colors.slate[400]}
+                          color={selected ? colors.brand[900] : colors.slate[400]}
                         />
                         <Text
                           variant="label"
-                          color={selected ? 'primary' : 'secondary'}
+                          color={selected ? colors.brand[900] : 'secondary'}
                           style={{ marginTop: 6 }}
                         >
                           {m.label}
@@ -460,7 +460,10 @@ export function CollectScreen() {
                             <View style={[styles.radioDot, { backgroundColor: colors.brand[600] }]} />
                           ) : null}
                         </View>
-                        <Text variant="body" style={{ marginLeft: spacing[2] }}>
+                        <Text
+                          variant="body"
+                          style={{ marginLeft: spacing[2], color: selected ? colors.brand[900] : colors.text.primary }}
+                        >
                           {REASON_LABEL[r]}
                         </Text>
                       </Pressable>

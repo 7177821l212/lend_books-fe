@@ -2,8 +2,8 @@
  * LoginScreen — designed with the centralised theme + reusable components.
  */
 import { Lock, Mail, Wallet } from 'lucide-react-native';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, GradientBackground, Input, Screen, Text } from '@/components/ui';
 import { useT } from '@/i18n';
@@ -16,25 +16,46 @@ export function LoginScreen() {
   const { submit, isLoading, error } = useLogin();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardOpen(true)
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardOpen(false)
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   return (
     <Screen padded={false} background="dark" statusBar="light" edges={[]}>
-      <GradientBackground gradient="hero" style={styles.hero}>
+      <GradientBackground
+        gradient="hero"
+        style={{ ...styles.hero, ...(keyboardOpen ? styles.heroCompact : {}) }}
+      >
         <View style={[styles.brandBubble, { backgroundColor: colors.white }]}>
           <Wallet size={28} color={colors.brand[600]} />
         </View>
-        <Text variant="display" color="onDark" style={{ marginTop: spacing[5] }}>
+        <Text variant={keyboardOpen ? 'h2' : 'display'} color="onDark" style={{ marginTop: keyboardOpen ? spacing[2] : spacing[5] }}>
           LendBook
         </Text>
-        <Text variant="body" color="onDark" style={{ opacity: 0.7, marginTop: spacing[1] }}>
-          Money lending, simplified.
-        </Text>
+        {!keyboardOpen ? (
+          <Text variant="body" color="onDark" style={{ opacity: 0.7, marginTop: spacing[1] }}>
+            Money lending, simplified.
+          </Text>
+        ) : null}
       </GradientBackground>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         enabled={Platform.OS === 'ios'}
-        style={[styles.sheet, { backgroundColor: colors.card }]}
+        style={[styles.sheet, keyboardOpen && styles.sheetExpanded, { backgroundColor: colors.card }]}
       >
         <ScrollView
           contentContainerStyle={styles.sheetContent}
@@ -95,6 +116,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing[16],
     paddingBottom: spacing[6],
   },
+  heroCompact: {
+    flex: 0,
+    minHeight: 108,
+    paddingTop: spacing[4],
+    paddingBottom: spacing[3],
+  },
   brandBubble: {
     width: 56,
     height: 56,
@@ -106,6 +133,9 @@ const styles = StyleSheet.create({
     flex: 0.6,
     borderTopLeftRadius: radii['3xl'],
     borderTopRightRadius: radii['3xl'],
+  },
+  sheetExpanded: {
+    flex: 1,
   },
   sheetContent: {
     flexGrow: 1,

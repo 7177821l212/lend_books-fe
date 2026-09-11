@@ -395,13 +395,18 @@ export function NewLoanScreen() {
                       >
                         <Avatar name={c.name} id={c.id} size="sm" />
                         <View style={{ flex: 1, marginLeft: spacing[3] }}>
-                          <Text variant="bodyStrong">{c.name}</Text>
+                          <Text
+                            variant="bodyStrong"
+                            style={{ color: selected ? colors.brand[900] : colors.text.primary }}
+                          >
+                            {c.name}
+                          </Text>
                           <Text variant="caption" color="tertiary">
                             {c.email}
                           </Text>
                         </View>
                         {selected ? (
-                          <CheckCircle2 size={20} color={colors.brand[600]} />
+                          <CheckCircle2 size={20} color={colors.brand[900]} />
                         ) : null}
                       </Pressable>
                     );
@@ -465,10 +470,10 @@ function ToggleCard({ label, sub, selected, onPress }: ToggleCardProps) {
       ]}
     >
       <View style={styles.toggleHeader}>
-        <Text variant="bodyStrong" color={selected ? colors.brand[700] : 'primary'}>
+        <Text variant="bodyStrong" color={selected ? colors.brand[900] : 'primary'}>
           {label}
         </Text>
-        {selected ? <CheckCircle2 size={16} color={colors.brand[600]} /> : null}
+        {selected ? <CheckCircle2 size={16} color={colors.brand[900]} /> : null}
       </View>
       <Text variant="caption" color="secondary" style={{ marginTop: 4 }}>
         {sub}
