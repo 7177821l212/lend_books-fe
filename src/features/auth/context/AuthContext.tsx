@@ -77,6 +77,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user?.role]);
 
   const login = useCallback(async (payload: LoginPayload) => {
+    // Login must not depend on a previous device session. A stale SecureStore
+    // entry used to block the request before it left Android.
+    await Promise.allSettled([
+      tokenStorage.deleteItem(SECURE_STORE_KEYS.ACCESS_TOKEN),
+      tokenStorage.deleteItem(SECURE_STORE_KEYS.REFRESH_TOKEN),
+    ]);
     const tokens = await authApi.login(payload);
     try {
       await tokenStorage.setItem(SECURE_STORE_KEYS.ACCESS_TOKEN, tokens.access_token);
@@ -85,8 +91,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(me);
     } catch (error) {
       // Never leave a partially-written or stale session behind after login.
-      await tokenStorage.deleteItem(SECURE_STORE_KEYS.ACCESS_TOKEN);
-      await tokenStorage.deleteItem(SECURE_STORE_KEYS.REFRESH_TOKEN);
+      await Promise.allSettled([
+        tokenStorage.deleteItem(SECURE_STORE_KEYS.ACCESS_TOKEN),
+        tokenStorage.deleteItem(SECURE_STORE_KEYS.REFRESH_TOKEN),
+      ]);
       throw error;
     }
   }, []);

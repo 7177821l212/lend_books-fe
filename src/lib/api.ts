@@ -44,9 +44,10 @@ function resolveBaseUrl(): string {
 
 const BASE_URL: string = resolveBaseUrl();
 
-export function getApiBaseUrl(): string {
-  return BASE_URL;
-}
+export const publicApiClient: AxiosInstance = axios.create({
+  baseURL: BASE_URL,
+  timeout: 15_000,
+});
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -60,6 +61,9 @@ export function setUnauthorizedHandler(fn: () => void): void {
 }
 
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  if (config.url?.startsWith('/auth/login') || config.url?.startsWith('/auth/refresh')) {
+    return config;
+  }
   const token = await tokenStorage.getItem(SECURE_STORE_KEYS.ACCESS_TOKEN);
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
@@ -94,7 +98,9 @@ apiClient.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
     const original = error.config as (AxiosRequestConfig & { _retried?: boolean }) | undefined;
-    if (!original || error.response?.status !== 401 || original._retried) {
+    const isPublicAuthRequest =
+      original?.url?.startsWith('/auth/login') || original?.url?.startsWith('/auth/refresh');
+    if (!original || isPublicAuthRequest || error.response?.status !== 401 || original._retried) {
       return Promise.reject(error);
     }
     original._retried = true;
