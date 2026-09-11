@@ -1,7 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { LogOut, Settings } from 'lucide-react-native';
-import { StyleSheet, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { Camera, LogOut, Settings } from 'lucide-react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -13,10 +14,12 @@ import {
   IconButton,
   Screen,
   Text,
+  useToast,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { usePaymentHistory } from '@/features/payments/hooks/usePayments';
 import { useT } from '@/i18n';
+import { uploadPhoto } from '@/lib/uploadPhoto';
 import type { MeStackParamList } from '@/app/navigation/MeNavigator';
 import { useColors, layout, radii, spacing } from '@/theme';
 
@@ -27,7 +30,8 @@ export function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const nav = useNavigation<Nav>();
   const colors = useColors();
-  const { user, logout } = useAuth();
+  const toast = useToast();
+  const { user, logout, updateProfilePhoto } = useAuth();
   const { data: history } = usePaymentHistory();
 
   const collected = (history?.items ?? [])
@@ -36,6 +40,25 @@ export function ProfileScreen() {
   const missed = (history?.items ?? []).filter((p) => p.is_missed).length;
 
   if (!user) return null;
+
+  const handlePickProfilePhoto = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (result.canceled) return;
+    try {
+      const uploaded = await uploadPhoto(result.assets[0].uri);
+      await updateProfilePhoto(uploaded.objectName);
+      toast.success('Profile photo updated');
+    } catch {
+      toast.error('Could not update profile photo');
+    }
+  };
 
   return (
     <Screen padded={false} background="default" edges={[]} scroll>
@@ -58,13 +81,17 @@ export function ProfileScreen() {
             accessibilityLabel="Settings"
           />
         </View>
-        <Avatar
-          name={user.name}
-          id={user.id}
-          imageUrl={user.photo_url}
-          size="2xl"
-          style={{ marginTop: spacing[2] }}
-        />
+        <TouchableOpacity onPress={() => void handlePickProfilePhoto()} style={styles.avatarButton}>
+          <Avatar
+            name={user.name}
+            id={user.id}
+            imageUrl={user.photo_url}
+            size="2xl"
+          />
+          <View style={styles.cameraBadge}>
+            <Camera size={13} color={colors.white} />
+          </View>
+        </TouchableOpacity>
         <Text variant="h2" color="onDark" style={{ marginTop: spacing[3] }}>
           {user.name}
         </Text>
@@ -127,6 +154,22 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: radii.full,
     backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  avatarButton: {
+    marginTop: spacing[2],
+  },
+  cameraBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 24,
+    height: 24,
+    borderRadius: radii.full,
+    backgroundColor: '#00C853',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   kpiRow: { flexDirection: 'row', gap: spacing[2] },
   kpi: { flex: 1, alignItems: 'center' },

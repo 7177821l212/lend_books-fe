@@ -50,7 +50,10 @@ export function useUpdateCustomer(customerId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: UpdateCustomerPayload) => customerApi.update(customerId, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
+    onSuccess: (customer) => {
+      qc.setQueryData([KEY, 'detail', customerId], customer);
+      qc.invalidateQueries({ queryKey: [KEY] });
+    },
   });
 }
 

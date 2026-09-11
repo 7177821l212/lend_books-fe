@@ -4,7 +4,7 @@ import { apiClient } from '@/lib/api';
 /** Returns true if the string is a GCS object path (not a full URL). */
 export function isGcsObject(url: string | null | undefined): boolean {
   if (!url) return false;
-  return !url.startsWith('http://') && !url.startsWith('https://');
+  return !/^[a-z][a-z0-9+.-]*:\/\//i.test(url);
 }
 
 /**
