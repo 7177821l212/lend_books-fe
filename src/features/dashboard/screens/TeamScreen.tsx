@@ -42,10 +42,17 @@ export function TeamScreen() {
   const team = data?.collector_performance ?? [];
   const allCollectors = collectors ?? [];
   const [search, setSearch] = useState('');
+  const [collectorPage, setCollectorPage] = useState(1);
+  const collectorPageSize = 20;
   const filteredCollectors = search.trim()
     ? allCollectors.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
     : allCollectors;
   const peak = team.length ? Math.max(...team.map((c) => c.collected), 1) : 1;
+  const collectorPageCount = Math.max(1, Math.ceil(filteredCollectors.length / collectorPageSize));
+  const visibleCollectors = filteredCollectors.slice(
+    (collectorPage - 1) * collectorPageSize,
+    collectorPage * collectorPageSize
+  );
 
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
@@ -135,7 +142,7 @@ export function TeamScreen() {
             <Search size={16} color={colors.slate[400]} />
             <TextInput
               value={search}
-              onChangeText={setSearch}
+              onChangeText={(value) => { setSearch(value); setCollectorPage(1); }}
               placeholder="Search collectors…"
               placeholderTextColor={colors.slate[400]}
               cursorColor={colors.white}
@@ -181,7 +188,7 @@ export function TeamScreen() {
               description={`No collectors matching "${search}"`}
             />
           ) : (
-            filteredCollectors.map((c, i) => {
+            visibleCollectors.map((c, i) => {
               const perf = team.find((t) => t.id === c.id);
               const isInactive = !c.is_active;
               return (
@@ -193,7 +200,7 @@ export function TeamScreen() {
                 >
                   <View style={styles.row}>
                     <View style={[styles.rankBubble, { backgroundColor: colors.brand[50] }]}>
-                      <Text variant="caption" color="secondary">#{i + 1}</Text>
+                      <Text variant="caption" color="secondary">#{(collectorPage - 1) * collectorPageSize + i + 1}</Text>
                     </View>
                     <Avatar name={c.name} id={c.id} size="md" imageUrl={c.photo_url} />
                     <View style={{ flex: 1, marginLeft: spacing[3] }}>
@@ -220,6 +227,13 @@ export function TeamScreen() {
               );
             })
           )}
+          {filteredCollectors.length > collectorPageSize ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing[2] }}>
+              <Button label="Previous" variant="secondary" size="sm" disabled={collectorPage === 1} onPress={() => setCollectorPage((page) => Math.max(1, page - 1))} />
+              <Text variant="caption" color="secondary">Page {collectorPage} of {collectorPageCount}</Text>
+              <Button label="Next" variant="secondary" size="sm" disabled={collectorPage === collectorPageCount} onPress={() => setCollectorPage((page) => Math.min(collectorPageCount, page + 1))} />
+            </View>
+          ) : null}
         </View>
       </Screen>
 
