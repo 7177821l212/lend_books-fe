@@ -42,12 +42,12 @@ export const lineHeight = {
 } as const;
 
 export const letterSpacing = {
-  tightest: -0.5,
-  tight: -0.25,
+  tightest: 0,
+  tight: 0,
   normal: 0,
-  wide: 0.25,
-  wider: 0.5,
-  widest: 1,
+  wide: 0,
+  wider: 0,
+  widest: 0,
 } as const;
 
 type TextVariant = TextStyle;

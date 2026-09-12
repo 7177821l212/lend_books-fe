@@ -295,18 +295,22 @@ interface KPITileProps {
 function KPITile({ icon, iconBg, label, sub, value, valueColor, isCount = false, onPress }: KPITileProps) {
   return (
     <Card padding={3} style={styles.kpiTile} onPress={onPress}>
-      <View style={[styles.kpiIcon, { backgroundColor: iconBg }]}>{icon}</View>
+      <View style={styles.kpiHeader}>
+        <Text variant="overline" color="tertiary" style={styles.kpiLabel} numberOfLines={2}>
+          {label}
+        </Text>
+        <View style={[styles.kpiIcon, { backgroundColor: iconBg }]}>{icon}</View>
+      </View>
       {value !== null ? (
         isCount ? (
-          <Text variant="h2" style={{ color: valueColor, marginTop: spacing[2] }}>{value}</Text>
+          <Text variant="h2" style={[styles.kpiValue, { color: valueColor }]}>{value}</Text>
         ) : (
-          <AmountText value={value} size="lg" color={valueColor} short style={{ marginTop: spacing[2] }} />
+          <AmountText value={value} size="lg" color={valueColor} short style={styles.kpiAmount} />
         )
       ) : (
-        <SkeletonLoader width={72} height={24} style={{ marginTop: spacing[2] }} />
+        <SkeletonLoader width={72} height={24} style={styles.kpiValue} />
       )}
-      <Text variant="label" color="tertiary" style={{ marginTop: spacing[1] }} numberOfLines={2}>{label}</Text>
-      <Text variant="caption" color="tertiary" numberOfLines={1} style={{ opacity: 0.7, marginTop: 1 }}>{sub}</Text>
+      <Text variant="caption" color="tertiary" numberOfLines={1} style={styles.kpiSub}>{sub}</Text>
     </Card>
   );
 }
@@ -350,6 +354,8 @@ const styles = StyleSheet.create({
     gap: spacing[2],
   },
   kpiTile: { flex: 1 },
+  kpiHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: 36 },
+  kpiLabel: { flex: 1, paddingRight: spacing[2] },
   kpiIcon: {
     width: 36,
     height: 36,
@@ -357,6 +363,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  kpiValue: { marginTop: spacing[3] },
+  kpiAmount: { marginTop: spacing[3] },
+  kpiSub: { marginTop: spacing[2], opacity: 0.75 },
   statsRow: { flexDirection: 'row', gap: spacing[2], marginTop: spacing[2] },
   statCard: { flex: 1 },
   sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

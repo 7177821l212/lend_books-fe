@@ -7,6 +7,7 @@ export { Avatar } from './Avatar';
 export { Badge } from './Badge';
 export { Button } from './Button';
 export { Card } from './Card';
+export { ConfirmSheet } from './ConfirmSheet';
 export { DatePickerField } from './DatePickerField';
 export { Divider } from './Divider';
 export { EmptyState } from './EmptyState';
