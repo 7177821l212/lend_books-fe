@@ -15,7 +15,7 @@ import {
   SkeletonLoader,
   Text,
 } from '@/components/ui';
-import { Sparkline } from '@/components/charts/Sparkline';
+import { CollectionBarChart } from '@/components/charts/CollectionBarChart';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
 import { useT } from '@/i18n';
@@ -33,7 +33,10 @@ export function DashboardScreen() {
   const nav = useNavigation<any>();
 
   const k = data?.kpis;
-  const trend = data?.trend_30d.map((p) => p.amount) ?? [];
+  const weeklyTrend = data?.trend_30d.slice(-7) ?? [];
+  const weeklyCollections = weeklyTrend.reduce((total, point) => total + point.amount, 0);
+  const hasWeeklyCollections = weeklyCollections > 0;
+  const overdueAmount = k?.overdue_amount ?? 0;
   const recent = data?.collector_performance ?? [];
 
   return (
@@ -153,10 +156,13 @@ export function DashboardScreen() {
               icon={<AlertTriangle size={18} color={colors.danger} />}
               iconBg="rgba(220,38,38,0.12)"
               label={t('overdue')}
-              sub={t('needs_attention')}
+              sub={k && k.overdue_loans > 0
+                ? `₹${overdueAmount.toLocaleString('en-IN')} overdue`
+                : 'No overdue balance'}
               value={k ? k.overdue_loans : null}
               valueColor={k && k.overdue_loans > 0 ? colors.danger : colors.text.secondary}
               isCount
+              onPress={() => nav.navigate('Reports')}
             />
           </View>
         </View>
@@ -175,23 +181,25 @@ export function DashboardScreen() {
           </Card>
         </View>
 
-        {/* Trend chart */}
+        {/* Collection chart */}
         <Card padding={4} style={{ marginTop: spacing[3] }}>
           <View style={styles.sectionHead}>
             <View>
               <Text variant="title">{t('collection_trend')}</Text>
-              <Text variant="caption" color="tertiary">{t('last_30_days')}</Text>
+              <Text variant="caption" color="tertiary">Daily collections for the last 7 days</Text>
             </View>
-            {k ? (
-              <AmountText value={k.collected_lifetime} size="sm" color={colors.brand[700]} short />
+            {data ? (
+              <View style={{ alignItems: 'flex-end' }}>
+                <AmountText value={weeklyCollections} size="sm" color={colors.brand[700]} short />
+                <Text variant="caption" color="tertiary">7-day total</Text>
+              </View>
             ) : null}
           </View>
           <View style={{ marginTop: spacing[2] }}>
-            {trend.length > 0 ? (
-              <Sparkline
-                data={trend}
+            {hasWeeklyCollections ? (
+              <CollectionBarChart
+                data={weeklyTrend}
                 width={screenWidth - layout.screenPaddingX * 2 - spacing[4] * 2}
-                height={110}
               />
             ) : isLoading ? (
               <SkeletonLoader height={110} />
@@ -282,10 +290,11 @@ interface KPITileProps {
   value: number | null;
   valueColor: string;
   isCount?: boolean;
+  onPress?: () => void;
 }
-function KPITile({ icon, iconBg, label, sub, value, valueColor, isCount = false }: KPITileProps) {
+function KPITile({ icon, iconBg, label, sub, value, valueColor, isCount = false, onPress }: KPITileProps) {
   return (
-    <Card padding={3} style={styles.kpiTile}>
+    <Card padding={3} style={styles.kpiTile} onPress={onPress}>
       <View style={[styles.kpiIcon, { backgroundColor: iconBg }]}>{icon}</View>
       {value !== null ? (
         isCount ? (
