@@ -6,7 +6,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Camera, CheckCircle2, ChevronLeft, CircleCheck, Lock, UserCog, X } from 'lucide-react-native';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
   Pressable,
@@ -23,6 +22,7 @@ import {
   Badge,
   Button,
   Card,
+  ConfirmSheet,
   EmptyState,
   GradientBackground,
   IconButton,
@@ -80,6 +80,7 @@ export function LoanDetailScreen() {
   const { data: paymentsPage } = usePaymentHistory({ loan_id: params.id });
   const payments = paymentsPage?.items ?? [];
   const [showReassign, setShowReassign] = useState(false);
+  const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
   const [viewProof, setViewProof] = useState<string | null>(null);
 
   // When reached via a cross-tab deep link (e.g. Reports' overdue list), this
@@ -104,26 +105,9 @@ export function LoanDetailScreen() {
       toast.success('Loan closed');
     } catch {
       toast.error('Could not close loan');
+    } finally {
+      setShowCloseConfirmation(false);
     }
-  };
-
-  const confirmClose = () => {
-    const outstandingWarning = loan.outstanding > 0
-      ? `\n\n₹${loan.outstanding.toLocaleString('en-IN')} is still outstanding. Only continue after the final settlement has been recorded.`
-      : '';
-
-    Alert.alert(
-      'Close loan?',
-      `Closing a loan stops further collections and cannot be undone.${outstandingWarning}`,
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('close_loan'),
-          style: 'destructive',
-          onPress: () => void handleClose(),
-        },
-      ],
-    );
   };
 
   const installments = loan.installments ?? [];
@@ -336,7 +320,7 @@ export function LoanDetailScreen() {
             fullWidth
             size="lg"
             leadingIcon={<Lock size={16} color={colors.white} />}
-            onPress={confirmClose}
+            onPress={() => setShowCloseConfirmation(true)}
             loading={close.isPending}
             style={{ marginTop: spacing[6] }}
           />
@@ -352,6 +336,19 @@ export function LoanDetailScreen() {
       </View>
 
       <ProofViewerModal objectName={viewProof} onClose={() => setViewProof(null)} />
+      <ConfirmSheet
+        visible={showCloseConfirmation}
+        title="Close loan?"
+        description={loan.outstanding > 0
+          ? `₹${loan.outstanding.toLocaleString('en-IN')} is still outstanding. Only close after final settlement is recorded. This stops future collections and cannot be undone.`
+          : 'This stops future collections and cannot be undone.'}
+        cancelLabel={t('cancel')}
+        confirmLabel={t('close_loan')}
+        onCancel={() => setShowCloseConfirmation(false)}
+        onConfirm={() => void handleClose()}
+        loading={close.isPending}
+        icon={<Lock size={22} color={colors.danger} />}
+      />
     </Screen>
   );
 }

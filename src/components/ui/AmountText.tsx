@@ -52,13 +52,16 @@ export function AmountText({
   const px = SIZE_PX[size];
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'baseline', flexShrink: 1 }}>
       {symbol ? (
         <Text
           style={[
             {
-              fontFamily: bold ? fontFamily.semibold : fontFamily.regular,
+              fontFamily: bold ? fontFamily.bold : fontFamily.regular,
               fontSize: px,
+              lineHeight: Math.round(px * 1.15),
+              includeFontPadding: false,
+              fontVariant: ['tabular-nums'],
               color: color ?? colors.text.primary,
               marginRight: 1,
             },
@@ -73,8 +76,11 @@ export function AmountText({
           {
             fontFamily: bold ? fontFamily.bold : fontFamily.regular,
             fontSize: px,
+            lineHeight: Math.round(px * 1.15),
+            includeFontPadding: false,
+            fontVariant: ['tabular-nums'],
             color: color ?? colors.text.primary,
-            letterSpacing: -0.25,
+            letterSpacing: 0,
           },
           style,
         ]}

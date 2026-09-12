@@ -39,6 +39,7 @@ import {
   Badge,
   Button,
   Card,
+  ConfirmSheet,
   EmptyState,
   GradientBackground,
   IconButton,
@@ -91,6 +92,7 @@ export function CustomerDetailScreen() {
   const loans = loansPage?.items ?? [];
   const [blacklistReason, setBlacklistReason] = useState('');
   const [showBlacklistModal, setShowBlacklistModal] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [previewDocument, setPreviewDocument] = useState<CustomerDocument | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | undefined>();
   const [customerPhotoPreviewUrl, setCustomerPhotoPreviewUrl] = useState<string | undefined>();
@@ -134,6 +136,19 @@ export function CustomerDetailScreen() {
       toast.success('Customer removed from blacklist');
     } catch {
       toast.error('Could not unblacklist');
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteCustomer.mutateAsync(params.id);
+      toast.success('Customer deleted');
+      nav.navigate('CustomerList');
+    } catch (error) {
+      const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      toast.error(typeof detail === 'string' ? detail : 'Failed to delete customer');
+    } finally {
+      setShowDeleteConfirmation(false);
     }
   };
 
@@ -463,33 +478,21 @@ export function CustomerDetailScreen() {
             leadingIcon={<Trash2 size={16} color="#fff" />}
             loading={deleteCustomer.isPending}
             style={{ marginTop: spacing[2] }}
-            onPress={() => {
-              if (Platform.OS === 'ios' || Platform.OS === 'android') {
-                Alert.alert(
-                  t('delete_customer'),
-                  `${t('delete_customer_warn')}\n\n${t('cannot_undo')}`,
-                  [
-                    { text: t('cancel'), style: 'cancel' },
-                    {
-                      text: t('delete'),
-                      style: 'destructive',
-                      onPress: async () => {
-                        try {
-                          await deleteCustomer.mutateAsync(customer.id);
-                          toast.success('Customer deleted');
-                          nav.navigate('CustomerList');
-                        } catch (e) {
-                          const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Failed';
-                          toast.error(typeof detail === 'string' ? detail : 'Failed');
-                        }
-                      },
-                    },
-                  ]
-                );
-              }
-            }}
+            onPress={() => setShowDeleteConfirmation(true)}
           />
         ) : null}
+
+        <ConfirmSheet
+          visible={showDeleteConfirmation}
+          title={t('delete_customer')}
+          description={`${t('delete_customer_warn')} ${t('cannot_undo')}`}
+          cancelLabel={t('cancel')}
+          confirmLabel={t('delete')}
+          onCancel={() => setShowDeleteConfirmation(false)}
+          onConfirm={() => void handleDelete()}
+          loading={deleteCustomer.isPending}
+          icon={<Trash2 size={22} color={colors.danger} />}
+        />
 
         {/* Blacklist reason modal */}
         <Modal
