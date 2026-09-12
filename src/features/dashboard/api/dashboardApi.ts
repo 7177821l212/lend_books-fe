@@ -12,6 +12,7 @@ export interface DashboardKPIs {
   active_loans: number;
   closed_loans: number;
   overdue_loans: number;
+  overdue_amount: number;
   active_customers: number;
   total_customers: number;
 }

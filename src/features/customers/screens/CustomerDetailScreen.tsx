@@ -18,6 +18,7 @@ import { useState } from 'react';
 import {
   ActionSheetIOS,
   Alert,
+  KeyboardAvoidingView,
   Image,
   Linking,
   Modal,
@@ -497,49 +498,54 @@ export function CustomerDetailScreen() {
           animationType="fade"
           onRequestClose={() => setShowBlacklistModal(false)}
         >
-          <Pressable
-            style={styles.modalOverlay}
-            onPress={() => setShowBlacklistModal(false)}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalKeyboardAvoider}
           >
-            <Pressable style={[styles.modalSheet, { backgroundColor: colors.card }]} onPress={() => {}}>
-              <Text variant="h2" style={{ marginBottom: spacing[2] }}>
-                {t('blacklist_reason')}
-              </Text>
-              <Text variant="body" color="secondary" style={{ marginBottom: spacing[4] }}>
-                Provide a reason for blacklisting {customer.name}.
-              </Text>
-              <TextInput
-                value={blacklistReason}
-                onChangeText={setBlacklistReason}
-                placeholder="e.g. Defaulted on loan repayment"
-                placeholderTextColor={colors.text.placeholder}
-                cursorColor={colors.brand[600]}
-                selectionColor={colors.brand[200]}
-                style={[styles.reasonInput, {
-                  backgroundColor: colors.slate[100],
-                  color: colors.text.primary,
-                  borderColor: colors.border.default,
-                }]}
-                multiline
-                autoFocus
-              />
-              <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[4] }}>
-                <Button
-                  label={t('cancel')}
-                  variant="secondary"
-                  style={{ flex: 1 }}
-                  onPress={() => setShowBlacklistModal(false)}
+            <Pressable
+              style={styles.modalOverlay}
+              onPress={() => setShowBlacklistModal(false)}
+            >
+              <Pressable style={[styles.modalSheet, { backgroundColor: colors.card }]} onPress={() => {}}>
+                <Text variant="h2" style={{ marginBottom: spacing[2] }}>
+                  {t('blacklist_reason')}
+                </Text>
+                <Text variant="body" color="secondary" style={{ marginBottom: spacing[4] }}>
+                  Provide a reason for blacklisting {customer.name}.
+                </Text>
+                <TextInput
+                  value={blacklistReason}
+                  onChangeText={setBlacklistReason}
+                  placeholder="e.g. Defaulted on loan repayment"
+                  placeholderTextColor={colors.text.placeholder}
+                  cursorColor={colors.brand[600]}
+                  selectionColor={colors.brand[200]}
+                  style={[styles.reasonInput, {
+                    backgroundColor: colors.slate[100],
+                    color: colors.text.primary,
+                    borderColor: colors.border.default,
+                  }]}
+                  multiline
+                  autoFocus
                 />
-                <Button
-                  label={t('confirm')}
-                  variant="danger"
-                  style={{ flex: 1 }}
-                  loading={blacklist.isPending}
-                  onPress={handleBlacklist}
-                />
-              </View>
+                <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[4] }}>
+                  <Button
+                    label={t('cancel')}
+                    variant="secondary"
+                    style={{ flex: 1 }}
+                    onPress={() => setShowBlacklistModal(false)}
+                  />
+                  <Button
+                    label={t('confirm')}
+                    variant="danger"
+                    style={{ flex: 1 }}
+                    loading={blacklist.isPending}
+                    onPress={handleBlacklist}
+                  />
+                </View>
+              </Pressable>
             </Pressable>
-          </Pressable>
+          </KeyboardAvoidingView>
         </Modal>
       </View>
     </Screen>
@@ -725,6 +731,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
+  },
+  modalKeyboardAvoider: {
+    flex: 1,
   },
   modalSheet: {
     borderTopLeftRadius: radii['3xl'],

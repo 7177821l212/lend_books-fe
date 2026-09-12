@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Camera, CheckCircle2, ChevronLeft, CircleCheck, Lock, UserCog, X } from 'lucide-react-native';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Modal,
   Pressable,
@@ -104,6 +105,25 @@ export function LoanDetailScreen() {
     } catch {
       toast.error('Could not close loan');
     }
+  };
+
+  const confirmClose = () => {
+    const outstandingWarning = loan.outstanding > 0
+      ? `\n\n₹${loan.outstanding.toLocaleString('en-IN')} is still outstanding. Only continue after the final settlement has been recorded.`
+      : '';
+
+    Alert.alert(
+      'Close loan?',
+      `Closing a loan stops further collections and cannot be undone.${outstandingWarning}`,
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('close_loan'),
+          style: 'destructive',
+          onPress: () => void handleClose(),
+        },
+      ],
+    );
   };
 
   const installments = loan.installments ?? [];
@@ -316,7 +336,7 @@ export function LoanDetailScreen() {
             fullWidth
             size="lg"
             leadingIcon={<Lock size={16} color={colors.white} />}
-            onPress={handleClose}
+            onPress={confirmClose}
             loading={close.isPending}
             style={{ marginTop: spacing[6] }}
           />
