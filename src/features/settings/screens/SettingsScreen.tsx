@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
+import { LogOut } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, Input, Screen, Text, useToast } from '@/components/ui';
+import { Button, Card, ConfirmSheet, Input, Screen, Text, useToast } from '@/components/ui';
 import { authApi } from '@/features/auth/api/authApi';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAppSettings } from '@/store/appSettings';
@@ -36,6 +36,7 @@ export function SettingsScreen() {
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
   const [changingPw, setChangingPw] = useState(false);
+  const [showSignOutConfirmation, setShowSignOutConfirmation] = useState(false);
 
   const handleChangePassword = async () => {
     if (!currentPw || !newPw || !confirmPw) {
@@ -64,12 +65,7 @@ export function SettingsScreen() {
     }
   };
 
-  const handleSignOut = () => {
-    Alert.alert('Sign out', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: () => void logout() },
-    ]);
-  };
+  const handleSignOut = () => setShowSignOutConfirmation(true);
 
   return (
     <Screen padded={false} background="default" edges={[]}>
@@ -249,6 +245,16 @@ export function SettingsScreen() {
         />
       </ScrollView>
       </KeyboardAvoidingView>
+      <ConfirmSheet
+        visible={showSignOutConfirmation}
+        title="Sign out?"
+        description="You will need to enter your account credentials to use LendBook again."
+        cancelLabel={t('cancel')}
+        confirmLabel="Sign out"
+        onCancel={() => setShowSignOutConfirmation(false)}
+        onConfirm={() => void logout()}
+        icon={<LogOut size={22} color={colors.danger} />}
+      />
     </Screen>
   );
 }

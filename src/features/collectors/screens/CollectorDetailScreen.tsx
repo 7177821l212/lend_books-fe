@@ -4,12 +4,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { Banknote, Camera, Phone, Trash2, TrendingUp, User, X } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-  Alert,
   Image,
   Linking,
-  Modal,
-  Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -24,6 +20,7 @@ import {
   Badge,
   Button,
   Card,
+  ConfirmSheet,
   Input,
   Screen,
   SkeletonLoader,
@@ -69,7 +66,7 @@ export function CollectorDetailScreen() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   // When reached via a cross-tab deep link (e.g. Dashboard's leaderboard), this
   // screen may be the only entry in the Team stack — goBack() would then have
@@ -140,22 +137,7 @@ export function CollectorDetailScreen() {
       const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Failed';
       toast.error(typeof detail === 'string' ? detail : 'Failed');
     }
-    setShowDeleteModal(false);
-  };
-
-  const confirmDelete = () => {
-    if (Platform.OS === 'ios' || Platform.OS === 'android') {
-      Alert.alert(
-        t('delete_collector'),
-        `${t('delete_collector_warn')}\n\n${t('cannot_undo')}`,
-        [
-          { text: t('cancel'), style: 'cancel' },
-          { text: t('delete'), style: 'destructive', onPress: () => void handleDelete() },
-        ]
-      );
-    } else {
-      setShowDeleteModal(true);
-    }
+    setShowDeleteConfirmation(false);
   };
 
   // Must be called before any early return (Rules of Hooks)
@@ -350,27 +332,23 @@ export function CollectorDetailScreen() {
               size="lg"
               leadingIcon={<Trash2 size={16} color="#fff" />}
               loading={deleteCollector.isPending}
-              onPress={confirmDelete}
+              onPress={() => setShowDeleteConfirmation(true)}
             />
           </View>
         ) : null}
       </ScrollView>
 
-      {/* Delete confirmation modal (web fallback) */}
-      <Modal visible={showDeleteModal} transparent animationType="fade" onRequestClose={() => setShowDeleteModal(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowDeleteModal(false)}>
-          <Pressable style={[styles.modalSheet, { backgroundColor: colors.card }]} onPress={() => {}}>
-            <Text variant="h2" style={{ marginBottom: spacing[2] }}>{t('delete_collector')}</Text>
-            <Text variant="body" color="secondary" style={{ marginBottom: spacing[4] }}>
-              {t('delete_collector_warn')}{'\n\n'}{t('cannot_undo')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-              <Button label={t('cancel')} variant="secondary" style={{ flex: 1 }} onPress={() => setShowDeleteModal(false)} />
-              <Button label={t('delete')} variant="danger" style={{ flex: 1 }} loading={deleteCollector.isPending} onPress={() => void handleDelete()} />
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <ConfirmSheet
+        visible={showDeleteConfirmation}
+        title={t('delete_collector')}
+        description={`${t('delete_collector_warn')} ${t('cannot_undo')}`}
+        cancelLabel={t('cancel')}
+        confirmLabel={t('delete')}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onConfirm={() => void handleDelete()}
+        loading={deleteCollector.isPending}
+        icon={<Trash2 size={22} color={colors.danger} />}
+      />
     </Screen>
   );
 }
@@ -456,6 +434,4 @@ const styles = StyleSheet.create({
   photo: { width: 72, height: 72, borderRadius: 36, borderWidth: 2 },
   cameraBtn: { position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   infoRow: { flexDirection: 'row', alignItems: 'center' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalSheet: { borderTopLeftRadius: radii['3xl'], borderTopRightRadius: radii['3xl'], padding: spacing[6], paddingBottom: spacing[10] },
 });
