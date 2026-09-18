@@ -156,6 +156,9 @@ export const translations = {
     covered: 'covered',
     remaining: 'remaining',
     carried_forward: 'carried forward',
+    record_collection: 'Record collection',
+    collect_early_payment: 'Take an early payment',
+    nothing_left_to_collect: 'This loan is fully collected',
 
     // Reschedule
     reschedule: 'Reschedule',
@@ -421,6 +424,9 @@ export const translations = {
     covered: 'செலுத்தியது',
     remaining: 'மீதம்',
     carried_forward: 'கடைசியில் சேர்க்கப்பட்டது',
+    record_collection: 'பணம் பதிவு செய்',
+    collect_early_payment: 'முன்கூட்டியே பணம் பெற',
+    nothing_left_to_collect: 'இந்த கடன் முழுமையாக வசூலிக்கப்பட்டது',
 
     // Reschedule
     reschedule: 'மறுதிட்டம்',
