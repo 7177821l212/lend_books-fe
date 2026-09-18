@@ -56,6 +56,12 @@ export function MyDayScreen() {
           <View style={styles.titleRow}>
             <Text variant="bodyStrong" numberOfLines={1} style={{ flex: 1 }}>
               {item.customer_name}
+              {/* A customer can hold several live loans; without the number and
+                  start date the rows are indistinguishable on the round. */}
+              <Text variant="caption" color="tertiary">
+                {'  '}
+                {t('loan')} {item.loan_number}
+              </Text>
             </Text>
             <AmountText
               value={item.due_amount}
@@ -89,6 +95,15 @@ export function MyDayScreen() {
             {item.collection_mode === 'schedule' ? (
               <Text variant="caption" color="tertiary" style={{ marginLeft: spacing[2] }}>
                 #{item.sequence} · {item.due_date}
+              </Text>
+            ) : item.start_date ? (
+              <Text variant="caption" color="tertiary" style={{ marginLeft: spacing[2] }}>
+                {t('since')} {item.start_date}
+              </Text>
+            ) : null}
+            {item.missed_count > 0 ? (
+              <Text variant="caption" color={colors.danger} style={{ marginLeft: spacing[2] }}>
+                {item.missed_count} {t('missed').toLowerCase()}
               </Text>
             ) : null}
           </View>

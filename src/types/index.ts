@@ -116,6 +116,10 @@ export interface Loan {
   profit: number;
 
   collection_mode: CollectionMode;
+  /** Position among this customer's loans, oldest first ("Loan 1" was given first). */
+  loan_number: number;
+  /** Visits where the collector called and collected nothing. */
+  missed_count: number;
   repayment_frequency: RepaymentFrequency;
   /** null on balance loans — they have no installments. */
   total_installments: number | null;

@@ -96,7 +96,7 @@ export function RescheduleSheet({ loan, visible, onClose }: RescheduleSheetProps
 
   const [mode, setMode] = useState<Exclude<RescheduleMode, 'manual'>>('same_end_date');
   const [reason, setReason] = useState<string>('');
-  const [amount, setAmount] = useState<string>(String(loan.installment_amount));
+  const [amount, setAmount] = useState<string>(String(loan.installment_amount ?? 0));
   const [plan, setPlan] = useState<ReschedulePreview | null>(null);
 
   const installmentAmount = Number.parseInt(amount, 10);
@@ -114,7 +114,7 @@ export function RescheduleSheet({ loan, visible, onClose }: RescheduleSheetProps
     setPlan(null);
     setReason('');
     setMode('same_end_date');
-    setAmount(String(loan.installment_amount));
+    setAmount(String(loan.installment_amount ?? 0));
   };
 
   const close = () => {

@@ -17,7 +17,9 @@ export interface CollectPayload {
 
 export interface MissedPayload {
   loan_id: string;
-  schedule_id: string;
+  /** The day the collector called and got nothing (YYYY-MM-DD). */
+  missed_on?: string;
+  schedule_id?: string;
   reason: string;
   notes?: string;
 }
@@ -29,6 +31,10 @@ export interface PickupItem {
   customer_phone: string;
   customer_location: string | null;
   collection_mode: CollectionMode;
+  /** Position among this customer's loans, oldest first. */
+  loan_number: number;
+  start_date: string | null;
+  missed_count: number;
   /** null on balance loans — they have no installment behind them. */
   schedule_id: string | null;
   sequence: number | null;

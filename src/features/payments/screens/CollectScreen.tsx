@@ -174,10 +174,12 @@ export function CollectScreen() {
         });
         toast.success(`Collected ₹${amt.toLocaleString('en-IN')}`);
       } else {
-        if (!targetInstallment) return;
         await markMissed.mutateAsync({
           loan_id: loan.id,
-          schedule_id: targetInstallment.id,
+          // A balance loan has no installment behind the visit — the day and
+          // the reason are the whole record.
+          ...(targetInstallment ? { schedule_id: targetInstallment.id } : {}),
+          ...(collectedOn !== todayIso ? { missed_on: collectedOn } : {}),
           reason,
           notes: notes.trim() || undefined,
         });
@@ -192,7 +194,9 @@ export function CollectScreen() {
     }
   };
 
-  if (!loan || !targetInstallment) {
+  // A balance loan has no installments at all, so waiting for one here left the
+  // screen stuck on the skeleton forever.
+  if (!loan || (!isBalanceLoan && !targetInstallment)) {
     return <CollectSkeleton insetsTop={insets.top} onBack={() => nav.goBack()} />;
   }
 
@@ -275,7 +279,7 @@ export function CollectScreen() {
             />
           ) : null}
 
-          <View style={[styles.toggleRow, isBalanceLoan && { display: 'none' }]}>
+          <View style={styles.toggleRow}>
             <Pressable
               onPress={() => setMode('PAID')}
               style={[

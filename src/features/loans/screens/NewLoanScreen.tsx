@@ -57,10 +57,7 @@ export function NewLoanScreen() {
   const [interestValue, setInterestValue] = useState<string>('10');
   const [interestType, setInterestType] = useState<InterestType>('pct');
   const [lendingModel, setLendingModel] = useState<LendingModel>('model_a');
-  // A balance loan has no installments; the preview still shows an indicative
-  // per-visit figure over a nominal 10 visits so the investor can sanity-check
-  // the terms. It is not stored on the loan.
-  const INDICATIVE_VISITS = 10;
+  const [installments, setInstallments] = useState<string>('20');
   const [startDate, setStartDate] = useState<string>(todayISO());
   const [collectorId, setCollectorId] = useState<string | undefined>(undefined);
 
@@ -71,9 +68,9 @@ export function NewLoanScreen() {
         interestType,
         interestValue: parseFloat(interestValue) || 0,
         lendingModel,
-        installments: INDICATIVE_VISITS,
+        installments: parseInt(installments, 10) || 0,
       }),
-    [principal, interestType, interestValue, lendingModel]
+    [principal, interestType, interestValue, lendingModel, installments]
   );
 
   const submit = async () => {
@@ -92,6 +89,9 @@ export function NewLoanScreen() {
         // New lending is registered the way a collector keeps a notebook: an
         // amount to collect, with no installment schedule to maintain.
         collection_mode: 'balance',
+        // A guide for the collector, not a schedule: it derives the expected
+        // per-visit amount and nothing enforces it.
+        total_installments: parseInt(installments, 10),
         start_date: startDate,
       });
       toast.success('Loan created');
@@ -299,10 +299,17 @@ export function NewLoanScreen() {
           </Section>
 
           {/* Loan date — new loans keep no schedule */}
-          <Section title="Simple loan">
+          <Section title="Collection plan">
             <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
-              No schedule — collect any amount, any day
+              Sets the expected amount per visit. The customer can still pay any
+              amount on any day.
             </Text>
+            <Input
+              label="Number of installments"
+              keyboardType="numeric"
+              value={installments}
+              onChangeText={setInstallments}
+            />
             <View style={{ marginTop: spacing[3] }}>
               <DatePickerField
                 label="Start date"

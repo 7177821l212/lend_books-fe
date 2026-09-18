@@ -180,7 +180,7 @@ export function LoanDetailScreen() {
           />
           <View style={{ flex: 1, marginLeft: spacing[2] }}>
             <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-              LOAN · {loan.id.slice(0, 8).toUpperCase()}
+              {t('loan').toUpperCase()} {loan.loan_number} · {loan.start_date}
             </Text>
             <Text variant="title" color="onDark">
               {loan.customer_name}
@@ -256,13 +256,32 @@ export function LoanDetailScreen() {
             />
           </View>
           {isBalanceLoan ? (
-            <View style={styles.termsRow}>
-              <Term
-                label={t('total_to_collect')}
-                value={`₹${loan.repayable.toLocaleString('en-IN')}`}
-              />
-              <Term label={t('start_date')} value={loan.start_date} />
-            </View>
+            <>
+              <View style={styles.termsRow}>
+                <Term
+                  label={t('total_to_collect')}
+                  value={`₹${loan.repayable.toLocaleString('en-IN')}`}
+                />
+                <Term label={t('start_date')} value={loan.start_date} />
+              </View>
+              {/* A guide, not a schedule — the customer may pay any amount. */}
+              {loan.installment_amount && loan.total_installments ? (
+                <View style={styles.termsRow}>
+                  <Term
+                    label={t('expected_per_visit')}
+                    value={`₹${loan.installment_amount.toLocaleString('en-IN')}`}
+                  />
+                  <Term label={t('installments')} value={`${loan.total_installments}`} />
+                </View>
+              ) : null}
+              <View style={styles.termsRow}>
+                <Term label={t('missed_visits')} value={`${loan.missed_count}`} />
+                <Term
+                  label={t('collected_so_far')}
+                  value={`₹${loan.repaid.toLocaleString('en-IN')}`}
+                />
+              </View>
+            </>
           ) : (
             <>
               <View style={styles.termsRow}>
@@ -474,7 +493,7 @@ export function LoanDetailScreen() {
         loading={close.isPending}
         icon={<Lock size={22} color={colors.danger} />}
       />
-      {loan ? (
+      {loan && !isBalanceLoan ? (
         <RescheduleSheet
           loan={loan}
           visible={showReschedule}
