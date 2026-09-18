@@ -28,15 +28,22 @@ export const palette = {
   slate800: '#22262A',
   slate900: '#0E1014',
 
-  // Semantic
-  success: '#16A34A',
+  // Semantic INK — drawn as text/icons on a light surface or its Soft fill.
+  // Darkened from the original tints: amber #F59E0B read at 2.15:1 on a white
+  // card and 1.93:1 inside its own badge, i.e. below every legibility bar.
+  success: '#15803D',
   successSoft: '#DCFCE7',
-  warning: '#F59E0B',
+  warning: '#B45309',
   warningSoft: '#FEF3C7',
-  danger: '#DC2626',
+  danger: '#B91C1C',
   dangerSoft: '#FEE2E2',
-  info: '#0EA5E9',
+  info: '#0369A1',
   infoSoft: '#E0F2FE',
+
+  // Semantic FILL — a solid block carrying WHITE text. Kept dark in BOTH themes
+  // because white is white in both, so these never follow the ink lighter.
+  successFill: '#15803D',
+  dangerFill: '#B91C1C',
 
   // Accents
   amber: '#F59E0B',
@@ -91,6 +98,10 @@ export const colors = {
     secondary: palette.slate500,
     tertiary: palette.slate400,
     onBrand: palette.white,
+    // Ink for the VIVID brand fill (#00C853). White on that green is 2.24:1, so
+    // primary buttons and active chips use this dark green instead (4.89:1).
+    // Theme-invariant: the fill it sits on is the same colour in both themes.
+    onBrandFill: palette.brand900,
     onDark: palette.white,
     placeholder: palette.slate400,
     disabled: palette.slate300,
@@ -113,6 +124,8 @@ export const colors = {
   dangerSoft: palette.dangerSoft,
   info: palette.info,
   infoSoft: palette.infoSoft,
+  successFill: palette.successFill,
+  dangerFill: palette.dangerFill,
 
   // Gradients (consumed via expo-linear-gradient)
   gradients: {

@@ -16,11 +16,12 @@ import {
 } from '@/components/ui';
 import { usePaymentHistory } from '@/features/payments/hooks/usePayments';
 import { useT } from '@/i18n';
-import { colors, layout, radii, spacing } from '@/theme';
+import { useColors, layout, radii, spacing } from '@/theme';
 import type { Payment } from '@/types';
 
 export function HistoryScreen() {
   const t = useT();
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { data, isLoading, isRefetching, refetch } = usePaymentHistory();
 
@@ -55,6 +56,13 @@ export function HistoryScreen() {
           <Text variant="caption" color="tertiary" style={{ marginTop: 2 }}>
             Loan {item.loan_id.slice(0, 8).toUpperCase()} · {new Date(item.collected_at).toLocaleString()}
           </Text>
+          {!item.is_missed && item.allocations.length > 0 ? (
+            <Text variant="caption" color="secondary" style={{ marginTop: 4 }}>
+              {item.allocations
+                .map((allocation) => `#${allocation.sequence}: ₹${allocation.amount.toLocaleString('en-IN')}`)
+                .join(' · ')}
+            </Text>
+          ) : null}
           {item.notes ? (
             <Text variant="caption" color="secondary" style={{ marginTop: 6 }}>
               {item.notes}

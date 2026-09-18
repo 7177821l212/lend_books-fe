@@ -146,7 +146,7 @@ export function NewCustomerScreen() {
                 <Avatar name="?" size="2xl" />
               )}
               <View style={[styles.cameraBtn, { backgroundColor: colors.brand[600] }]}>
-                <Camera size={14} color="#fff" />
+                <Camera size={14} color={colors.text.onBrandFill} />
               </View>
             </TouchableOpacity>
             <Text variant="caption" color="tertiary" style={{ marginTop: spacing[2] }}>

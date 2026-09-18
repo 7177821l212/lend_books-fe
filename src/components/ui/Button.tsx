@@ -62,10 +62,10 @@ export function Button({
     secondary: colors.slate[200],
     outline: 'transparent',
     ghost: 'transparent',
-    danger: colors.danger,
+    danger: colors.dangerFill,
   };
   const VARIANT_LABEL: Record<Variant, ComponentProps<typeof Text>['color']> = {
-    primary: 'onBrand',
+    primary: 'onBrandFill',
     secondary: 'primary',
     outline: 'primary',
     ghost: 'primary',

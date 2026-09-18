@@ -49,6 +49,51 @@ export interface Installment {
   due_amount: number;
   paid_amount: number;
   status: InstallmentStatus;
+  is_active: boolean;
+  schedule_version: number;
+  replaced_at: string | null;
+}
+
+export type RescheduleMode = 'same_end_date' | 'same_installment' | 'manual';
+
+export interface RescheduleInstallment {
+  due_date: string;
+  due_amount: number;
+}
+
+export interface SchedulePreviewRow {
+  sequence: number;
+  due_date: string;
+  due_amount: number;
+  paid_amount: number;
+}
+
+export interface ReschedulePreview {
+  remaining_balance: number;
+  current: SchedulePreviewRow[];
+  proposed: SchedulePreviewRow[];
+  current_total: number;
+  proposed_total: number;
+  current_end_date: string | null;
+  proposed_end_date: string | null;
+}
+
+export interface ScheduleRevision {
+  id: string;
+  loan_id: string;
+  version: number;
+  reason: string;
+  effective_from: string;
+  created_by: string;
+  created_by_name: string;
+  created_at: string;
+}
+
+export interface PaymentAllocation {
+  installment_id: string;
+  sequence: number;
+  due_date: string;
+  amount: number;
 }
 
 export interface Loan {
@@ -97,6 +142,7 @@ export interface Payment {
   notes: string | null;
   proof_photo_url: string | null;
   collected_at: string;
+  allocations: PaymentAllocation[];
 }
 
 export interface Collector {
