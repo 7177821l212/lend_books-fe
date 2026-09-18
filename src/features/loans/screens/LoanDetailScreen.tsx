@@ -3,7 +3,17 @@
  */
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Camera, CheckCircle2, ChevronLeft, CircleCheck, Lock, UserCog, X } from 'lucide-react-native';
+import {
+  CalendarClock,
+  Camera,
+  CheckCircle2,
+  ChevronLeft,
+  CircleCheck,
+  History,
+  Lock,
+  UserCog,
+  X,
+} from 'lucide-react-native';
 import {
   ActivityIndicator,
   Image,
@@ -36,8 +46,14 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCollectors } from '@/features/collectors/hooks/useCollectors';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
 import { useT } from '@/i18n';
-import { useCloseLoan, useLoan, useReassignLoan } from '@/features/loans/hooks/useLoans';
+import {
+  useCloseLoan,
+  useLoan,
+  useReassignLoan,
+  useScheduleRevisions,
+} from '@/features/loans/hooks/useLoans';
 import { InstallmentRow } from '@/features/loans/components/InstallmentRow';
+import { RescheduleSheet } from '@/features/loans/components/RescheduleSheet';
 import { usePaymentHistory } from '@/features/payments/hooks/usePayments';
 import { colors, useColors, layout, radii, spacing } from '@/theme';
 import type { LoanStatus, Payment } from '@/types';
@@ -78,10 +94,13 @@ export function LoanDetailScreen() {
   const reassign = useReassignLoan(params.id);
   const { data: collectors } = useCollectors();
   const { data: paymentsPage } = usePaymentHistory({ loan_id: params.id });
+  const { data: revisions } = useScheduleRevisions(params.id);
   const payments = paymentsPage?.items ?? [];
   const [showReassign, setShowReassign] = useState(false);
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
   const [viewProof, setViewProof] = useState<string | null>(null);
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [showReplaced, setShowReplaced] = useState(false);
 
   // When reached via a cross-tab deep link (e.g. Reports' overdue list), this
   // screen may be the only entry in the Customers stack — goBack() would then
@@ -112,6 +131,25 @@ export function LoanDetailScreen() {
 
   const installments = loan.installments ?? [];
   const paidCount = installments.filter((i) => i.status === 'paid').length;
+  // Rows replaced by a reschedule are history, not plan: keep them out of the
+  // live schedule so the investor reads one schedule, not two interleaved.
+  const activeInstallments = installments.filter((i) => i.is_active);
+  const replacedInstallments = installments.filter((i) => !i.is_active);
+  // Local date parts, NOT toISOString() — that returns the UTC day, so before
+  // 05:30 IST it reads as yesterday and today's row would be mislabelled as
+  // advance credit. The backend's business day is its own timezone (see
+  // `business_today`), and the device's local day is the right proxy for it.
+  // `loan.installment_amount` is the amount the ORIGINAL contract was cut into
+  // and a reschedule does not rewrite it, so read the live plan's own per-visit
+  // amount from the rows that are still expecting money.
+  const nextUnpaid = activeInstallments.find((i) => i.paid_amount < i.due_amount);
+  const currentInstallment = nextUnpaid?.due_amount ?? loan.installment_amount;
+
+  const today = (() => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  })();
 
   return (
     <Screen padded={false} background="default" edges={[]} scroll>
@@ -214,7 +252,7 @@ export function LoanDetailScreen() {
             <Term label={t('installments')} value={`${paidCount}/${loan.total_installments}`} />
           </View>
           <View style={styles.termsRow}>
-            <Term label={t('installment')} value={`₹${loan.installment_amount.toLocaleString('en-IN')}`} />
+            <Term label={t('installment')} value={`₹${currentInstallment.toLocaleString('en-IN')}`} />
             <Term label={t('start_date')} value={loan.start_date} />
           </View>
         </Card>
@@ -273,22 +311,73 @@ export function LoanDetailScreen() {
         </Card>
 
         {/* Schedule */}
-        <Text variant="title" style={{ marginTop: spacing[2], marginBottom: spacing[2] }}>
-          {t('schedule')}
-        </Text>
+        <View style={styles.scheduleHeader}>
+          <Text variant="title">{t('schedule')}</Text>
+          {isInvestor && loan.status === 'active' ? (
+            <Button
+              label={t('reschedule')}
+              variant="ghost"
+              size="sm"
+              leadingIcon={<CalendarClock size={14} color={colors.brand[700]} />}
+              onPress={() => setShowReschedule(true)}
+            />
+          ) : null}
+        </View>
         <Card padding={0} style={{ paddingTop: spacing[1] }}>
-          {installments.length === 0 ? (
+          {activeInstallments.length === 0 ? (
             <Text variant="caption" color="tertiary" style={{ padding: spacing[4] }}>
               No installments
             </Text>
           ) : (
             <ScrollView style={{ maxHeight: 360 }} nestedScrollEnabled showsVerticalScrollIndicator>
-              {installments.map((i) => (
-                <InstallmentRow key={i.id} installment={i} />
+              {activeInstallments.map((i) => (
+                <InstallmentRow key={i.id} installment={i} today={today} />
               ))}
             </ScrollView>
           )}
         </Card>
+
+        {replacedInstallments.length > 0 ? (
+          <>
+            <Pressable
+              onPress={() => setShowReplaced((v) => !v)}
+              style={styles.replacedToggle}
+            >
+              <History size={14} color={colors.slate[500]} />
+              <Text variant="caption" color="secondary">
+                {t('status_replaced')} · {replacedInstallments.length}
+              </Text>
+            </Pressable>
+            {showReplaced ? (
+              <Card padding={0} style={{ paddingTop: spacing[1] }}>
+                <ScrollView style={{ maxHeight: 240 }} nestedScrollEnabled>
+                  {replacedInstallments.map((i) => (
+                    <InstallmentRow key={i.id} installment={i} today={today} />
+                  ))}
+                </ScrollView>
+              </Card>
+            ) : null}
+          </>
+        ) : null}
+
+        {revisions && revisions.length > 0 ? (
+          <Card padding={3} style={{ marginTop: spacing[3] }}>
+            <Text variant="caption" color="tertiary">
+              {t('revision_history').toUpperCase()}
+            </Text>
+            {revisions.map((revision) => (
+              <View key={revision.id} style={{ marginTop: spacing[2] }}>
+                <Text variant="bodyStrong">
+                  v{revision.version} · {revision.reason}
+                </Text>
+                <Text variant="caption" color="tertiary">
+                  {t('revised_by')} {revision.created_by_name} ·{' '}
+                  {new Date(revision.created_at).toLocaleDateString()}
+                </Text>
+              </View>
+            ))}
+          </Card>
+        ) : null}
 
         {/* Collections */}
         <Text variant="title" style={{ marginTop: spacing[4], marginBottom: spacing[2] }}>
@@ -301,14 +390,16 @@ export function LoanDetailScreen() {
           />
         ) : (
           <Card padding={0} style={{ overflow: 'hidden' }}>
-            {payments.map((p, idx) => (
-              <PaymentRow
-                key={p.id}
-                payment={p}
-                last={idx === payments.length - 1}
-                onViewProof={setViewProof}
-              />
-            ))}
+            <ScrollView style={{ maxHeight: 360 }} nestedScrollEnabled>
+              {payments.map((p, idx) => (
+                <PaymentRow
+                  key={p.id}
+                  payment={p}
+                  last={idx === payments.length - 1}
+                  onViewProof={setViewProof}
+                />
+              ))}
+            </ScrollView>
           </Card>
         )}
 
@@ -326,7 +417,7 @@ export function LoanDetailScreen() {
           />
         ) : null}
         {loan.status === 'closed' ? (
-          <View style={styles.closedBanner}>
+          <View style={[styles.closedBanner, { backgroundColor: colors.successSoft }]}>
             <CircleCheck size={18} color={colors.success} />
             <Text variant="bodyStrong" color={colors.success} style={{ marginLeft: spacing[2] }}>
               {t('loan_closed')}
@@ -349,6 +440,13 @@ export function LoanDetailScreen() {
         loading={close.isPending}
         icon={<Lock size={22} color={colors.danger} />}
       />
+      {loan ? (
+        <RescheduleSheet
+          loan={loan}
+          visible={showReschedule}
+          onClose={() => setShowReschedule(false)}
+        />
+      ) : null}
     </Screen>
   );
 }
@@ -516,6 +614,13 @@ function PaymentRow({ payment, last, onViewProof }: PaymentRowProps) {
             </Text>
           ) : null}
         </View>
+        {!payment.is_missed && payment.allocations.length > 0 ? (
+          <Text variant="caption" color="secondary" style={{ marginTop: spacing[1] }}>
+            {payment.allocations
+              .map((allocation) => `#${allocation.sequence}: ₹${allocation.amount.toLocaleString('en-IN')}`)
+              .join(' · ')}
+          </Text>
+        ) : null}
       </View>
       {payment.proof_photo_url ? (
         <Pressable
@@ -523,7 +628,7 @@ function PaymentRow({ payment, last, onViewProof }: PaymentRowProps) {
           style={[styles.proofBadge, { backgroundColor: colors.brand[50] }]}
           hitSlop={8}
         >
-          {proofUrl ? <Image source={{ uri: proofUrl }} style={styles.proofThumbnail} /> : <Camera size={14} color={colors.brand[600]} />}
+          {proofUrl ? <Image source={{ uri: proofUrl }} style={styles.proofThumbnail} /> : <Camera size={14} color={colors.brand[900]} />}
           <Text variant="caption" style={{ color: colors.brand[800], marginLeft: 5 }}>Proof</Text>
         </Pressable>
       ) : null}
@@ -556,6 +661,19 @@ function ProofViewerModal({ objectName, onClose }: ProofViewerModalProps) {
 }
 
 const styles = StyleSheet.create({
+  scheduleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing[2],
+    marginBottom: spacing[2],
+  },
+  replacedToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    paddingVertical: spacing[2],
+  },
   topRow: { flexDirection: 'row', alignItems: 'center' },
   outstandingRow: {
     flexDirection: 'row',
@@ -583,7 +701,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.successSoft,
     padding: spacing[3],
     borderRadius: radii.lg,
     marginTop: spacing[6],

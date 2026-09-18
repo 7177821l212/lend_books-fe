@@ -42,7 +42,7 @@ export function Badge({
     danger: colors.danger,
     info: colors.info,
     neutral: colors.slate[600],
-    brand: colors.brand[700],
+    brand: colors.brand[900],
   };
 
   return (

@@ -169,7 +169,7 @@ export function CustomerListScreen() {
             >
               <Text
                 variant="label"
-                style={{ fontSize: 12, color: active ? '#fff' : colors.text.secondary }}
+                style={{ fontSize: 12, color: active ? colors.text.onBrandFill : colors.text.secondary }}
               >
                 {label}
               </Text>
