@@ -126,7 +126,14 @@ export function CollectScreen() {
   };
 
   const submit = async () => {
-    if (!loan || !targetInstallment) return;
+    if (!loan) return;
+    // Every open row is settled — there is genuinely nothing left to take, and
+    // the backend would reject the payment anyway. Say so instead of leaving a
+    // button that looks live but does nothing.
+    if (!targetInstallment) {
+      toast.warning(t('nothing_left_to_collect'));
+      return;
+    }
     try {
       if (mode === 'PAID') {
         const amt = parseInt(amount, 10);

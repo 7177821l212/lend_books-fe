@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   CalendarClock,
   Camera,
+  IndianRupee,
   CheckCircle2,
   ChevronLeft,
   CircleCheck,
@@ -96,6 +97,10 @@ export function LoanDetailScreen() {
   const { data: paymentsPage } = usePaymentHistory({ loan_id: params.id });
   const { data: revisions } = useScheduleRevisions(params.id);
   const payments = paymentsPage?.items ?? [];
+  // A customer can pay before anything falls due, and on such a day the
+  // collector's worklist is empty — so the loan itself has to offer the action.
+  const isAssignedCollector =
+    user?.role === 'collector' && loan?.collector_id === user?.id;
   const [showReassign, setShowReassign] = useState(false);
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
   const [viewProof, setViewProof] = useState<string | null>(null);
@@ -404,6 +409,17 @@ export function LoanDetailScreen() {
         )}
 
         {/* Actions */}
+        {isAssignedCollector && loan.status === 'active' ? (
+          <Button
+            label={t('record_collection')}
+            fullWidth
+            size="lg"
+            leadingIcon={<IndianRupee size={16} color={colors.text.onBrandFill} />}
+            onPress={() => nav.navigate('Collect', { loanId: loan.id })}
+            style={{ marginTop: spacing[6] }}
+          />
+        ) : null}
+
         {isInvestor && loan.status === 'active' ? (
           <Button
             label={t('close_loan')}

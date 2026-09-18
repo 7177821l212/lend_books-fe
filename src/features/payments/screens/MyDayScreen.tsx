@@ -191,6 +191,11 @@ export function MyDayScreen() {
               icon={<PartyPopper size={28} color={colors.brand[700]} />}
               title={t('all_caught_up')}
               description={t('no_pickups_desc')}
+              // Nothing due is not the same as nothing collectible: a customer
+              // can still pay early, so leave a way through to their loan
+              // rather than ending the day at a dead end.
+              actionLabel={t('collect_early_payment')}
+              onAction={() => nav.getParent()?.navigate('Customers')}
             />
           }
         />
