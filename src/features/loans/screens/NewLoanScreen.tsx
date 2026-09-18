@@ -78,6 +78,11 @@ export function NewLoanScreen() {
       toast.warning('Fix the highlighted fields');
       return;
     }
+    const installmentCount = parseInt(installments, 10);
+    if (!Number.isFinite(installmentCount) || installmentCount < 1 || installmentCount > 10_000) {
+      toast.warning('Enter 10,000 installments or fewer');
+      return;
+    }
     try {
       const loan = await create.mutateAsync({
         customer_id: customer.id,
@@ -91,7 +96,7 @@ export function NewLoanScreen() {
         collection_mode: 'balance',
         // A guide for the collector, not a schedule: it derives the expected
         // per-visit amount and nothing enforces it.
-        total_installments: parseInt(installments, 10),
+        total_installments: installmentCount,
         start_date: startDate,
       });
       toast.success('Loan created');

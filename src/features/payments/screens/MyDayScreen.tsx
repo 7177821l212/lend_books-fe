@@ -56,12 +56,11 @@ export function MyDayScreen() {
           <View style={styles.titleRow}>
             <Text variant="bodyStrong" numberOfLines={1} style={{ flex: 1 }}>
               {item.customer_name}
-              {/* A customer can hold several live loans; without the number and
-                  start date the rows are indistinguishable on the round. */}
-              <Text variant="caption" color="tertiary">
-                {'  '}
-                {t('loan')} {item.loan_number}
-              </Text>
+            </Text>
+            {/* A sibling, not a child: nested inside the name it was the first
+                thing ellipsized, which is exactly the disambiguator we need. */}
+            <Text variant="caption" color="tertiary" style={{ marginLeft: spacing[2] }}>
+              {t('loan')} {item.loan_number}
             </Text>
             <AmountText
               value={item.due_amount}

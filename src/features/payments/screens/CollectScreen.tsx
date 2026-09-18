@@ -272,7 +272,7 @@ export function CollectScreen() {
         >
           {isBalanceLoan ? (
             <DatePickerField
-              label={t('collection_date')}
+              label={mode === 'MISSED' ? t('visit_date') : t('collection_date')}
               value={collectedOn}
               onChange={setCollectedOn}
               maxDate={todayIso}
