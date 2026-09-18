@@ -157,6 +157,11 @@ export const translations = {
     remaining: 'remaining',
     carried_forward: 'carried forward',
     record_collection: 'Record collection',
+    total_to_collect: 'To collect',
+    collected_so_far: 'Collected',
+    collection_date: 'Collection date',
+    simple_loan: 'Simple loan',
+    simple_loan_desc: 'No schedule \u2014 collect any amount, any day',
     collect_early_payment: 'Take an early payment',
     nothing_left_to_collect: 'This loan is fully collected',
 
@@ -425,6 +430,11 @@ export const translations = {
     remaining: 'மீதம்',
     carried_forward: 'கடைசியில் சேர்க்கப்பட்டது',
     record_collection: 'பணம் பதிவு செய்',
+    total_to_collect: 'வசூலிக்க வேண்டியது',
+    collected_so_far: 'வசூலானது',
+    collection_date: 'வசூல் தேதி',
+    simple_loan: 'எளிய கடன்',
+    simple_loan_desc: 'திட்டம் இல்லை — எந்த நாளிலும் எந்த தொகையும்',
     collect_early_payment: 'முன்கூட்டியே பணம் பெற',
     nothing_left_to_collect: 'இந்த கடன் முழுமையாக வசூலிக்கப்பட்டது',
 

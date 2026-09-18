@@ -42,7 +42,12 @@ export function MyDayScreen() {
   const renderItem = ({ item }: ListRenderItemInfo<PickupItem>) => (
     <Card
       padding={4}
-      onPress={() => nav.navigate('Collect', { loanId: item.loan_id, scheduleId: item.schedule_id })}
+      onPress={() =>
+        nav.navigate('Collect', {
+          loanId: item.loan_id,
+          ...(item.schedule_id ? { scheduleId: item.schedule_id } : {}),
+        })
+      }
       style={[styles.pickup, item.is_overdue && { borderLeftWidth: 4, borderLeftColor: colors.warning }]}
     >
       <View style={styles.row}>
@@ -74,14 +79,18 @@ export function MyDayScreen() {
             </View>
           ) : null}
           <View style={styles.badges}>
-            {item.is_overdue ? (
+            {item.collection_mode === 'balance' ? (
+              <Badge label={t('remaining')} tone="neutral" withDot size="sm" />
+            ) : item.is_overdue ? (
               <Badge label={t('status_overdue')} tone="danger" withDot size="sm" />
             ) : (
               <Badge label={t('status_due_today')} tone="warning" withDot size="sm" />
             )}
-            <Text variant="caption" color="tertiary" style={{ marginLeft: spacing[2] }}>
-              #{item.sequence} · {item.due_date}
-            </Text>
+            {item.collection_mode === 'schedule' ? (
+              <Text variant="caption" color="tertiary" style={{ marginLeft: spacing[2] }}>
+                #{item.sequence} · {item.due_date}
+              </Text>
+            ) : null}
           </View>
         </View>
         <ChevronRight size={18} color={colors.slate[300]} />
@@ -180,7 +189,7 @@ export function MyDayScreen() {
       ) : (
         <FlatList
           data={data?.pickups ?? []}
-          keyExtractor={(p) => p.schedule_id}
+          keyExtractor={(p) => p.loan_id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           refreshing={isRefetching}

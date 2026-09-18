@@ -2,12 +2,14 @@
  * Payment API — collect, missed, history, my-day.
  */
 import { apiClient } from '@/lib/api';
-import type { Paginated, Payment, PaymentMode } from '@/types';
+import type { CollectionMode, Paginated, Payment, PaymentMode } from '@/types';
 
 export interface CollectPayload {
   loan_id: string;
   amount: number;
   mode: PaymentMode;
+  /** The day the money changed hands (YYYY-MM-DD). Defaults to today. */
+  collected_on?: string;
   schedule_id?: string;
   notes?: string;
   proof_photo_url?: string;
@@ -26,9 +28,12 @@ export interface PickupItem {
   customer_name: string;
   customer_phone: string;
   customer_location: string | null;
-  schedule_id: string;
-  sequence: number;
-  due_date: string;
+  collection_mode: CollectionMode;
+  /** null on balance loans — they have no installment behind them. */
+  schedule_id: string | null;
+  sequence: number | null;
+  due_date: string | null;
+  /** Amount due today for a schedule loan; amount REMAINING for a balance loan. */
   due_amount: number;
   is_overdue: boolean;
 }

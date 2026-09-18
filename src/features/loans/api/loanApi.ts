@@ -3,6 +3,7 @@
  */
 import { apiClient } from '@/lib/api';
 import type {
+  CollectionMode,
   InterestType,
   LendingModel,
   Loan,
@@ -29,10 +30,13 @@ export interface CreateLoanPayload {
   interest_type: InterestType;
   interest_value: number;
   lending_model: LendingModel;
-  repayment_frequency: RepaymentFrequency;
-  frequency_meta?: Record<string, unknown> | null;
-  total_installments: number;
+  /** `balance` keeps no schedule; the schedule fields below must be omitted. */
+  collection_mode?: CollectionMode;
   start_date: string; // YYYY-MM-DD
+  // SCHEDULE loans only
+  repayment_frequency?: RepaymentFrequency;
+  frequency_meta?: Record<string, unknown> | null;
+  total_installments?: number;
 }
 
 export interface ReschedulePayload {
