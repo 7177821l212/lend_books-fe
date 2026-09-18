@@ -242,7 +242,7 @@ export function CollectScreen() {
               style={[
                 styles.toggle,
                 { backgroundColor: colors.card, borderColor: colors.border.default },
-                mode === 'PAID' && { backgroundColor: colors.success, borderColor: colors.success },
+                mode === 'PAID' && { backgroundColor: colors.successFill, borderColor: colors.successFill },
               ]}
             >
               <Check size={16} color={mode === 'PAID' ? colors.white : colors.success} />
@@ -259,7 +259,7 @@ export function CollectScreen() {
               style={[
                 styles.toggle,
                 { backgroundColor: colors.card, borderColor: colors.border.default },
-                mode === 'MISSED' && { backgroundColor: colors.danger, borderColor: colors.danger },
+                mode === 'MISSED' && { backgroundColor: colors.dangerFill, borderColor: colors.dangerFill },
               ]}
             >
               <X size={16} color={mode === 'MISSED' ? colors.white : colors.danger} />

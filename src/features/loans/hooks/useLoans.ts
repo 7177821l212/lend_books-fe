@@ -3,7 +3,12 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { type CreateLoanPayload, type ListLoansParams, loanApi } from '../api/loanApi';
+import {
+  type CreateLoanPayload,
+  type ListLoansParams,
+  type ReschedulePayload,
+  loanApi,
+} from '../api/loanApi';
 
 const KEY = 'loans';
 
@@ -62,4 +67,33 @@ export function useReassignLoan(loanId: string) {
       qc.invalidateQueries({ queryKey: [KEY] });
     },
   });
+}
+
+export function useScheduleRevisions(loanId: string | undefined) {
+  return useQuery({
+    queryKey: [KEY, 'revisions', loanId],
+    queryFn: () => loanApi.revisions(loanId!),
+    enabled: !!loanId,
+  });
+}
+
+/**
+ * Reschedule is two steps on purpose: the investor always sees the replacement
+ * plan before anything is written, so `preview` is a mutation they trigger and
+ * `commit` only runs on their confirmation.
+ */
+export function useReschedule(loanId: string) {
+  const qc = useQueryClient();
+  const preview = useMutation({
+    mutationFn: (payload: ReschedulePayload) => loanApi.previewReschedule(loanId, payload),
+  });
+  const commit = useMutation({
+    mutationFn: (payload: ReschedulePayload) => loanApi.reschedule(loanId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [KEY] });
+      qc.invalidateQueries({ queryKey: ['payments'] });
+      qc.invalidateQueries({ queryKey: ['customers'] });
+    },
+  });
+  return { preview, commit };
 }

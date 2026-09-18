@@ -2,7 +2,17 @@
  * Loan API — typed wrappers over apiClient.
  */
 import { apiClient } from '@/lib/api';
-import type { InterestType, LendingModel, Loan, Paginated, RepaymentFrequency } from '@/types';
+import type {
+  InterestType,
+  LendingModel,
+  Loan,
+  Paginated,
+  RepaymentFrequency,
+  ReschedulePreview,
+  RescheduleInstallment,
+  RescheduleMode,
+  ScheduleRevision,
+} from '@/types';
 
 export interface ListLoansParams {
   status?: 'active' | 'overdue' | 'closed' | 'cancelled';
@@ -23,6 +33,17 @@ export interface CreateLoanPayload {
   frequency_meta?: Record<string, unknown> | null;
   total_installments: number;
   start_date: string; // YYYY-MM-DD
+}
+
+export interface ReschedulePayload {
+  reason: string;
+  mode: RescheduleMode;
+  /** `manual` mode only — the investor's explicit replacement rows. */
+  installments?: RescheduleInstallment[];
+  /** `same_installment` mode only — the per-visit amount to hold constant. */
+  installment_amount?: number;
+  /** Optional override for the first new due date. */
+  start_date?: string;
 }
 
 export const loanApi = {
@@ -46,6 +67,22 @@ export const loanApi = {
     const { data } = await apiClient.post<Loan>(`/loans/${id}/assign`, {
       collector_id: collectorId,
     });
+    return data;
+  },
+  /** Dry run — returns old vs. new remaining rows without writing anything. */
+  async previewReschedule(id: string, payload: ReschedulePayload): Promise<ReschedulePreview> {
+    const { data } = await apiClient.post<ReschedulePreview>(
+      `/loans/${id}/reschedule/preview`,
+      payload,
+    );
+    return data;
+  },
+  async reschedule(id: string, payload: ReschedulePayload): Promise<Loan> {
+    const { data } = await apiClient.post<Loan>(`/loans/${id}/reschedule`, payload);
+    return data;
+  },
+  async revisions(id: string): Promise<ScheduleRevision[]> {
+    const { data } = await apiClient.get<ScheduleRevision[]>(`/loans/${id}/revisions`);
     return data;
   },
 };

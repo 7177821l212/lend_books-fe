@@ -261,7 +261,7 @@ export function CustomerDetailScreen() {
               />
               {isInvestor ? (
                 <View style={[styles.cameraOverlay, { backgroundColor: colors.brand[600] }]}>
-                  <Camera size={12} color="#fff" />
+                  <Camera size={12} color={colors.text.onBrandFill} />
                 </View>
               ) : null}
             </View>
