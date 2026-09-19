@@ -42,6 +42,8 @@ export function useMarkMissed() {
     mutationFn: (payload: MissedPayload) => paymentApi.markMissed(payload),
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: [KEY] });
+      // The loan card shows missed_count, so the list must refetch too.
+      qc.invalidateQueries({ queryKey: ['loans'] });
       qc.invalidateQueries({ queryKey: ['loans', 'detail', vars.loan_id] });
     },
   });

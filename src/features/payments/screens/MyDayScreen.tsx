@@ -42,7 +42,12 @@ export function MyDayScreen() {
   const renderItem = ({ item }: ListRenderItemInfo<PickupItem>) => (
     <Card
       padding={4}
-      onPress={() => nav.navigate('Collect', { loanId: item.loan_id, scheduleId: item.schedule_id })}
+      onPress={() =>
+        nav.navigate('Collect', {
+          loanId: item.loan_id,
+          ...(item.schedule_id ? { scheduleId: item.schedule_id } : {}),
+        })
+      }
       style={[styles.pickup, item.is_overdue && { borderLeftWidth: 4, borderLeftColor: colors.warning }]}
     >
       <View style={styles.row}>
@@ -51,6 +56,11 @@ export function MyDayScreen() {
           <View style={styles.titleRow}>
             <Text variant="bodyStrong" numberOfLines={1} style={{ flex: 1 }}>
               {item.customer_name}
+            </Text>
+            {/* A sibling, not a child: nested inside the name it was the first
+                thing ellipsized, which is exactly the disambiguator we need. */}
+            <Text variant="caption" color="tertiary" style={{ marginLeft: spacing[2] }}>
+              {t('loan')} {item.loan_number}
             </Text>
             <AmountText
               value={item.due_amount}
@@ -74,14 +84,27 @@ export function MyDayScreen() {
             </View>
           ) : null}
           <View style={styles.badges}>
-            {item.is_overdue ? (
+            {item.collection_mode === 'balance' ? (
+              <Badge label={t('remaining')} tone="neutral" withDot size="sm" />
+            ) : item.is_overdue ? (
               <Badge label={t('status_overdue')} tone="danger" withDot size="sm" />
             ) : (
               <Badge label={t('status_due_today')} tone="warning" withDot size="sm" />
             )}
-            <Text variant="caption" color="tertiary" style={{ marginLeft: spacing[2] }}>
-              #{item.sequence} · {item.due_date}
-            </Text>
+            {item.collection_mode === 'schedule' ? (
+              <Text variant="caption" color="tertiary" style={{ marginLeft: spacing[2] }}>
+                #{item.sequence} · {item.due_date}
+              </Text>
+            ) : item.start_date ? (
+              <Text variant="caption" color="tertiary" style={{ marginLeft: spacing[2] }}>
+                {t('since')} {item.start_date}
+              </Text>
+            ) : null}
+            {item.missed_count > 0 ? (
+              <Text variant="caption" color={colors.danger} style={{ marginLeft: spacing[2] }}>
+                {item.missed_count} {t('missed').toLowerCase()}
+              </Text>
+            ) : null}
           </View>
         </View>
         <ChevronRight size={18} color={colors.slate[300]} />
@@ -180,7 +203,7 @@ export function MyDayScreen() {
       ) : (
         <FlatList
           data={data?.pickups ?? []}
-          keyExtractor={(p) => p.schedule_id}
+          keyExtractor={(p) => p.loan_id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           refreshing={isRefetching}

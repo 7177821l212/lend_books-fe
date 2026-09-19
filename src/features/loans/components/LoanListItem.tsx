@@ -4,6 +4,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AmountText, Badge, Card, ProgressBar, Text } from '@/components/ui';
+import { useT } from '@/i18n';
 import { useColors, spacing } from '@/theme';
 import type { Loan } from '@/types';
 
@@ -23,16 +24,23 @@ const MODEL_LABEL = { model_a: 'Pre-deduct', model_b: 'Add-on' } as const;
 
 export function LoanListItem({ loan, onPress }: LoanListItemProps) {
   const colors = useColors();
+  const t = useT();
+  const isBalanceLoan = loan.collection_mode === 'balance';
   return (
     <Card padding={4} onPress={onPress} style={{ marginBottom: spacing[2] }}>
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
           <View style={styles.idRow}>
-            <Text variant="bodyStrong">{loan.id.slice(0, 8).toUpperCase()}</Text>
+            <Text variant="bodyStrong">
+              {t('loan')} {loan.loan_number}
+            </Text>
             <Badge label={MODEL_LABEL[loan.lending_model]} tone="brand" size="sm" />
           </View>
           <Text variant="caption" color="tertiary" style={{ marginTop: 2 }}>
-            {loan.repayment_frequency} · {loan.total_installments} installments
+            {isBalanceLoan
+              ? loan.start_date
+              : `${loan.repayment_frequency} · ${loan.total_installments} installments`}
+            {loan.missed_count > 0 ? ` · ${loan.missed_count} ${t('missed').toLowerCase()}` : ''}
           </Text>
         </View>
         <Badge label={loan.status} tone={STATUS_TONE[loan.status]} size="sm" withDot />
@@ -55,7 +63,9 @@ export function LoanListItem({ loan, onPress }: LoanListItemProps) {
             {loan.repaid_pct.toFixed(0)}% PAID
           </Text>
           <Text variant="label" color="secondary" style={{ marginTop: 2 }}>
-            {loan.paid_count}/{loan.total_installments} done
+            {isBalanceLoan || loan.total_installments == null
+              ? `${loan.paid_count} ${t('collections').toLowerCase()}`
+              : `${loan.paid_count}/${loan.total_installments} done`}
           </Text>
         </View>
       </View>

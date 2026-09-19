@@ -54,6 +54,9 @@ export interface Installment {
   replaced_at: string | null;
 }
 
+/** How a loan tracks what is owed. `balance` loans keep no schedule at all. */
+export type CollectionMode = 'schedule' | 'balance';
+
 export type RescheduleMode = 'same_end_date' | 'same_installment' | 'manual';
 
 export interface RescheduleInstallment {
@@ -112,11 +115,18 @@ export interface Loan {
   repayable: number;
   profit: number;
 
+  collection_mode: CollectionMode;
+  /** Position among this customer's loans, oldest first ("Loan 1" was given first). */
+  loan_number: number;
+  /** Visits where the collector called and collected nothing. */
+  missed_count: number;
   repayment_frequency: RepaymentFrequency;
-  total_installments: number;
-  installment_amount: number;
-  /** Largest single installment amount (= base+1 when remainder distributes a +1). */
-  installment_amount_max: number;
+  /** null on balance loans — they have no installments. */
+  total_installments: number | null;
+  /** null on balance loans — there is no per-visit amount. */
+  installment_amount: number | null;
+  /** Largest single installment amount; null on balance loans. */
+  installment_amount_max: number | null;
   start_date: string;
 
   status: LoanStatus;

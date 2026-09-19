@@ -32,6 +32,7 @@ import {
   Avatar,
   Button,
   Card,
+  DatePickerField,
   GradientBackground,
   IconButton,
   Screen,
@@ -99,6 +100,15 @@ export function CollectScreen() {
     );
   }, [loan, params.scheduleId]);
 
+  const isBalanceLoan = loan?.collection_mode === 'balance';
+  // Today's local date, not toISOString() — that is the UTC day and would read
+  // as yesterday during the early hours of the business day.
+  const todayIso = (() => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  })();
+
   const targetRemaining = targetInstallment
     ? targetInstallment.due_amount - targetInstallment.paid_amount
     : loan?.installment_amount ?? 0;
@@ -111,6 +121,7 @@ export function CollectScreen() {
   const [proofUri, setProofUri] = useState<string | undefined>(undefined);
   const [uploadingProof, setUploadingProof] = useState(false);
   const [amountFocused, setAmountFocused] = useState(false);
+  const [collectedOn, setCollectedOn] = useState<string>(todayIso);
 
   const captureProof = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -127,10 +138,9 @@ export function CollectScreen() {
 
   const submit = async () => {
     if (!loan) return;
-    // Every open row is settled — there is genuinely nothing left to take, and
-    // the backend would reject the payment anyway. Say so instead of leaving a
-    // button that looks live but does nothing.
-    if (!targetInstallment) {
+    // A balance loan has no installments at all, so there is nothing to target
+    // and nothing to check here — the backend works from the remaining balance.
+    if (!isBalanceLoan && !targetInstallment) {
       toast.warning(t('nothing_left_to_collect'));
       return;
     }
@@ -155,7 +165,10 @@ export function CollectScreen() {
           loan_id: loan.id,
           amount: amt,
           mode: paymentMode,
-          schedule_id: targetInstallment.id,
+          // Send the date only when it is not today, so an ordinary same-day
+          // collection keeps the server's own timestamp.
+          ...(collectedOn !== todayIso ? { collected_on: collectedOn } : {}),
+          ...(targetInstallment ? { schedule_id: targetInstallment.id } : {}),
           notes: notes.trim() || undefined,
           proof_photo_url: proofObjectName,
         });
@@ -163,7 +176,10 @@ export function CollectScreen() {
       } else {
         await markMissed.mutateAsync({
           loan_id: loan.id,
-          schedule_id: targetInstallment.id,
+          // A balance loan has no installment behind the visit — the day and
+          // the reason are the whole record.
+          ...(targetInstallment ? { schedule_id: targetInstallment.id } : {}),
+          ...(collectedOn !== todayIso ? { missed_on: collectedOn } : {}),
           reason,
           notes: notes.trim() || undefined,
         });
@@ -178,7 +194,9 @@ export function CollectScreen() {
     }
   };
 
-  if (!loan || !targetInstallment) {
+  // A balance loan has no installments at all, so waiting for one here left the
+  // screen stuck on the skeleton forever.
+  if (!loan || (!isBalanceLoan && !targetInstallment)) {
     return <CollectSkeleton insetsTop={insets.top} onBack={() => nav.goBack()} />;
   }
 
@@ -220,14 +238,23 @@ export function CollectScreen() {
           />
           <View style={{ flex: 1, marginLeft: spacing[3] }}>
             <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-              {t('installment').toUpperCase()} #{targetInstallment.sequence}
+              {isBalanceLoan
+                ? t('remaining').toUpperCase()
+                : `${t('installment').toUpperCase()} #${targetInstallment?.sequence ?? ''}`}
             </Text>
             <Text variant="h2" color="onDark">
-              ₹{targetRemaining.toLocaleString('en-IN')}
+              ₹{(isBalanceLoan ? loan.outstanding : targetRemaining).toLocaleString('en-IN')}
             </Text>
-            <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-              Due {targetInstallment.due_date}
-            </Text>
+            {isBalanceLoan ? (
+              <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
+                {t('collected_so_far')} ₹{loan.repaid.toLocaleString('en-IN')} / ₹
+                {loan.repayable.toLocaleString('en-IN')}
+              </Text>
+            ) : targetInstallment ? (
+              <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
+                Due {targetInstallment.due_date}
+              </Text>
+            ) : null}
           </View>
         </View>
       </GradientBackground>
@@ -243,6 +270,15 @@ export function CollectScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
+          {isBalanceLoan ? (
+            <DatePickerField
+              label={mode === 'MISSED' ? t('visit_date') : t('collection_date')}
+              value={collectedOn}
+              onChange={setCollectedOn}
+              maxDate={todayIso}
+            />
+          ) : null}
+
           <View style={styles.toggleRow}>
             <Pressable
               onPress={() => setMode('PAID')}

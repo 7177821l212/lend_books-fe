@@ -99,6 +99,9 @@ export function LoanDetailScreen() {
   const payments = paymentsPage?.items ?? [];
   // A customer can pay before anything falls due, and on such a day the
   // collector's worklist is empty — so the loan itself has to offer the action.
+  // A balance loan keeps no schedule, so every schedule affordance is hidden
+  // rather than rendered empty: no installment list, no reschedule, no revisions.
+  const isBalanceLoan = loan?.collection_mode === 'balance';
   const isAssignedCollector =
     user?.role === 'collector' && loan?.collector_id === user?.id;
   const [showReassign, setShowReassign] = useState(false);
@@ -148,7 +151,7 @@ export function LoanDetailScreen() {
   // and a reschedule does not rewrite it, so read the live plan's own per-visit
   // amount from the rows that are still expecting money.
   const nextUnpaid = activeInstallments.find((i) => i.paid_amount < i.due_amount);
-  const currentInstallment = nextUnpaid?.due_amount ?? loan.installment_amount;
+  const currentInstallment = nextUnpaid?.due_amount ?? loan.installment_amount ?? 0;
 
   const today = (() => {
     const now = new Date();
@@ -177,7 +180,7 @@ export function LoanDetailScreen() {
           />
           <View style={{ flex: 1, marginLeft: spacing[2] }}>
             <Text variant="caption" color="onDark" style={{ opacity: 0.7 }}>
-              LOAN · {loan.id.slice(0, 8).toUpperCase()}
+              {t('loan').toUpperCase()} {loan.loan_number} · {loan.start_date}
             </Text>
             <Text variant="title" color="onDark">
               {loan.customer_name}
@@ -252,14 +255,45 @@ export function LoanDetailScreen() {
               }
             />
           </View>
-          <View style={styles.termsRow}>
-            <Term label={t('frequency')} value={FREQ_LABEL[loan.repayment_frequency] ?? loan.repayment_frequency} />
-            <Term label={t('installments')} value={`${paidCount}/${loan.total_installments}`} />
-          </View>
-          <View style={styles.termsRow}>
-            <Term label={t('installment')} value={`₹${currentInstallment.toLocaleString('en-IN')}`} />
-            <Term label={t('start_date')} value={loan.start_date} />
-          </View>
+          {isBalanceLoan ? (
+            <>
+              <View style={styles.termsRow}>
+                <Term
+                  label={t('total_to_collect')}
+                  value={`₹${loan.repayable.toLocaleString('en-IN')}`}
+                />
+                <Term label={t('start_date')} value={loan.start_date} />
+              </View>
+              {/* A guide, not a schedule — the customer may pay any amount. */}
+              {loan.installment_amount && loan.total_installments ? (
+                <View style={styles.termsRow}>
+                  <Term
+                    label={t('expected_per_visit')}
+                    value={`₹${loan.installment_amount.toLocaleString('en-IN')}`}
+                  />
+                  <Term label={t('installments')} value={`${loan.total_installments}`} />
+                </View>
+              ) : null}
+              <View style={styles.termsRow}>
+                <Term label={t('missed_visits')} value={`${loan.missed_count}`} />
+                <Term
+                  label={t('collected_so_far')}
+                  value={`₹${loan.repaid.toLocaleString('en-IN')}`}
+                />
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.termsRow}>
+                <Term label={t('frequency')} value={FREQ_LABEL[loan.repayment_frequency] ?? loan.repayment_frequency} />
+                <Term label={t('installments')} value={`${paidCount}/${loan.total_installments}`} />
+              </View>
+              <View style={styles.termsRow}>
+                <Term label={t('installment')} value={`₹${currentInstallment.toLocaleString('en-IN')}`} />
+                <Term label={t('start_date')} value={loan.start_date} />
+              </View>
+            </>
+          )}
         </Card>
 
         {/* Collector */}
@@ -315,8 +349,9 @@ export function LoanDetailScreen() {
           ) : null}
         </Card>
 
-        {/* Schedule */}
-        <View style={styles.scheduleHeader}>
+        {/* Schedule — balance loans have none */}
+        {isBalanceLoan ? null : (
+        <><View style={styles.scheduleHeader}>
           <Text variant="title">{t('schedule')}</Text>
           {isInvestor && loan.status === 'active' ? (
             <Button
@@ -383,6 +418,8 @@ export function LoanDetailScreen() {
             ))}
           </Card>
         ) : null}
+        </>
+        )}
 
         {/* Collections */}
         <Text variant="title" style={{ marginTop: spacing[4], marginBottom: spacing[2] }}>
@@ -456,7 +493,7 @@ export function LoanDetailScreen() {
         loading={close.isPending}
         icon={<Lock size={22} color={colors.danger} />}
       />
-      {loan ? (
+      {loan && !isBalanceLoan ? (
         <RescheduleSheet
           loan={loan}
           visible={showReschedule}
