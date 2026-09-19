@@ -28,19 +28,11 @@ import { useCustomer } from '@/features/customers/hooks/useCustomers';
 import { previewLoan } from '@/features/loans/utils/loanCalc';
 import { useCreateLoan } from '@/features/loans/hooks/useLoans';
 import { useColors, layout, radii, spacing } from '@/theme';
-import type { InterestType, LendingModel, RepaymentFrequency } from '@/types';
+import type { InterestType, LendingModel } from '@/types';
 
 type Nav = NativeStackNavigationProp<CustomersStackParamList, 'NewLoan'>;
 type Route = RouteProp<CustomersStackParamList, 'NewLoan'>;
 
-const FREQUENCY_OPTIONS: Array<{ key: RepaymentFrequency; label: string }> = [
-  { key: 'daily', label: 'Daily' },
-  { key: 'weekly', label: 'Weekly' },
-  { key: 'monthly', label: 'Monthly' },
-  { key: 'half_yearly', label: '6 Months' },
-  { key: 'yearly', label: 'Yearly' },
-  { key: 'custom', label: 'Custom' },
-];
 
 function todayISO(): string {
   const now = new Date();
@@ -65,9 +57,7 @@ export function NewLoanScreen() {
   const [interestValue, setInterestValue] = useState<string>('10');
   const [interestType, setInterestType] = useState<InterestType>('pct');
   const [lendingModel, setLendingModel] = useState<LendingModel>('model_a');
-  const [frequency, setFrequency] = useState<RepaymentFrequency>('daily');
-  const [customInterval, setCustomInterval] = useState<string>('7');
-  const [installments, setInstallments] = useState<string>('10');
+  const [installments, setInstallments] = useState<string>('20');
   const [startDate, setStartDate] = useState<string>(todayISO());
   const [collectorId, setCollectorId] = useState<string | undefined>(undefined);
 
@@ -88,6 +78,11 @@ export function NewLoanScreen() {
       toast.warning('Fix the highlighted fields');
       return;
     }
+    const installmentCount = parseInt(installments, 10);
+    if (!Number.isFinite(installmentCount) || installmentCount < 1 || installmentCount > 10_000) {
+      toast.warning('Enter 10,000 installments or fewer');
+      return;
+    }
     try {
       const loan = await create.mutateAsync({
         customer_id: customer.id,
@@ -96,12 +91,12 @@ export function NewLoanScreen() {
         interest_type: interestType,
         interest_value: parseFloat(interestValue),
         lending_model: lendingModel,
-        repayment_frequency: frequency,
-        frequency_meta:
-          frequency === 'custom'
-            ? { interval_days: parseInt(customInterval, 10) || 7 }
-            : null,
-        total_installments: parseInt(installments, 10),
+        // New lending is registered the way a collector keeps a notebook: an
+        // amount to collect, with no installment schedule to maintain.
+        collection_mode: 'balance',
+        // A guide for the collector, not a schedule: it derives the expected
+        // per-visit amount and nothing enforces it.
+        total_installments: installmentCount,
         start_date: startDate,
       });
       toast.success('Loan created');
@@ -308,59 +303,17 @@ export function NewLoanScreen() {
             </View>
           </Section>
 
-          {/* Schedule */}
-          <Section title="Repayment schedule">
+          {/* Loan date — new loans keep no schedule */}
+          <Section title="Collection plan">
             <Text variant="caption" color="secondary" style={{ marginBottom: spacing[2] }}>
-              FREQUENCY
+              Sets the expected amount per visit. The customer can still pay any
+              amount on any day.
             </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.freqRow}
-            >
-              {FREQUENCY_OPTIONS.map((opt) => {
-                const active = frequency === opt.key;
-                return (
-                  <Pressable
-                    key={opt.key}
-                    onPress={() => setFrequency(opt.key)}
-                    style={[
-                      styles.freqChip,
-                      {
-                        backgroundColor: colors.slate[100],
-                        borderColor: colors.border.default,
-                      },
-                      active && {
-                        backgroundColor: colors.brand[600],
-                        borderColor: colors.brand[600],
-                      },
-                    ]}
-                  >
-                    <Text
-                      variant="label"
-                      color={active ? 'onBrand' : 'secondary'}
-                    >
-                      {opt.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-            {frequency === 'custom' ? (
-              <Input
-                label="Days between installments"
-                keyboardType="numeric"
-                value={customInterval}
-                onChangeText={setCustomInterval}
-                containerStyle={{ marginTop: spacing[3] }}
-              />
-            ) : null}
             <Input
               label="Number of installments"
               keyboardType="numeric"
               value={installments}
               onChangeText={setInstallments}
-              containerStyle={{ marginTop: spacing[3] }}
             />
             <View style={{ marginTop: spacing[3] }}>
               <DatePickerField
