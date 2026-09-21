@@ -1,16 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { dashboardApi } from '../api/dashboardApi';
+import { dashboardApi, type DateRangeParams } from '../api/dashboardApi';
 
-export function useDashboard() {
+export function useDashboard(filters: DateRangeParams = {}) {
   return useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => dashboardApi.overview(),
+    queryKey: ['dashboard', filters],
+    queryFn: () => dashboardApi.overview(filters),
     staleTime: 30_000,
   });
 }
 
-interface ReportFilters {
+interface ReportFilters extends DateRangeParams {
   collector_id?: string;
   period?: 'week' | 'month' | 'year';
 }

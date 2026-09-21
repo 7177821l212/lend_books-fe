@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
-import { AlertTriangle, Ban, Check, ChevronDown, Percent, ReceiptText, Shield, TrendingUp } from 'lucide-react-native';
+import { Ban, CalendarDays, Check, ChevronDown, Percent, ReceiptText, Shield, TrendingUp } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -9,51 +9,70 @@ import {
   Avatar,
   Badge,
   Card,
+  DatePickerField,
   EmptyState,
   GradientBackground,
   Screen,
   SkeletonLoader,
   Text,
 } from '@/components/ui';
+import { CollectionBarChart } from '@/components/charts/CollectionBarChart';
 import { useCollectors } from '@/features/collectors/hooks/useCollectors';
 import { useDashboard, useReports } from '@/features/dashboard/hooks/useDashboard';
 import { useT } from '@/i18n';
 import { useColors, layout, radii, spacing } from '@/theme';
 
-type ActiveFilter = 'all' | 'overdue' | 'blacklisted';
-type SortKey = 'amount' | 'installments';
-type Period = 'week' | 'month' | 'year';
+type ActiveFilter = 'all' | 'blacklisted';
+type Period = 'today' | 'week' | 'month' | 'year' | 'custom';
+
+function toISODate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function daysAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return toISODate(d);
+}
 
 export function ReportsScreen() {
   const t = useT();
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const { width: screenWidth } = useWindowDimensions();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nav = useNavigation<any>();
   const [filter, setFilter] = useState<ActiveFilter>('all');
-  const [sort, setSort] = useState<SortKey>('amount');
-  const [period, setPeriod] = useState<Period | undefined>(undefined);
+  const today = toISODate(new Date());
+  const [period, setPeriod] = useState<Period>('month');
+  const [startDate, setStartDate] = useState(daysAgo(29));
+  const [endDate, setEndDate] = useState(today);
   const [apiCollectorId, setApiCollectorId] = useState<string | undefined>(undefined);
   const [showCollectorModal, setShowCollectorModal] = useState(false);
 
   const { data, isLoading, isRefetching, refetch } = useReports({
     collector_id: apiCollectorId,
-    period,
+    period: period === 'custom' || period === 'today' ? undefined : period,
+    start_date: startDate,
+    end_date: endDate,
   });
-  const { data: dashboard } = useDashboard();
+  const { data: dashboard } = useDashboard({ start_date: startDate, end_date: endDate });
   const { data: collectorsList } = useCollectors();
 
   const FILTER_OPTIONS: { value: ActiveFilter; label: string }[] = [
     { value: 'all', label: t('all') },
-    { value: 'overdue', label: t('status_overdue') },
     { value: 'blacklisted', label: t('blacklisted') },
   ];
 
-  const PERIOD_OPTIONS: { value: Period | undefined; label: string }[] = [
-    { value: undefined, label: t('all') },
+  const PERIOD_OPTIONS: { value: Period; label: string }[] = [
+    { value: 'today', label: t('today') },
     { value: 'week', label: t('this_week') },
     { value: 'month', label: t('this_month') },
     { value: 'year', label: t('this_year') },
+    { value: 'custom', label: 'Custom' },
   ];
 
   const collectorOptions = useMemo(() => {
@@ -62,20 +81,37 @@ export function ReportsScreen() {
     return opts;
   }, [collectorsList, t]);
 
-  const filteredOverdue = useMemo(() => {
-    let rows = data?.overdue ?? [];
-    if (sort === 'amount') rows = [...rows].sort((a, b) => b.overdue_amount - a.overdue_amount);
-    else rows = [...rows].sort((a, b) => b.overdue_installments - a.overdue_installments);
-    return rows;
-  }, [data?.overdue, sort]);
 
-  const showOverdue = filter === 'all' || filter === 'overdue';
   const showBlacklisted = filter === 'all' || filter === 'blacklisted';
 
   const kpis = dashboard?.kpis;
+  const collectionSummary = data?.collection_summary;
+  const collectionTrend = data?.collection_trend ?? [];
+  const collectors = data?.collector_performance ?? [];
+  const selectedCollectorName = apiCollectorId
+    ? collectorOptions.find((c) => c.id === apiCollectorId)?.name ?? 'Selected collector'
+    : 'All collectors';
+  const hasCollectionTrend = collectionTrend.some((point) => point.amount > 0);
   const recoveryRate = kpis && kpis.capital_disbursed > 0
     ? Math.min(100, (kpis.collected_lifetime / kpis.capital_disbursed) * 100)
     : 0;
+
+  const applyPeriod = (next: Period) => {
+    setPeriod(next);
+    if (next === 'today') {
+      setStartDate(today);
+      setEndDate(today);
+    } else if (next === 'week') {
+      setStartDate(daysAgo(6));
+      setEndDate(today);
+    } else if (next === 'month') {
+      setStartDate(daysAgo(29));
+      setEndDate(today);
+    } else if (next === 'year') {
+      setStartDate(daysAgo(364));
+      setEndDate(today);
+    }
+  };
 
   return (
     <Screen
@@ -137,6 +173,31 @@ export function ReportsScreen() {
           />
         </View>
 
+        <Card padding={4} style={{ marginBottom: spacing[3] }}>
+          <View style={styles.collectionHead}>
+            <View style={{ flex: 1 }}>
+              <Text variant="title">Collection summary</Text>
+              <Text variant="caption" color="tertiary">{startDate} to {endDate}</Text>
+            </View>
+            <CalendarDays size={20} color={colors.brand[700]} />
+          </View>
+          <View style={styles.collectionTotalRow}>
+            <View style={{ flex: 1 }}>
+              <Text variant="caption" color="tertiary">TOTAL COLLECTED</Text>
+              <AmountText value={collectionSummary?.total_collected ?? 0} size="lg" color={colors.brand[700]} short />
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text variant="caption" color="tertiary">PAYMENTS</Text>
+              <Text variant="h2">{collectionSummary?.total_payments ?? 0}</Text>
+            </View>
+          </View>
+          <View style={styles.modeRow}>
+            <ModePill label="Cash" value={collectionSummary?.cash_collected ?? 0} />
+            <ModePill label="UPI" value={collectionSummary?.upi_collected ?? 0} />
+            <ModePill label="Bank" value={collectionSummary?.bank_collected ?? 0} />
+          </View>
+        </Card>
+
         {/* Recovery rate tile */}
         <Card padding={4} style={{ marginBottom: spacing[3] }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -181,13 +242,23 @@ export function ReportsScreen() {
               <TouchableOpacity
                 key={String(opt.value)}
                 style={[styles.segmentBtn, active && { backgroundColor: colors.brand[600] }]}
-                onPress={() => setPeriod(opt.value)}
+                onPress={() => applyPeriod(opt.value)}
               >
                 <Text variant="label" style={{ color: active ? '#fff' : colors.text.secondary }}>{opt.label}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
+        {period === 'custom' ? (
+          <View style={styles.dateRow}>
+            <View style={styles.dateField}>
+              <DatePickerField label="From" value={startDate} maxDate={endDate} onChange={setStartDate} />
+            </View>
+            <View style={styles.dateField}>
+              <DatePickerField label="To" value={endDate} minDate={startDate} maxDate={today} onChange={setEndDate} />
+            </View>
+          </View>
+        ) : null}
 
         {/* Collector dropdown */}
         <Text variant="caption" color="tertiary" style={{ marginBottom: spacing[1.5] }}>{t('collector_filter').toUpperCase()}</Text>
@@ -227,82 +298,79 @@ export function ReportsScreen() {
           </Pressable>
         </Modal>
 
-        {/* Overdue loans */}
-        {showOverdue ? (
-          <>
-            <View style={styles.sectionHead}>
-              <Text variant="title">{t('overdue_loans')}</Text>
-              <View style={{ flexDirection: 'row', gap: spacing[2], alignItems: 'center' }}>
-                {data ? (
-                  <Badge label={String(filteredOverdue.length)} tone={filteredOverdue.length > 0 ? 'warning' : 'success'} />
-                ) : null}
-              </View>
+        <Card padding={4} style={{ marginBottom: spacing[3] }}>
+          <View style={styles.sectionHead}>
+            <View style={{ flex: 1 }}>
+              <Text variant="title">{t('collection_trend')}</Text>
+              <Text variant="caption" color="tertiary">
+                {selectedCollectorName} · {startDate} to {endDate}
+              </Text>
             </View>
+            <AmountText
+              value={collectionSummary?.total_collected ?? 0}
+              size="sm"
+              color={colors.brand[700]}
+              short
+            />
+          </View>
+          {hasCollectionTrend ? (
+            <CollectionBarChart
+              data={collectionTrend}
+              width={screenWidth - layout.screenPaddingX * 2 - spacing[4] * 2}
+            />
+          ) : isLoading ? (
+            <SkeletonLoader height={110} />
+          ) : (
+            <EmptyState title={t('no_trend_data')} description={t('no_collections_desc')} />
+          )}
+        </Card>
 
-            {/* Sort sub-filters */}
-            {(data?.overdue ?? []).length > 0 ? (
-              <View style={{ flexDirection: 'row', gap: spacing[2], marginBottom: spacing[2] }}>
-                <TouchableOpacity
-                  style={[styles.subChip, { backgroundColor: sort === 'amount' ? colors.brand[50] : colors.slate[100], borderColor: sort === 'amount' ? colors.brand[400] : colors.border.default }]}
-                  onPress={() => setSort('amount')}
-                >
-                  <Text variant="label" style={{ color: sort === 'amount' ? colors.brand[700] : colors.text.secondary }}>{t('sort_amount')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.subChip, { backgroundColor: sort === 'installments' ? colors.brand[50] : colors.slate[100], borderColor: sort === 'installments' ? colors.brand[400] : colors.border.default }]}
-                  onPress={() => setSort('installments')}
-                >
-                  <Text variant="label" style={{ color: sort === 'installments' ? colors.brand[700] : colors.text.secondary }}>{t('sort_installments')}</Text>
-                </TouchableOpacity>
-              </View>
-            ) : null}
-
-            {isLoading ? (
-              <SkeletonLoader height={84} style={{ marginBottom: spacing[2] }} />
-            ) : filteredOverdue.length === 0 ? (
-              <EmptyState
-                icon={<AlertTriangle size={24} color={colors.success} />}
-                title={t('nothing_overdue')}
-                description={t('nothing_overdue_desc')}
-              />
+        <Card padding={4} style={{ marginBottom: spacing[3] }}>
+          <View style={styles.sectionHead}>
+            <View style={{ flex: 1 }}>
+              <Text variant="title">Collector collections</Text>
+              <Text variant="caption" color="tertiary">
+                Tap a collector to see their day-wise trend
+              </Text>
+            </View>
+            {apiCollectorId ? (
+              <TouchableOpacity
+                style={[styles.resetCollector, { borderColor: colors.border.default }]}
+                onPress={() => setApiCollectorId(undefined)}
+              >
+                <Text variant="label" style={{ color: colors.brand[700] }}>All</Text>
+              </TouchableOpacity>
             ) : (
-              <View>
-                {filteredOverdue.map((row) => (
-                  <Card
-                    key={row.loan_id}
-                    padding={4}
-                    style={{ marginBottom: spacing[2], borderLeftWidth: 4, borderLeftColor: colors.warning }}
-                    onPress={() => nav.navigate('Customers', { screen: 'LoanDetail', params: { id: row.loan_id } })}
-                  >
-                    <View style={styles.overdueRow}>
-                      <TouchableOpacity
-                        onPress={() => nav.navigate('Customers', { screen: 'CustomerDetail', params: { id: row.customer_id } })}
-                      >
-                        <Avatar name={row.customer_name} id={row.customer_id} size="md" />
-                      </TouchableOpacity>
-                      <View style={{ flex: 1, marginLeft: spacing[3] }}>
-                        <View style={styles.overdueHead}>
-                          <Text variant="bodyStrong" numberOfLines={1} style={{ flex: 1 }}>
-                            {row.customer_name}
-                          </Text>
-                          <AmountText
-                            value={row.overdue_amount}
-                            size="md"
-                            color={colors.warning}
-                            short
-                          />
-                        </View>
-                        <Text variant="caption" color="tertiary" style={{ marginTop: 2 }}>
-                          {row.collector_name} · {row.overdue_installments} {t('installments').toLowerCase()}
-                        </Text>
-                      </View>
-                    </View>
-                  </Card>
-                ))}
-              </View>
+              <Badge label={String(collectors.length)} tone={collectors.length > 0 ? 'success' : 'neutral'} />
             )}
-          </>
-        ) : null}
+          </View>
+          {collectors.length === 0 ? (
+            <EmptyState title={t('no_collections_yet')} description={t('no_collections_desc')} />
+          ) : (
+            collectors.map((collector, index) => (
+              <TouchableOpacity
+                key={collector.id}
+                style={[
+                  styles.collectorRow,
+                  index > 0 && { borderTopColor: colors.border.subtle, borderTopWidth: 1 },
+                  apiCollectorId === collector.id && { backgroundColor: colors.brand[50] },
+                ]}
+                onPress={() => setApiCollectorId(collector.id)}
+              >
+                <Avatar name={collector.name} id={collector.id} size="sm" />
+                <View style={{ flex: 1, marginLeft: spacing[3] }}>
+                  <View style={styles.collectorLine}>
+                    <Text variant="bodyStrong" numberOfLines={1} style={{ flex: 1 }}>{collector.name}</Text>
+                    <AmountText value={collector.collected} size="sm" color={colors.brand[700]} short />
+                  </View>
+                  <Text variant="caption" color="tertiary">
+                    {collector.visits} payments · {collector.collection_days} days · avg ₹{collector.average_per_day.toLocaleString('en-IN')}/day
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
+        </Card>
 
         {/* Blacklisted */}
         {showBlacklisted ? (
@@ -328,7 +396,7 @@ export function ReportsScreen() {
                     style={{ marginBottom: spacing[2], borderLeftWidth: 4, borderLeftColor: colors.danger }}
                     onPress={() => nav.navigate('Customers', { screen: 'CustomerDetail', params: { id: row.customer_id } })}
                   >
-                    <View style={styles.overdueRow}>
+                    <View style={styles.personRow}>
                       <Avatar name={row.name} id={row.customer_id} size="md" ring="danger" />
                       <View style={{ flex: 1, marginLeft: spacing[3] }}>
                         <Text variant="bodyStrong">{row.name}</Text>
@@ -382,6 +450,16 @@ function AnalyticTile({ icon, label, valueNode }: AnalyticTileProps) {
   );
 }
 
+function ModePill({ label, value }: { label: string; value: number }) {
+  const colors = useColors();
+  return (
+    <View style={[styles.modePill, { backgroundColor: colors.slate[50], borderColor: colors.border.subtle }]}>
+      <Text variant="caption" color="tertiary">{label.toUpperCase()}</Text>
+      <AmountText value={value} size="sm" color={colors.text.primary} short />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   tileRow: {
     flexDirection: 'row',
@@ -400,10 +478,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     borderWidth: 1,
   },
-  subChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  // Referenced by the "All" button that clears the collector filter; it was
+  // used without ever being defined, so the button rendered unstyled.
+  resetCollector: {
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[1.5],
     borderRadius: radii.full,
@@ -416,8 +493,7 @@ const styles = StyleSheet.create({
     marginTop: spacing[3],
     marginBottom: spacing[2],
   },
-  overdueRow: { flexDirection: 'row', alignItems: 'center' },
-  overdueHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  personRow: { flexDirection: 'row', alignItems: 'center' },
   segmented: {
     flexDirection: 'row',
     borderRadius: radii.xl,
@@ -456,5 +532,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing[3],
     borderBottomWidth: 1,
+  },
+  collectionHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  collectionTotalRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginTop: spacing[3],
+  },
+  modeRow: {
+    flexDirection: 'row',
+    gap: spacing[2],
+    marginTop: spacing[3],
+  },
+  modePill: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: radii.lg,
+    padding: spacing[2],
+  },
+  dateRow: {
+    flexDirection: 'row',
+    gap: spacing[2],
+    marginBottom: spacing[3],
+  },
+  dateField: { flex: 1 },
+  collectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing[3],
+  },
+  collectorLine: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
   },
 });
