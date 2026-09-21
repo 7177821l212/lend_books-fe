@@ -1,4 +1,5 @@
-import { AlertTriangle, IndianRupee, LogOut, RefreshCw, TrendingUp, Wallet } from 'lucide-react-native';
+import { IndianRupee, LogOut, RefreshCw, TrendingUp, Wallet } from 'lucide-react-native';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { fontFamily } from '@/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +8,7 @@ import {
   AmountText,
   Avatar,
   Card,
+  DatePickerField,
   EmptyState,
   GradientBackground,
   IconButton,
@@ -22,22 +24,58 @@ import { useT } from '@/i18n';
 import { useColors, layout, radii, spacing } from '@/theme';
 import { useNavigation } from '@react-navigation/native';
 
+type RangePreset = 'today' | '7d' | '30d' | 'custom';
+
+function toISODate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function daysAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return toISODate(d);
+}
+
 export function DashboardScreen() {
   const t = useT();
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const { user, logout } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
-  const { data, isLoading, isRefetching, refetch } = useDashboard();
+  const today = toISODate(new Date());
+  const [rangePreset, setRangePreset] = useState<RangePreset>('7d');
+  const [startDate, setStartDate] = useState(daysAgo(6));
+  const [endDate, setEndDate] = useState(today);
+  const { data, isLoading, isRefetching, refetch } = useDashboard({
+    start_date: startDate,
+    end_date: endDate,
+  });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nav = useNavigation<any>();
 
   const k = data?.kpis;
-  const weeklyTrend = data?.trend_30d.slice(-7) ?? [];
-  const weeklyCollections = weeklyTrend.reduce((total, point) => total + point.amount, 0);
-  const hasWeeklyCollections = weeklyCollections > 0;
-  const overdueAmount = k?.overdue_amount ?? 0;
+  const rangeTrend = data?.trend_30d ?? [];
+  const rangeSummary = data?.collection_summary;
+  const rangeCollections = rangeSummary?.total_collected ?? 0;
+  const hasRangeCollections = rangeCollections > 0;
   const recent = data?.collector_performance ?? [];
+
+  const applyPreset = (preset: RangePreset) => {
+    setRangePreset(preset);
+    if (preset === 'today') {
+      setStartDate(today);
+      setEndDate(today);
+    } else if (preset === '7d') {
+      setStartDate(daysAgo(6));
+      setEndDate(today);
+    } else if (preset === '30d') {
+      setStartDate(daysAgo(29));
+      setEndDate(today);
+    }
+  };
 
   return (
     <Screen
@@ -107,9 +145,9 @@ export function DashboardScreen() {
               <HeroStat label={t('profit')} amount={k.profit_realised} />
               <View style={styles.heroDivider} />
               <HeroStat
-                label={t('overdue')}
-                count={k.overdue_loans}
-                warn={k.overdue_loans > 0}
+                label="Period"
+                amount={rangeCollections}
+                accent={rangeCollections > 0}
               />
             </View>
           </View>
@@ -152,18 +190,6 @@ export function DashboardScreen() {
               value={k ? k.profit_realised : null}
               valueColor="#f97316"
             />
-            <KPITile
-              icon={<AlertTriangle size={18} color={colors.danger} />}
-              iconBg="rgba(220,38,38,0.12)"
-              label={t('overdue')}
-              sub={k && k.overdue_loans > 0
-                ? `₹${overdueAmount.toLocaleString('en-IN')} overdue`
-                : 'No overdue balance'}
-              value={k ? k.overdue_loans : null}
-              valueColor={k && k.overdue_loans > 0 ? colors.danger : colors.text.secondary}
-              isCount
-              onPress={() => nav.navigate('Reports')}
-            />
           </View>
         </View>
 
@@ -181,24 +207,71 @@ export function DashboardScreen() {
           </Card>
         </View>
 
+        <Card padding={4} style={{ marginTop: spacing[3] }}>
+          <View style={styles.sectionHead}>
+            <View>
+              <Text variant="title">Collection period</Text>
+              <Text variant="caption" color="tertiary">Choose dates to inspect day-wise collections</Text>
+            </View>
+          </View>
+          <View style={styles.rangeChips}>
+            {[
+              { key: 'today', label: 'Today' },
+              { key: '7d', label: '7 days' },
+              { key: '30d', label: '30 days' },
+              { key: 'custom', label: 'Custom' },
+            ].map((opt) => {
+              const active = rangePreset === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  style={[styles.rangeChip, { borderColor: active ? colors.brand[500] : colors.border.default, backgroundColor: active ? colors.brand[50] : colors.card }]}
+                  onPress={() => applyPreset(opt.key as RangePreset)}
+                >
+                  <Text variant="label" style={{ color: active ? colors.brand[700] : colors.text.secondary }}>
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {rangePreset === 'custom' ? (
+            <View style={styles.dateRow}>
+              <View style={styles.dateField}>
+                <DatePickerField label="From" value={startDate} maxDate={endDate} onChange={setStartDate} />
+              </View>
+              <View style={styles.dateField}>
+                <DatePickerField label="To" value={endDate} minDate={startDate} maxDate={today} onChange={setEndDate} />
+              </View>
+            </View>
+          ) : null}
+          {rangeSummary ? (
+            <View style={styles.rangeTotals}>
+              <RangeMetric label="Total" value={rangeSummary.total_collected} />
+              <RangeMetric label="Cash" value={rangeSummary.cash_collected} />
+              <RangeMetric label="UPI" value={rangeSummary.upi_collected} />
+            </View>
+          ) : null}
+        </Card>
+
         {/* Collection chart */}
         <Card padding={4} style={{ marginTop: spacing[3] }}>
           <View style={styles.sectionHead}>
             <View>
               <Text variant="title">{t('collection_trend')}</Text>
-              <Text variant="caption" color="tertiary">Daily collections for the last 7 days</Text>
+              <Text variant="caption" color="tertiary">{startDate} to {endDate}</Text>
             </View>
             {data ? (
               <View style={{ alignItems: 'flex-end' }}>
-                <AmountText value={weeklyCollections} size="sm" color={colors.brand[700]} short />
-                <Text variant="caption" color="tertiary">7-day total</Text>
+                <AmountText value={rangeCollections} size="sm" color={colors.brand[700]} short />
+                <Text variant="caption" color="tertiary">period total</Text>
               </View>
             ) : null}
           </View>
           <View style={{ marginTop: spacing[2] }}>
-            {hasWeeklyCollections ? (
+            {hasRangeCollections ? (
               <CollectionBarChart
-                data={weeklyTrend}
+                data={rangeTrend}
                 width={screenWidth - layout.screenPaddingX * 2 - spacing[4] * 2}
               />
             ) : isLoading ? (
@@ -242,7 +315,7 @@ export function DashboardScreen() {
                       <View style={styles.leaderSub}>
                         <Text variant="caption" color="tertiary">{c.visits} {t('visits')}</Text>
                         <Text variant="caption" color={c.missed > 0 ? colors.danger : colors.text.tertiary}>
-                          {c.missed} {t('missed').toLowerCase()}
+                          {c.collection_days} days · avg ₹{c.average_per_day.toLocaleString('en-IN')}
                         </Text>
                       </View>
                       <ProgressBar value={pct} height={3} style={{ marginTop: 4 }} />
@@ -278,6 +351,16 @@ function HeroStat({ label, amount, count, accent, warn }: HeroStatProps) {
       ) : (
         <Text variant="bodyStrong" style={{ color: valueColor }}>{count ?? 0}</Text>
       )}
+    </View>
+  );
+}
+
+function RangeMetric({ label, value }: { label: string; value: number }) {
+  const colors = useColors();
+  return (
+    <View style={styles.rangeMetric}>
+      <Text variant="caption" color="tertiary">{label.toUpperCase()}</Text>
+      <AmountText value={value} size="sm" color={colors.text.primary} short />
     </View>
   );
 }
@@ -373,4 +456,28 @@ const styles = StyleSheet.create({
   leaderRank: { width: 24, textAlign: 'center', marginRight: spacing[1] },
   leaderHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   leaderSub: { flexDirection: 'row', justifyContent: 'space-between' },
+  rangeChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[2],
+    marginTop: spacing[3],
+  },
+  rangeChip: {
+    borderWidth: 1,
+    borderRadius: radii.full,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1.5],
+  },
+  dateRow: {
+    flexDirection: 'row',
+    gap: spacing[2],
+    marginTop: spacing[3],
+  },
+  dateField: { flex: 1 },
+  rangeTotals: {
+    flexDirection: 'row',
+    gap: spacing[2],
+    marginTop: spacing[3],
+  },
+  rangeMetric: { flex: 1 },
 });
