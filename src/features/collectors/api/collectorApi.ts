@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api';
+import type { TrendPoint } from '@/features/dashboard/api/dashboardApi';
 
 export interface CollectorSummary {
   id: string;
@@ -44,6 +45,11 @@ export interface CollectorLocation {
 }
 
 export const collectorApi = {
+  /** Day-wise collections for one collector; defaults to the last 30 days. */
+  async trend(id: string, params: { start_date?: string; end_date?: string } = {}) {
+    const { data } = await apiClient.get<TrendPoint[]>(`/collectors/${id}/trend`, { params });
+    return data;
+  },
   async list(): Promise<CollectorSummary[]> {
     const { data } = await apiClient.get<CollectorSummary[]>('/collectors');
     return data;

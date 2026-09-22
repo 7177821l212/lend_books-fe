@@ -87,3 +87,14 @@ export function useCollectorLocations() {
     refetchInterval: 30_000,
   });
 }
+
+export function useCollectorTrend(
+  id: string | undefined,
+  params: { start_date?: string; end_date?: string } = {}
+) {
+  return useQuery({
+    queryKey: ['collector-trend', id, params],
+    queryFn: () => collectorApi.trend(id!, params),
+    enabled: !!id,
+  });
+}
