@@ -46,6 +46,7 @@ import {
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCollectors } from '@/features/collectors/hooks/useCollectors';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
+import { useBackToList } from '@/hooks/useBackToList';
 import { useT } from '@/i18n';
 import {
   useCloseLoan,
@@ -110,17 +111,7 @@ export function LoanDetailScreen() {
   const [showReschedule, setShowReschedule] = useState(false);
   const [showReplaced, setShowReplaced] = useState(false);
 
-  // When reached via a cross-tab deep link (e.g. Reports' overdue list), this
-  // screen may be the only entry in the Customers stack — goBack() would then
-  // have nothing to pop and fall through to the previously-focused tab instead
-  // of showing the customer list. Fall back to navigating to CustomerList.
-  const goBackOrToList = () => {
-    if (nav.canGoBack()) {
-      nav.goBack();
-    } else {
-      nav.navigate('CustomerList');
-    }
-  };
+  const goBackOrToList = useBackToList('CustomerList');
 
   if (isLoading || !loan) {
     return <LoanDetailSkeleton insetsTop={insets.top} onBack={goBackOrToList} />;

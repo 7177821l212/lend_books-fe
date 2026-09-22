@@ -49,6 +49,7 @@ import {
   useToast,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { useBackToList } from '@/hooks/useBackToList';
 import { useT } from '@/i18n';
 import { uploadPhoto } from '@/lib/uploadPhoto';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
@@ -101,18 +102,7 @@ export function CustomerDetailScreen() {
   const requestedPreviewUrl = useSignedUrl(previewDocument?.file_url);
   const activePreviewUrl = previewUrl ?? requestedPreviewUrl;
 
-  // When reached via a cross-tab deep link (e.g. Reports' overdue/blacklisted
-  // lists), this screen may be the only entry in the Customers stack —
-  // navigate('CustomerList') would then push a NEW list screen instead of
-  // popping back to one, leaving a phantom entry that a second back-press
-  // loops back into. Prefer a true pop when history exists.
-  const goBackOrToList = () => {
-    if (nav.canGoBack()) {
-      nav.goBack();
-    } else {
-      nav.navigate('CustomerList');
-    }
-  };
+  const goBackOrToList = useBackToList('CustomerList');
 
   if (isLoading || !customer) {
     return <CustomerDetailSkeleton insetsTop={insets.top} onBack={goBackOrToList} />;

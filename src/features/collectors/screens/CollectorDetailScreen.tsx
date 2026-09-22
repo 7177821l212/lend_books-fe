@@ -1,16 +1,8 @@
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import { Banknote, Camera, Phone, Trash2, TrendingUp, User, X } from 'lucide-react-native';
 import { useState } from 'react';
-import {
-  Image,
-  Linking,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Image, Linking, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { TeamStackParamList } from '@/app/navigation/TeamNavigator';
@@ -28,20 +20,23 @@ import {
   useToast,
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { CollectionBarChart } from '@/components/charts/CollectionBarChart';
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
+import { useLoans } from '@/features/loans/hooks/useLoans';
 import {
   useActivateCollector,
   useCollector,
+  useCollectorTrend,
   useDeactivateCollector,
   useDeleteCollector,
   useUpdateCollector,
 } from '../hooks/useCollectors';
+import { useBackToList } from '@/hooks/useBackToList';
 import { useT } from '@/i18n';
 import { uploadPhoto } from '@/lib/uploadPhoto';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
 import { useColors, layout, radii, spacing } from '@/theme';
 
-type Nav = NativeStackNavigationProp<TeamStackParamList, 'CollectorDetail'>;
 type Route = RouteProp<TeamStackParamList, 'CollectorDetail'>;
 
 export function CollectorDetailScreen() {
@@ -49,7 +44,6 @@ export function CollectorDetailScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const toast = useToast();
-  const nav = useNavigation<Nav>();
   const { params } = useRoute<Route>();
   const { user } = useAuth();
   const isInvestor = user?.role === 'investor';
@@ -59,7 +53,15 @@ export function CollectorDetailScreen() {
   const activateCollector = useActivateCollector();
   const deactivateCollector = useDeactivateCollector();
   const deleteCollector = useDeleteCollector();
+  const { width: screenWidth } = useWindowDimensions();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const nav = useNavigation<any>();
   const { data: dashboard } = useDashboard();
+  // This collector's own day-wise collections, and the loans they carry.
+  const { data: trend, isLoading: trendLoading } = useCollectorTrend(params.id);
+  const { data: loansPage } = useLoans({ collector_id: params.id, page_size: 100 });
+  const assignedLoans = loansPage?.items ?? [];
+  const hasTrend = (trend ?? []).some((point) => point.amount > 0);
   const perf = dashboard?.collector_performance.find((c) => c.id === params.id);
 
   const [editing, setEditing] = useState(false);
@@ -68,17 +70,7 @@ export function CollectorDetailScreen() {
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-  // When reached via a cross-tab deep link (e.g. Dashboard's leaderboard), this
-  // screen may be the only entry in the Team stack — goBack() would then have
-  // nothing to pop and fall through to the previously-focused tab instead of
-  // showing the collector list. Fall back to navigating to TeamList explicitly.
-  const goBackOrToList = () => {
-    if (nav.canGoBack()) {
-      nav.goBack();
-    } else {
-      nav.navigate('TeamList');
-    }
-  };
+  const goBackOrToList = useBackToList('TeamList');
 
   const startEdit = () => {
     setName(collector?.name ?? '');
@@ -314,6 +306,60 @@ export function CollectorDetailScreen() {
           </Card>
         )}
 
+        {/* Collection trend for THIS collector */}
+        {!editing ? (
+          <Card padding={4} style={{ marginTop: spacing[4] }}>
+            <Text variant="title">{t('collection_trend')}</Text>
+            <Text variant="caption" color="tertiary" style={{ marginBottom: spacing[3] }}>
+              {t('last_30_days')}
+            </Text>
+            {hasTrend ? (
+              <CollectionBarChart
+                data={trend ?? []}
+                width={screenWidth - layout.screenPaddingX * 2 - spacing[4] * 2}
+              />
+            ) : trendLoading ? (
+              <SkeletonLoader height={110} />
+            ) : (
+              <Text variant="caption" color="tertiary">{t('no_collections_yet')}</Text>
+            )}
+          </Card>
+        ) : null}
+
+        {/* Loans assigned to this collector */}
+        {!editing ? (
+          <Card padding={0} style={{ marginTop: spacing[4], paddingTop: spacing[1] }}>
+            <View style={styles.loansHead}>
+              <Text variant="title">{t('loans')}</Text>
+              <Badge label={String(assignedLoans.length)} tone="brand" size="sm" />
+            </View>
+            {assignedLoans.length === 0 ? (
+              <Text variant="caption" color="tertiary" style={{ paddingHorizontal: spacing[4], paddingBottom: spacing[4] }}>
+                {t('no_loans_assigned')}
+              </Text>
+            ) : (
+              assignedLoans.map((loan) => (
+                <TouchableOpacity
+                  key={loan.id}
+                  style={[styles.loanRow, { borderBottomColor: colors.border.subtle }]}
+                  onPress={() => nav.navigate('LoanDetail', { id: loan.id })}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text variant="bodyStrong" numberOfLines={1}>{loan.customer_name}</Text>
+                    <Text variant="caption" color="tertiary">
+                      {t('loan')} {loan.loan_number} · {loan.start_date}
+                    </Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <AmountText value={loan.outstanding} size="sm" short />
+                    <Text variant="caption" color="tertiary">{t('outstanding')}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
+          </Card>
+        ) : null}
+
         {/* Investor actions */}
         {isInvestor && !editing ? (
           <View style={{ marginTop: spacing[4], gap: spacing[2] }}>
@@ -434,4 +480,12 @@ const styles = StyleSheet.create({
   photo: { width: 72, height: 72, borderRadius: 36, borderWidth: 2 },
   cameraBtn: { position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   infoRow: { flexDirection: 'row', alignItems: 'center' },
+  loansHead: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: spacing[4], paddingVertical: spacing[3],
+  },
+  loanRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: spacing[4], paddingVertical: spacing[3], borderBottomWidth: 1,
+  },
 });
